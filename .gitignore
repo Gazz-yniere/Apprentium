@@ -1,0 +1,26 @@
+# Fichiers/dossiers générés par PyInstaller
+/dist/
+/build/
+*.spec
+
+# Fichiers Python compilés
+__pycache__/
+*.pyc
+*.pyo
+
+# Fichiers exécutables
+*.exe
+
+# Fichiers temporaires ou de sauvegarde
+*.bak
+*.tmp
+*.log
+
+# Environnements virtuels
+env/
+.venv/
+venv/
+
+# Fichiers système
+.DS_Store
+Thumbs.db

@@ -1,0 +1,4 @@
+PyQt6
+reportlab
+# Pour créer un exécutable :
+# pyinstaller
