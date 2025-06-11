@@ -1,6 +1,6 @@
 # Fichiers/dossiers générés par PyInstaller
-/dist/
-/build/
+/src/dist/
+/src/build/
 *.spec
 
 # Fichiers Python compilés
