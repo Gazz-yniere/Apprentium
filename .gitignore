@@ -20,6 +20,7 @@ __pycache__/
 env/
 .venv/
 venv/
+config.json
 
 # Fichiers système
 .DS_Store

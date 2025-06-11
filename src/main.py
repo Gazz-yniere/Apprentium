@@ -320,11 +320,14 @@ class MainWindow(QMainWindow):
                     item.setStyleSheet(label_style)
 
         # Chargement de la configuration si elle existe
-        def get_resource_path(filename):
-            if hasattr(sys, '_MEIPASS'):
-                return os.path.join(sys._MEIPASS, filename)
-            return os.path.join(os.path.dirname(__file__), filename)
-        self.config_path = get_resource_path('config.json')
+        def get_config_path():
+            if getattr(sys, 'frozen', False):
+                # Exécutable PyInstaller : toujours à côté de l'exe
+                return os.path.join(os.path.dirname(sys.executable), 'config.json')
+            else:
+                # Mode script : à côté du script
+                return os.path.join(os.path.dirname(__file__), 'config.json')
+        self.config_path = get_config_path()
         self.load_config()
 
     def get_int(self, lineedit, default=0, field_name=None):
@@ -566,6 +569,12 @@ class MainWindow(QMainWindow):
 
     def load_config(self):
         if not os.path.exists(self.config_path):
+            # Crée un fichier config.json vide si absent (pour PyInstaller)
+            try:
+                with open(self.config_path, 'w', encoding='utf-8') as f:
+                    json.dump({}, f)
+            except Exception as e:
+                print(f"Erreur lors de la création de la configuration : {e}")
             return
         try:
             with open(self.config_path, 'r', encoding='utf-8') as f:
