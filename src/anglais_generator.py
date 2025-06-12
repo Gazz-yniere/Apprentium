@@ -4,9 +4,10 @@ import os
 import sys
 
 def get_resource_path(filename):
+    import sys, os
     if hasattr(sys, '_MEIPASS'):
-        return os.path.join(sys._MEIPASS, filename)
-    return os.path.join(os.path.dirname(__file__), filename)
+        return os.path.join(sys._MEIPASS, "json", filename)
+    return os.path.join(os.path.dirname(__file__), "json", filename)
 
 # Chargement des phrases à compléter simples
 try:

@@ -8,6 +8,17 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 import random
 
+def get_output_path(filename):
+    import sys, os
+    if getattr(sys, 'frozen', False):
+        base = os.path.dirname(sys.executable)
+    else:
+        base = os.path.dirname(__file__)
+    output_dir = os.path.join(base, 'output')
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    return os.path.join(output_dir, filename)
+
 def generate_workbook_docx(days, operations, counts, max_digits, conjugations, params_list, grammar_exercises, geo_exercises=None, english_exercises=None, header_text=None, show_name=False, show_note=False, filename="workbook.docx"):
     if geo_exercises is None:
         geo_exercises = []
@@ -154,5 +165,6 @@ def generate_workbook_docx(days, operations, counts, max_digits, conjugations, p
                         line = f"\u2022 {a:<{col_width}}    \u2022 {f}"
                         add_paragraph(line)
         doc.add_page_break()
-    doc.save(filename)
-    print(f"Word généré : {filename}")
+    out_path = get_output_path(filename)
+    doc.save(out_path)
+    print(f"Word généré : {out_path}")

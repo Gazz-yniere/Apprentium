@@ -4,9 +4,10 @@ import os
 import json
 
 def get_resource_path(filename):
+    import sys, os
     if hasattr(sys, '_MEIPASS'):
-        return os.path.join(sys._MEIPASS, filename)
-    return os.path.join(os.path.dirname(__file__), filename)
+        return os.path.join(sys._MEIPASS, "json", filename)
+    return os.path.join(os.path.dirname(__file__), "json", filename)
 
 # Chargement dynamique des phrases depuis un fichier JSON
 PHRASES_PATH = get_resource_path('phrases_grammaire.json')

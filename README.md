@@ -38,7 +38,7 @@ pip install -r requirements.txt
 ## Utilisation (exécutable Windows autonome)
 1. Compilez avec PyInstaller (logo et fichiers JSON à côté de l'exe) :
    ```
-   pyinstaller --onefile --noconsole --icon=logo-inv.png --add-data "phrases_grammaire.json;." --add-data "verbes.json;." --add-data "config.json;." main.py
+   pyinstaller --onefile --noconsole --icon=src/logo-inv.png --add-data "src/json;json" --add-data "src/logo-inv.png;." --add-data "src/config.json;." src/main.py
    ```
 2. Dans le dossier `dist/`, copiez `main.exe`, `phrases_grammaire.json`, `verbes.json`, `config.json` et `logo-inv.png`.
 3. Lancez `main.exe` sur n'importe quel PC Windows (aucune installation Python requise).

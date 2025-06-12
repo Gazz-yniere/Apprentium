@@ -4,9 +4,10 @@ import os
 import json
 
 def get_resource_path(filename):
+    import sys, os
     if hasattr(sys, '_MEIPASS'):
-        return os.path.join(sys._MEIPASS, filename)
-    return os.path.join(os.path.dirname(__file__), filename)
+        return os.path.join(sys._MEIPASS, "json", filename)
+    return os.path.join(os.path.dirname(__file__), "json", filename)
 
 # Chargement dynamique des verbes depuis un fichier JSON
 VERBS_PATH = get_resource_path('verbes.json')

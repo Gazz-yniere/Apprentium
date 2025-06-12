@@ -79,12 +79,24 @@ def draw_section_title(pdf, width, y, title):
     y = box_y - 12
     return y
 
+def get_output_path(filename):
+    import sys, os
+    if getattr(sys, 'frozen', False):
+        base = os.path.dirname(sys.executable)
+    else:
+        base = os.path.dirname(__file__)
+    output_dir = os.path.join(base, 'output')
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    return os.path.join(output_dir, filename)
+
 def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, params_list, grammar_exercises, geo_exercises=None, english_exercises=None, header_text=None, filename="workbook.pdf", division_entier=False, show_name=False, show_note=False):
     if geo_exercises is None:
         geo_exercises = []
     if english_exercises is None:
         english_exercises = []
-    pdf = canvas.Canvas(filename, pagesize=A4)
+    out_path = get_output_path(filename)
+    pdf = canvas.Canvas(out_path, pagesize=A4)
     width, height = A4
     margin = 50
 
@@ -246,7 +258,7 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
             pdf.showPage()
 
     pdf.save()
-    print(f"PDF généré : {filename}")
+    print(f"PDF généré : {out_path}")
 
 def get_resource_path(filename):
     if hasattr(sys, '_MEIPASS'):

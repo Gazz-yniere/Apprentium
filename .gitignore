@@ -1,6 +1,10 @@
 # Fichiers/dossiers générés par PyInstaller
 /src/dist/
 /src/build/
+/src/output/
+/src/config.json
+/dist/
+/build/
 *.spec
 
 # Fichiers Python compilés
@@ -20,7 +24,6 @@ __pycache__/
 env/
 .venv/
 venv/
-config.json
 
 # Fichiers système
 .DS_Store
