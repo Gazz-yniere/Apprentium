@@ -79,7 +79,11 @@ def draw_section_title(pdf, width, y, title):
     y = box_y - 12
     return y
 
-def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, params_list, grammar_exercises, header_text=None, filename="workbook.pdf", division_entier=False, show_name=False, show_note=False):
+def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, params_list, grammar_exercises, geo_exercises=None, english_exercises=None, header_text=None, filename="workbook.pdf", division_entier=False, show_name=False, show_note=False):
+    if geo_exercises is None:
+        geo_exercises = []
+    if english_exercises is None:
+        english_exercises = []
     pdf = canvas.Canvas(filename, pagesize=A4)
     width, height = A4
     margin = 50
@@ -127,8 +131,20 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                 pdf.setFont("Helvetica-Bold", 10)
             y_position -= 10
 
+        # Section géométrie/mesures (exercices de conversion)
+        if geo_exercises:
+            y_position = draw_section_title(pdf, width, y_position, "Mesures")
+            pdf.setFont("Helvetica", 9)
+            for ex in geo_exercises:
+                pdf.drawString(margin, y_position, ex)
+                y_position -= 15
+                if y_position < margin:
+                    pdf.showPage()
+                    y_position = height - margin
+            y_position -= 10
+
         # Section conjugaison (affichée seulement si des conjugaisons sont générées)
-        if any(len(day_conj) > 0 for day_conj in conjugations):
+        if conjugations and len(conjugations) >= day and conjugations[day-1]:
             y_position = draw_section_title(pdf, width, y_position, "Conjugaison")
             pdf.setFont("Helvetica-Bold", 10)
             from conjugation_generator import PRONOUNS
@@ -136,15 +152,14 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
             for conjugation in conjugations[day-1]:
                 verb = conjugation["verb"]
                 tense = conjugation["tense"]
-                # Déterminer le groupe du verbe
-                if verb in VERBS[1]:
-                    groupe = "1er groupe"
-                elif verb in VERBS[2]:
-                    groupe = "2ème groupe"
-                elif verb in VERBS[3]:
-                    groupe = "3ème groupe"
-                else:
-                    groupe = "Groupe inconnu"
+                # Recherche du vrai groupe
+                groupe = None
+                for g in (1, 2, 3):
+                    if verb in VERBS[g]:
+                        groupe = f"{g}er groupe"
+                        break
+                if not groupe:
+                    groupe = "usuel"
                 pdf.setFont("Helvetica-Bold", 10)
                 pdf.drawString(margin, y_position, f"Verbe : {verb}  |  Groupe : {groupe}  |  Temps : {tense}")
                 y_position -= 13
@@ -160,7 +175,7 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
             y_position -= 10
 
         # Section grammaire (affichée seulement si des exercices sont générés)
-        if grammar_exercises and any(len(day_gram) > 0 for day_gram in grammar_exercises):
+        if grammar_exercises and len(grammar_exercises) >= day and grammar_exercises[day-1]:
             y_position = draw_section_title(pdf, width, y_position, "Grammaire")
             pdf.setFont("Helvetica", 9)
             for ex in grammar_exercises[day-1]:
@@ -181,8 +196,54 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                 if y_position < margin:
                     pdf.showPage()
                     y_position = height - margin
-            y_position -= 10
-        pdf.showPage()
+        # Section anglais (exercices)
+        if english_exercises and len(english_exercises) >= day and english_exercises[day-1]:
+            y_position = draw_section_title(pdf, width, y_position, "Anglais")
+            pdf.setFont("Helvetica-Bold", 10)
+            y_position -= 2
+            pdf.setFont("Helvetica", 9)
+            completer_shown = False
+            for ex in english_exercises[day-1]:
+                if ex['type'] in ('simple', 'complexe'):
+                    if not completer_shown:
+                        pdf.setFont("Helvetica-Bold", 9)
+                        pdf.drawString(margin, y_position, "Compléter :")
+                        y_position -= 13
+                        pdf.setFont("Helvetica", 9)
+                        completer_shown = True
+                    pdf.drawString(margin, y_position, ex['content'])
+                    y_position -= 13
+                elif ex['type'] == 'relier':
+                    completer_shown = False
+                    pdf.setFont("Helvetica-Bold", 9)
+                    pdf.drawString(margin, y_position, "Jeu de mots à relier :")
+                    y_position -= 13
+                    pdf.setFont("Helvetica", 9)
+                    mots = ex['content']
+                    anglais = [m['english'] for m in mots]
+                    francais = [m['french'] for m in mots]
+                    random.shuffle(anglais)
+                    random.shuffle(francais)
+                    max_len = max(len(anglais), len(francais))
+                    col1_x = margin + 10
+                    col2_x = margin + 60  # point anglais
+                    col3_x = margin + 110 # point français
+                    col4_x = margin + 130 # mot français
+                    for i in range(max_len):
+                        a = anglais[i] if i < len(anglais) else ''
+                        f = francais[i] if i < len(francais) else ''
+                        pdf.drawString(col1_x, y_position, a)
+                        pdf.drawString(col2_x, y_position, '\u2022')
+                        pdf.drawString(col3_x, y_position, '\u2022')
+                        pdf.drawString(col4_x, y_position, f)
+                        y_position -= 13
+                        if y_position < margin:
+                            pdf.showPage()
+                            y_position = height - margin
+                if y_position < margin:
+                    pdf.showPage()
+                    y_position = height - margin
+            pdf.showPage()
 
     pdf.save()
     print(f"PDF généré : {filename}")

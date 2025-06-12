@@ -11,32 +11,35 @@ def get_resource_path(filename):
 # Chargement dynamique des verbes depuis un fichier JSON
 VERBS_PATH = get_resource_path('verbes.json')
 with open(VERBS_PATH, encoding='utf-8') as f:
-    VERBS = json.load(f)
-    # Convertir les clés en int pour compatibilité avec l'ancien code
-    VERBS = {int(k): v for k, v in VERBS.items()}
+    _VERBS = json.load(f)
+    VERBS = {}
+    for k, v in _VERBS.items():
+        if k.isdigit():
+            VERBS[int(k)] = v
+        else:
+            VERBS[k] = v
 
 PRONOUNS = ["je", "tu", "il/elle/on", "nous", "vous", "ils/elles"]
 
-def conjugate_verb(verb, tense):
-    conjugations = []
-
-    if tense == "présent":
-        if verb.endswith("er"):
-            endings = ["e", "es", "e", "ons", "ez", "ent"]
-        elif verb.endswith("ir"):
-            endings = ["is", "is", "it", "issons", "issez", "issent"]
-        else:  # 3ème groupe
-            endings = ["s", "s", "t", "ons", "ez", "ent"]
-    elif tense == "futur":
-        if verb.endswith("er") or verb.endswith("ir"):
-            endings = ["ai", "as", "a", "ons", "ez", "ont"]
-        else:  # 3ème groupe
-            endings = ["ai", "as", "a", "ons", "ez", "ont"]
-
-    for pronoun, ending in zip(PRONOUNS, endings):
-        conjugations.append(f"{pronoun} {verb[:-2]}{ending}")
-
-    return conjugations
+# Liste des temps de conjugaison utilisables (adaptée à l'école primaire)
+TENSES = [
+    # Présent de l'indicatif : action en cours ou habituelle
+    "présent",
+    # Imparfait de l'indicatif : action passée, description, habitude
+    "imparfait",
+    # Passé simple : récit, narration (principalement pour la reconnaissance)
+    "passé simple",
+    # Futur simple de l'indicatif : action à venir
+    "futur simple",
+    # Passé composé : action passée, résultat/conclusion
+    "passé composé",
+    # Plus-que-parfait de l'indicatif : action antérieure à une autre action passée
+    "plus-que-parfait",
+    # Conditionnel présent : hypothèse, souhait, politesse
+    "conditionnel présent",
+    # Impératif présent : ordre, conseil
+    "impératif présent"
+]
 
 def get_random_verb(group, used_verbs):
     if group not in VERBS:

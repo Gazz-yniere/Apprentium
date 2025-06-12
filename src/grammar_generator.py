@@ -13,29 +13,28 @@ PHRASES_PATH = get_resource_path('phrases_grammaire.json')
 with open(PHRASES_PATH, encoding='utf-8') as f:
     PHRASES = json.load(f)
 
-# Liste des transformations disponibles
+# Liste des transformations disponibles (restreinte et commentée)
 TRANSFORMATIONS = [
+    # Transformation des noms, adjectifs et verbes en fonction du nombre
     "Singulier ↔ Pluriel",
+    # Transformation des noms et adjectifs en fonction du genre
     "Masculin ↔ Féminin",
+    # Conjugaison des verbes à ces deux temps et compréhension de leur usage
     "Présent ↔ Passé composé",
     "Présent ↔ Imparfait",
     "Présent ↔ Futur simple",
-    "Indicatif ↔ Subjonctif",
+    # Utilisation du mode impératif pour donner des ordres ou des conseils
     "Indicatif ↔ Impératif",
-    "Infinitif ↔ Participe",
-    "Positif ↔ Comparatif",
-    "Positif ↔ Superlatif",
+    # Initiation et reconnaissance de cette transformation, surtout au cycle 3 (CM1-CM2)
     "Voix active ↔ Voix passive",
+    # Transformation pour poser des questions (intonation, 'est-ce que', inversion sujet-verbe de base)
     "Déclarative ↔ Interrogative",
+    # Transformation pour exprimer une émotion
     "Déclarative ↔ Exclamative",
+    # Transformation pour donner un ordre
     "Déclarative ↔ Impérative",
-    "Affirmative ↔ Négative",
-    "Personnelle ↔ Impersonnelle",
-    "Coordination/Subordination",
-    "Nominalisation",
-    "Pronominalisation",
-    "Topicalisation/Mise en relief",
-    "Effacement/Ellipses"
+    # Utilisation de 'ne...pas' et autres formes négatives
+    "Affirmative ↔ Négative"
 ]
 
 # Complexité des phrases
