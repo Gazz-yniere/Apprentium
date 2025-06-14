@@ -18,9 +18,12 @@ class InvalidFieldError(Exception):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Générateur de fiches de travail")
-        self.setWindowIcon(QIcon("logo-inv.png"))
-        self.setMinimumWidth(1500)
+        self.setWindowTitle("EduForge")
+        import os
+        icon_path = os.path.join(os.path.dirname(__file__), "EduForge.ico")
+        self.setWindowIcon(QIcon(icon_path))
+        self.setMinimumWidth(1400)
+        #self.setMinimumHeight(900)
         # Fenêtre redimensionnable
 
         # Mode dark
@@ -62,9 +65,9 @@ class MainWindow(QMainWindow):
         top_layout.addWidget(self.header_entry)
         top_layout.addWidget(self.show_name_checkbox)
         top_layout.addWidget(self.show_note_checkbox)
+        top_layout.addStretch()
         top_layout.addWidget(self.days_label)
         top_layout.addWidget(self.days_entry)
-        top_layout.addStretch()
         main_layout.addLayout(top_layout)
 
         # Séparateur
@@ -80,6 +83,23 @@ class MainWindow(QMainWindow):
         calc_layout.addWidget(calc_title)
         calc_layout.setContentsMargins(5, 5, 5, 5)
         calc_layout.setSpacing(6)
+        # Exercice : Enumérer un nombre
+        enumerate_group = QGroupBox("Enumérer un nombre")
+        enumerate_layout = QVBoxLayout()
+        row = QHBoxLayout()
+        row.addWidget(QLabel("Nombre d'exercices :"))
+        self.enumerate_count = QLineEdit(); self.enumerate_count.setMaximumWidth(60)
+        row.addWidget(self.enumerate_count)
+        enumerate_layout.addLayout(row)
+        row = QHBoxLayout()
+        row.addWidget(QLabel("Chiffres par nombre :"))
+        self.enumerate_digits = QLineEdit(); self.enumerate_digits.setMaximumWidth(60)
+        row.addWidget(self.enumerate_digits)
+        enumerate_layout.addLayout(row)
+        enumerate_group.setLayout(enumerate_layout)
+
+        # (Suppression de la création de sort_group ici, il sera déplacé dans la colonne Mesures)
+
         # Addition
         addition_group = QGroupBox("Addition")
         addition_layout = QVBoxLayout()
@@ -160,15 +180,21 @@ class MainWindow(QMainWindow):
         row.addWidget(self.division_decimals)
         division_layout.addLayout(row)
         division_group.setLayout(division_layout)
+        # Fonction utilitaire pour appliquer le style compact à une liste de QGroupBox
+        def set_groupbox_style(groups, color):
+            for group in groups:
+                group.setStyleSheet(f"QGroupBox {{ margin-top: 2px; margin-bottom: 2px; padding: 10px 12px 10px 12px; border: 2px solid {color}; border-radius: 8px; }} QGroupBox:title {{ subcontrol-origin: margin; subcontrol-position: top left; left: 10px; top: 0px; padding: 0 12px; color: #ffffff; font-weight: bold; font-size: 15px; background: #232323; }}")
+
         # Harmonisation des couleurs des bordures des QGroupBox selon la couleur du titre de colonne
-        # Calculs : bleu clair (#4FC3F7)
-        for group in [addition_group, subtraction_group, multiplication_group, division_group]:
-            group.setStyleSheet("QGroupBox { margin-top: 8px; margin-bottom: 8px; padding: 24px 12px 24px 12px; border: 2px solid #4FC3F7; border-radius: 8px; } QGroupBox:title { subcontrol-origin: margin; subcontrol-position: top left; left: 10px; top: 0px; padding: 0 12px; color: #ffffff; font-weight: bold; font-size: 15px; background: #232323; }")
+        set_groupbox_style([enumerate_group, addition_group, subtraction_group, multiplication_group, division_group], "#4FC3F7")
+        calc_layout.addWidget(enumerate_group)
         calc_layout.addWidget(addition_group)
         calc_layout.addWidget(subtraction_group)
         calc_layout.addWidget(multiplication_group)
         calc_layout.addWidget(division_group)
         calc_layout.addStretch()
+
+        # (Suppression de l'appel fautif à set_groupbox_style et des widgets non définis)
 
         # --- Colonne Géométrie/Mesures ---
         geo_layout = QVBoxLayout()
@@ -177,21 +203,17 @@ class MainWindow(QMainWindow):
         geo_layout.addWidget(geo_title)
         geo_layout.setContentsMargins(5, 5, 5, 5)
         geo_layout.setSpacing(6)
-        # Section nombre d'exercices
-        geo_number_group = QGroupBox("Paramètres de mesures")
-        geo_number_layout = QVBoxLayout()
+        # (Suppression de la section Paramètres de mesures qui est maintenant vide)
+        # Section conversions
+        geo_conv_group = QGroupBox("Conversions")
+        geo_conv_layout = QVBoxLayout()
         row = QHBoxLayout()
         self.geo_ex_count_label = QLabel("Nombre d'exercices :")
         self.geo_ex_count = QLineEdit()
         self.geo_ex_count.setMaximumWidth(60)
         row.addWidget(self.geo_ex_count_label)
         row.addWidget(self.geo_ex_count)
-        geo_number_layout.addLayout(row)
-        geo_number_group.setLayout(geo_number_layout)
-        geo_layout.addWidget(geo_number_group)
-        # Section conversions
-        geo_conv_group = QGroupBox("Conversions")
-        geo_conv_layout = QVBoxLayout()
+        geo_conv_layout.addLayout(row)
         self.conv_type_longueur = QCheckBox("Longueur")
         self.conv_type_masse = QCheckBox("Masse")
         self.conv_type_volume = QCheckBox("Volume")
@@ -203,17 +225,85 @@ class MainWindow(QMainWindow):
         for cb in self.geo_conv_type_checkboxes:
             geo_conv_layout.addWidget(cb)
         # Sens de conversion
-        self.conv_sens_direct = QCheckBox("Aller (ex : m → cm)")
-        self.conv_sens_inverse = QCheckBox("Retour (ex : cm → m)")
+        self.conv_sens_direct = QCheckBox("Aller (m → cm)")
+        self.conv_sens_inverse = QCheckBox("Retour (cm → m)")
         self.conv_sens_direct.setChecked(True)
         self.conv_sens_inverse.setChecked(True)
-        geo_conv_layout.addWidget(self.conv_sens_direct)
-        geo_conv_layout.addWidget(self.conv_sens_inverse)
+        sens_layout = QHBoxLayout()
+        sens_layout.addWidget(self.conv_sens_direct)
+        sens_layout.addWidget(self.conv_sens_inverse)
+        geo_conv_layout.addLayout(sens_layout)
         geo_conv_group.setLayout(geo_conv_layout)
         geo_layout.addWidget(geo_conv_group)
+
+        # Section : Ranger les nombres (déplacée ici)
+        sort_group = QGroupBox("Ranger les nombres")
+        sort_layout = QVBoxLayout()
+        row = QHBoxLayout()
+        row.addWidget(QLabel("Nombre d'exercices :"))
+        self.sort_count = QLineEdit(); self.sort_count.setMaximumWidth(60)
+        row.addWidget(self.sort_count)
+        sort_layout.addLayout(row)
+        row = QHBoxLayout()
+        row.addWidget(QLabel("Chiffres par nombre :"))
+        self.sort_digits = QLineEdit(); self.sort_digits.setMaximumWidth(60)
+        row.addWidget(self.sort_digits)
+        sort_layout.addLayout(row)
+        row = QHBoxLayout()
+        row.addWidget(QLabel("Nombres à ranger :"))
+        self.sort_n_numbers = QLineEdit(); self.sort_n_numbers.setMaximumWidth(60)
+        row.addWidget(self.sort_n_numbers)
+        sort_layout.addLayout(row)
+        row = QHBoxLayout()
+        row.addWidget(QLabel("Type :"))
+        self.sort_type_croissant = QCheckBox("Croissant")
+        self.sort_type_decroissant = QCheckBox("Décroissant")
+        self.sort_type_croissant.setChecked(True)
+        sort_type_layout = QHBoxLayout()
+        sort_type_layout.addWidget(self.sort_type_croissant)
+        sort_type_layout.addWidget(self.sort_type_decroissant)
+        row.addLayout(sort_type_layout)
+        sort_layout.addLayout(row)
+        sort_group.setLayout(sort_layout)
+        geo_layout.addWidget(sort_group)
+
+        # Section : Encadrer un nombre
+        encadrement_group = QGroupBox("Encadrer un nombre")
+        encadrement_layout = QVBoxLayout()
+        # Nombre d'exercices
+        row = QHBoxLayout()
+        row.addWidget(QLabel("Nombre d'exercices :"))
+        self.encadrement_count = QLineEdit(); self.encadrement_count.setMaximumWidth(60)
+        self.encadrement_count.setStyleSheet("color: black; background-color: white; font-size: 14px; border-radius: 4px; padding: 2px 6px;")
+        row.addWidget(self.encadrement_count)
+        encadrement_layout.addLayout(row)
+        # Chiffres par nombre
+        row = QHBoxLayout()
+        row.addWidget(QLabel("Chiffres par nombre :"))
+        self.encadrement_digits = QLineEdit(); self.encadrement_digits.setMaximumWidth(60)
+        self.encadrement_digits.setStyleSheet("color: black; background-color: white; font-size: 14px; border-radius: 4px; padding: 2px 6px;")
+        row.addWidget(self.encadrement_digits)
+        encadrement_layout.addLayout(row)
+        # Types d'encadrement
+        type_label = QLabel("Type :")
+        encadrement_layout.addWidget(type_label)
+        self.encadrement_unite = QCheckBox("Unité")
+        self.encadrement_dizaine = QCheckBox("Dizaine")
+        self.encadrement_centaine = QCheckBox("Centaine")
+        self.encadrement_millier = QCheckBox("Millier")
+        type_layout1 = QHBoxLayout()
+        type_layout1.addWidget(self.encadrement_unite)
+        type_layout1.addWidget(self.encadrement_dizaine)
+        type_layout2 = QHBoxLayout()
+        type_layout2.addWidget(self.encadrement_centaine)
+        type_layout2.addWidget(self.encadrement_millier)
+        encadrement_layout.addLayout(type_layout1)
+        encadrement_layout.addLayout(type_layout2)
+        encadrement_group.setLayout(encadrement_layout)
+        geo_layout.addWidget(encadrement_group)
+
         # Mesures : violet (#BA68C8)
-        for group in [geo_number_group, geo_conv_group]:
-            group.setStyleSheet("QGroupBox { margin-top: 8px; margin-bottom: 8px; padding: 24px 12px 24px 12px; border: 2px solid #BA68C8; border-radius: 8px; } QGroupBox:title { subcontrol-origin: margin; subcontrol-position: top left; left: 10px; top: 0px; padding: 0 12px; color: #ffffff; font-weight: bold; font-size: 15px; background: #232323; }")
+        set_groupbox_style([geo_conv_group, sort_group, encadrement_group], "#BA68C8")
         geo_layout.addStretch()
 
         # --- Colonne Conjugaison ---
@@ -259,8 +349,7 @@ class MainWindow(QMainWindow):
         tense_group.setLayout(tense_layout)
         conj_layout.addWidget(tense_group)
         # Conjugaison : vert (#81C784)
-        for group in [number_group, group_group, tense_group]:
-            group.setStyleSheet("QGroupBox { margin-top: 8px; margin-bottom: 8px; padding: 24px 12px 24px 12px; border: 2px solid #81C784; border-radius: 8px; } QGroupBox:title { subcontrol-origin: margin; subcontrol-position: top left; left: 10px; top: 0px; padding: 0 12px; color: #ffffff; font-weight: bold; font-size: 15px; background: #232323; }")
+        set_groupbox_style([number_group, group_group, tense_group], "#81C784")
         conj_layout.addStretch()
 
         # --- Colonne Grammaire ---
@@ -283,10 +372,10 @@ class MainWindow(QMainWindow):
         grammar_layout.addWidget(grammar_number_group)
         grammar_type_group = QGroupBox("Type de phrase")
         grammar_type_layout = QVBoxLayout()
-        self.intransitive_checkbox = QCheckBox("Intransitive")
-        self.transitive_direct_checkbox = QCheckBox("Transitive directe")
-        self.transitive_indirect_checkbox = QCheckBox("Transitive indirecte")
-        self.ditransitive_checkbox = QCheckBox("Ditransitive")
+        self.intransitive_checkbox = QCheckBox("Sans complément d'objet")
+        self.transitive_direct_checkbox = QCheckBox("Avec complément d'objet direct")
+        self.transitive_indirect_checkbox = QCheckBox("Avec complément d'objet indirect")
+        self.ditransitive_checkbox = QCheckBox("Avec deux compléments d'objet")
         grammar_type_layout.addWidget(self.intransitive_checkbox)
         grammar_type_layout.addWidget(self.transitive_direct_checkbox)
         grammar_type_layout.addWidget(self.transitive_indirect_checkbox)
@@ -304,9 +393,51 @@ class MainWindow(QMainWindow):
         grammar_transfo_group.setLayout(grammar_transfo_layout)
         grammar_layout.addWidget(grammar_transfo_group)
         # Grammaire : jaune (#FFD54F)
-        for group in [grammar_number_group, grammar_type_group, grammar_transfo_group]:
-            group.setStyleSheet("QGroupBox { margin-top: 8px; margin-bottom: 8px; padding: 24px 12px 24px 12px; border: 2px solid #FFD54F; border-radius: 8px; } QGroupBox:title { subcontrol-origin: margin; subcontrol-position: top left; left: 10px; top: 0px; padding: 0 12px; color: #ffffff; font-weight: bold; font-size: 15px; background: #232323; }")
+        set_groupbox_style([grammar_number_group, grammar_type_group, grammar_transfo_group], "#FFD54F")
         grammar_layout.addStretch()
+
+        # --- Colonne Orthographe ---
+        orthographe_layout = QVBoxLayout()
+        orthographe_title = QLabel("Orthographe")
+        orthographe_title.setStyleSheet("font-weight: bold; font-size: 20px; color: #FFB300; margin-bottom: 8px; margin-top: 0px;")
+        orthographe_layout.addWidget(orthographe_title)
+        orthographe_layout.setContentsMargins(5, 5, 5, 5)
+        orthographe_layout.setSpacing(6)
+        # Paramètres orthographe
+        orthographe_number_group = QGroupBox("Paramètres d'orthographe")
+        orthographe_number_layout = QVBoxLayout()
+        row = QHBoxLayout()
+        self.orthographe_ex_count_label = QLabel("Nombre d'exercices :")
+        self.orthographe_ex_count = QLineEdit()
+        self.orthographe_ex_count.setMaximumWidth(60)
+        row.addWidget(self.orthographe_ex_count_label)
+        row.addWidget(self.orthographe_ex_count)
+        orthographe_number_layout.addLayout(row)
+        orthographe_number_group.setLayout(orthographe_number_layout)
+        orthographe_layout.addWidget(orthographe_number_group)
+        # Section homophones
+        orthographe_homophone_group = QGroupBox("Homophones")
+        orthographe_homophone_layout = QVBoxLayout()
+        self.homophone_a_checkbox = QCheckBox("a / à")
+        self.homophone_et_checkbox = QCheckBox("et / est")
+        self.homophone_on_checkbox = QCheckBox("on / ont")
+        self.homophone_son_checkbox = QCheckBox("son / sont")
+        self.homophone_ce_checkbox = QCheckBox("ce / se")
+        self.homophone_ou_checkbox = QCheckBox("ou / où")
+        self.homophone_ces_checkbox = QCheckBox("ces / ses")
+        self.homophone_mes_checkbox = QCheckBox("mes / mais / met / mets")
+        self.orthographe_homophone_checkboxes = [
+            self.homophone_a_checkbox, self.homophone_et_checkbox, self.homophone_on_checkbox,
+            self.homophone_son_checkbox, self.homophone_ce_checkbox, self.homophone_mes_checkbox,
+            self.homophone_ou_checkbox, self.homophone_ces_checkbox
+        ]
+        for cb in self.orthographe_homophone_checkboxes:
+            orthographe_homophone_layout.addWidget(cb)
+        orthographe_homophone_group.setLayout(orthographe_homophone_layout)
+        orthographe_layout.addWidget(orthographe_homophone_group)
+        # Orthographe : orange foncé (#FFB300)
+        set_groupbox_style([orthographe_number_group, orthographe_homophone_group], "#FFB300")
+        orthographe_layout.addStretch()
 
         # --- Colonne Anglais ---
         english_layout = QVBoxLayout()
@@ -315,64 +446,73 @@ class MainWindow(QMainWindow):
         english_layout.addWidget(english_title)
         english_layout.setContentsMargins(5, 5, 5, 5)
         english_layout.setSpacing(6)
-        # Section nombre d'exercices
-        english_number_group = QGroupBox("Paramètres d'anglais")
-        english_number_layout = QVBoxLayout()
+        # Section 1 : Phrases à compléter
+        english_complete_group = QGroupBox("Phrases à compléter")
+        english_complete_layout = QVBoxLayout()
         row = QHBoxLayout()
-        self.english_ex_count_label = QLabel("Nombre d'exercices :")
-        self.english_ex_count = QLineEdit()
-        self.english_ex_count.setMaximumWidth(60)
-        self.english_ex_count.setStyleSheet("color: black; background-color: white; font-size: 14px; border-radius: 4px; padding: 2px 6px;")
-        row.addWidget(self.english_ex_count_label)
-        row.addWidget(self.english_ex_count)
-        english_number_layout.addLayout(row)
-        english_number_group.setLayout(english_number_layout)
-        english_layout.addWidget(english_number_group)
-        # Section types d'exercices
-        english_type_group = QGroupBox("Types d'exercices")
-        english_type_layout = QVBoxLayout()
+        self.english_complete_count_label = QLabel("Nombre d'exercices :")
+        self.english_complete_count = QLineEdit()
+        self.english_complete_count.setMaximumWidth(60)
+        self.english_complete_count.setStyleSheet("color: black; background-color: white; font-size: 14px; border-radius: 4px; padding: 2px 6px;")
+        row.addWidget(self.english_complete_count_label)
+        row.addWidget(self.english_complete_count)
+        english_complete_layout.addLayout(row)
         self.english_type_simple = QCheckBox("Phrase à compléter simple")
         self.english_type_complexe = QCheckBox("Phrase à compléter complexe")
-        self.english_type_relier = QCheckBox("Relier mots anglais/français")
-        self.english_type_checkboxes = [self.english_type_simple, self.english_type_complexe, self.english_type_relier]
-        for cb in self.english_type_checkboxes:
-            english_type_layout.addWidget(cb)
-        # Champ pour le nombre de mots à relier (affiché seulement si 'relier' est coché)
-        self.relier_count_label = QLabel("Nombre de mots à relier :")
+        english_complete_layout.addWidget(self.english_type_simple)
+        english_complete_layout.addWidget(self.english_type_complexe)
+        english_complete_group.setLayout(english_complete_layout)
+        english_layout.addWidget(english_complete_group)
+        # Section 2 : Jeux à relier
+        english_relier_group = QGroupBox("Jeux à relier")
+        english_relier_layout = QVBoxLayout()
+        row = QHBoxLayout()
+        self.english_relier_count_label = QLabel("Nombre de jeux à relier :")
+        self.english_relier_count = QLineEdit()
+        self.english_relier_count.setMaximumWidth(60)
+        self.english_relier_count.setStyleSheet("color: black; background-color: white; font-size: 14px; border-radius: 4px; padding: 2px 6px;")
+        row.addWidget(self.english_relier_count_label)
+        row.addWidget(self.english_relier_count)
+        english_relier_layout.addLayout(row)
+        row = QHBoxLayout()
+        self.relier_count_label = QLabel("Nombre de mots par jeu :")
         self.relier_count = QLineEdit()
         self.relier_count.setMaximumWidth(60)
         self.relier_count.setStyleSheet("color: black; background-color: white; font-size: 14px; border-radius: 4px; padding: 2px 6px;")
-        relier_count_layout = QHBoxLayout()
-        relier_count_layout.addWidget(self.relier_count_label)
-        relier_count_layout.addWidget(self.relier_count)
-        self.relier_count_label.hide()
-        self.relier_count.hide()
-        english_type_layout.addLayout(relier_count_layout)
-        self.english_type_relier.stateChanged.connect(self.toggle_relier_count)
-        english_type_group.setLayout(english_type_layout)
-        english_layout.addWidget(english_type_group)
+        row.addWidget(self.relier_count_label)
+        row.addWidget(self.relier_count)
+        english_relier_layout.addLayout(row)
+        english_relier_group.setLayout(english_relier_layout)
+        english_layout.addWidget(english_relier_group)
         # Anglais : bleu moyen (#64B5F6)
-        for group in [english_number_group, english_type_group]:
-            group.setStyleSheet("QGroupBox { margin-top: 8px; margin-bottom: 8px; padding: 24px 12px 24px 12px; border: 2px solid #64B5F6; border-radius: 8px; } QGroupBox:title { subcontrol-origin: margin; subcontrol-position: top left; left: 10px; top: 0px; padding: 0 12px; color: #ffffff; font-weight: bold; font-size: 15px; background: #232323; }")
+        set_groupbox_style([english_complete_group, english_relier_group], "#64B5F6")
         english_layout.addStretch()
-        # --- Splitter pour 5 colonnes ---
-        calc_widget = QWidget(); calc_widget.setLayout(calc_layout)
-        geo_widget = QWidget(); geo_widget.setLayout(geo_layout)
-        conj_widget = QWidget(); conj_widget.setLayout(conj_layout)
-        grammar_widget = QWidget(); grammar_widget.setLayout(grammar_layout)
-        english_widget = QWidget(); english_widget.setLayout(english_layout)
+        # --- Splitter pour 6 colonnes ---
+        calc_widget = QWidget(); calc_widget.setLayout(calc_layout); calc_widget.setMinimumWidth(270)
+        geo_widget = QWidget(); geo_widget.setLayout(geo_layout); geo_widget.setMinimumWidth(270)
+        conj_widget = QWidget(); conj_widget.setLayout(conj_layout); conj_widget.setMinimumWidth(270)
+        grammar_widget = QWidget(); grammar_widget.setLayout(grammar_layout); grammar_widget.setMinimumWidth(270)
+        orthographe_widget = QWidget(); orthographe_widget.setLayout(orthographe_layout); orthographe_widget.setMinimumWidth(270)
+        english_widget = QWidget(); english_widget.setLayout(english_layout); english_widget.setMinimumWidth(270)
+        # Bloc vertical pour orthographe + anglais
+        ortho_anglais_layout = QVBoxLayout()
+        ortho_anglais_layout.setContentsMargins(0, 0, 0, 0)
+        ortho_anglais_layout.setSpacing(0)
+        ortho_anglais_layout.addWidget(orthographe_widget, alignment=Qt.AlignmentFlag.AlignTop)
+        ortho_anglais_layout.addWidget(english_widget, alignment=Qt.AlignmentFlag.AlignTop)
+        ortho_anglais_widget = QWidget(); ortho_anglais_widget.setLayout(ortho_anglais_layout); ortho_anglais_widget.setMinimumWidth(270)
         splitter = QSplitter(Qt.Orientation.Horizontal)
         splitter.addWidget(calc_widget)
         splitter.addWidget(geo_widget)
         splitter.addWidget(conj_widget)
         splitter.addWidget(grammar_widget)
-        splitter.addWidget(english_widget)
-        splitter.setSizes([100, 100, 100, 100, 100])
+        splitter.addWidget(ortho_anglais_widget)
+        splitter.setSizes([100, 100, 100, 100, 200])
         splitter.setStretchFactor(0, 1)
         splitter.setStretchFactor(1, 1)
         splitter.setStretchFactor(2, 1)
         splitter.setStretchFactor(3, 1)
-        splitter.setStretchFactor(4, 1)
+        splitter.setStretchFactor(4, 2)
         main_layout.addWidget(splitter)
 
         # Bandeau bas : boutons générer + nom du fichier sur la même ligne
@@ -434,11 +574,12 @@ class MainWindow(QMainWindow):
 
         # Correction du style pour les QLineEdit (texte noir sur fond sombre)
         lineedit_style = "color: black; background-color: white; font-size: 14px; border-radius: 4px; padding: 2px 6px;"
-        for le in [self.days_entry, self.addition_count, self.addition_digits, self.addition_decimals,
+        for le in [self.days_entry, self.enumerate_count, self.enumerate_digits, self.sort_count, self.sort_digits, self.sort_n_numbers,
+                   self.addition_count, self.addition_digits, self.addition_decimals,
                    self.subtraction_count, self.subtraction_digits, self.subtraction_decimals,
                    self.multiplication_count, self.multiplication_digits, self.multiplication_decimals,
                    self.division_count, self.division_digits, self.division_decimals, self.verbs_per_day_entry,
-                   self.grammar_sentence_count, self.geo_ex_count, self.english_ex_count]:
+                   self.grammar_sentence_count, self.geo_ex_count, self.english_complete_count, self.english_relier_count, self.orthographe_ex_count]:
             le.setStyleSheet(lineedit_style)
 
         # Style pour les labels
@@ -462,6 +603,15 @@ class MainWindow(QMainWindow):
         # Centralisation des champs pour la config (nom, widget, mode)
         self.config_fields = [
             ('days_entry', self.days_entry, 'text'),
+            # Enumérer un nombre
+            ('enumerate_count', self.enumerate_count, 'text'),
+            ('enumerate_digits', self.enumerate_digits, 'text'),
+            # Ranger les nombres
+            ('sort_count', self.sort_count, 'text'),
+            ('sort_digits', self.sort_digits, 'text'),
+            ('sort_n_numbers', self.sort_n_numbers, 'text'),
+            ('sort_type_croissant', self.sort_type_croissant, 'checked'),
+            ('sort_type_decroissant', self.sort_type_decroissant, 'checked'),
             ('header_entry', self.header_entry, 'text'),
             ('addition_count', self.addition_count, 'text'),
             ('addition_digits', self.addition_digits, 'text'),
@@ -487,6 +637,10 @@ class MainWindow(QMainWindow):
             ('transitive_indirect_checkbox', self.transitive_indirect_checkbox, 'checked'),
             ('ditransitive_checkbox', self.ditransitive_checkbox, 'checked'),
             ('transfo_checkboxes', self.transfo_checkboxes, 'checked_list'),
+            # Orthographe
+            ('orthographe_ex_count', self.orthographe_ex_count, 'text'),
+            ('orthographe_homophone_checkboxes', self.orthographe_homophone_checkboxes, 'checked_list'),
+            #
             ('show_name_checkbox', self.show_name_checkbox, 'checked'),
             ('show_note_checkbox', self.show_note_checkbox, 'checked'),
             ('filename_entry', self.filename_entry, 'text'),
@@ -496,9 +650,20 @@ class MainWindow(QMainWindow):
             ('geo_conv_type_checkboxes', self.geo_conv_type_checkboxes, 'checked_list'),
             ('conv_sens_direct', self.conv_sens_direct, 'checked'),
             ('conv_sens_inverse', self.conv_sens_inverse, 'checked'),
-            ('english_ex_count', self.english_ex_count, 'text'),
-            ('english_type_checkboxes', self.english_type_checkboxes, 'checked_list'),
+            # Anglais - phrases à compléter
+            ('english_complete_count', self.english_complete_count, 'text'),
+            ('english_type_simple', self.english_type_simple, 'checked'),
+            ('english_type_complexe', self.english_type_complexe, 'checked'),
+            # Anglais - jeux à relier
+            ('english_relier_count', self.english_relier_count, 'text'),
             ('relier_count', self.relier_count, 'text'),
+            # Encadrement
+            ('encadrement_count', self.encadrement_count, 'text'),
+            ('encadrement_digits', self.encadrement_digits, 'text'),
+            ('encadrement_unite', self.encadrement_unite, 'checked'),
+            ('encadrement_dizaine', self.encadrement_dizaine, 'checked'),
+            ('encadrement_centaine', self.encadrement_centaine, 'checked'),
+            ('encadrement_millier', self.encadrement_millier, 'checked'),
         ]
         self.load_config()
 
@@ -527,189 +692,101 @@ class MainWindow(QMainWindow):
 
     def build_exercise_data(self):
         try:
-            days = self.get_int(self.days_entry, field_name="Nombre de jours")
-            relier_count = self.get_int(self.relier_count, field_name="Anglais - nombre de mots à relier")
-            operations = []
-            params_list = []
-            # Addition
-            if self.get_int(self.addition_count, field_name="Addition - nombre de calculs") > 0 and self.get_int(self.addition_digits, field_name="Addition - chiffres") > 0:
-                count = self.get_int(self.addition_count, field_name="Addition - nombre de calculs")
-                digits = self.get_int(self.addition_digits, field_name="Addition - chiffres")
-                decimals = self.get_int(self.addition_decimals, field_name="Addition - décimales")
-                params_list.append({
-                    'operation': 'addition',
-                    'count': count,
-                    'digits': digits,
-                    'with_decimals': decimals > 0,
-                    'decimals': decimals
-                })
-                operations.append('addition')
-            # Soustraction
-            if self.get_int(self.subtraction_count, field_name="Soustraction - nombre de calculs") > 0 and self.get_int(self.subtraction_digits, field_name="Soustraction - chiffres") > 0:
-                count = self.get_int(self.subtraction_count, field_name="Soustraction - nombre de calculs")
-                digits = self.get_int(self.subtraction_digits, field_name="Soustraction - chiffres")
-                decimals = self.get_int(self.subtraction_decimals, field_name="Soustraction - décimales")
-                allow_negative = self.subtraction_negative_checkbox.isChecked()
-                params_list.append({
-                    'operation': 'soustraction',
-                    'count': count,
-                    'digits': digits,
-                    'with_decimals': decimals > 0,
-                    'decimals': decimals,
-                    'allow_negative': allow_negative
-                })
-                operations.append('soustraction')
-            # Multiplication
-            if self.get_int(self.multiplication_count, field_name="Multiplication - nombre de calculs") > 0 and self.get_int(self.multiplication_digits, field_name="Multiplication - chiffres") > 0:
-                count = self.get_int(self.multiplication_count, field_name="Multiplication - nombre de calculs")
-                digits = self.get_int(self.multiplication_digits, field_name="Multiplication - chiffres")
-                decimals = self.get_int(self.multiplication_decimals, field_name="Multiplication - décimales")
-                params_list.append({
-                    'operation': 'multiplication',
-                    'count': count,
-                    'digits': digits,
-                    'with_decimals': decimals > 0,
-                    'decimals': decimals
-                })
-                operations.append('multiplication')
-            # Division
-            if self.get_int(self.division_count, field_name="Division - nombre de calculs") > 0 and self.get_int(self.division_digits, field_name="Division - chiffres") > 0:
-                count = self.get_int(self.division_count, field_name="Division - nombre de calculs")
-                digits = self.get_int(self.division_digits, field_name="Division - chiffres")
-                division_reste = self.division_reste_checkbox.isChecked()
-                division_decimals = self.get_int(self.division_decimals, field_name="Division - décimales")
-                division_quotient_decimal = division_decimals > 0
-                params_list.append({
-                    'operation': 'division',
-                    'count': count,
-                    'digits': digits,
-                    'division_reste': division_reste,
-                    'division_quotient_decimal': division_quotient_decimal,
-                    'division_decimals': division_decimals
-                })
-                operations.append('division')
-
-            # Récupération des groupes et temps cochés
-            groupes_choisis = []
-            if self.group_1_checkbox.isChecked():
-                groupes_choisis.append(1)
-            if self.group_2_checkbox.isChecked():
-                groupes_choisis.append(2)
-            if self.group_3_checkbox.isChecked():
-                groupes_choisis.append(3)
-            include_usuels = self.usual_verbs_checkbox.isChecked()
-            from conjugation_generator import TENSES
-            temps_choisis = [tense for tense, cb in zip(TENSES, self.tense_checkboxes) if cb.isChecked()]
-            jours = self.get_int(self.days_entry, field_name="Nombre de jours")
-            verbes_par_jour = self.get_int(self.verbs_per_day_entry, field_name="Verbes par jour")
-
-            # Construction de la liste de tous les verbes possibles selon les groupes cochés
-            from conjugation_generator import VERBS
-            verbes_possibles = []
-            for g in groupes_choisis:
-                verbes_possibles += VERBS[g]
-            if include_usuels and "usuels" in VERBS:
-                verbes_possibles += VERBS["usuels"]
-            random.shuffle(verbes_possibles)
-            if len(verbes_possibles) < verbes_par_jour * jours:
-                print("Pas assez de verbes pour couvrir tous les jours sans doublon.")
-                return
-
-            # Génération de la structure pour le PDF
-            index = 0
-            conjugations = []
-            for _ in range(jours):
-                daily_conjugations = []
-                for _ in range(verbes_par_jour):
-                    verbe = verbes_possibles[index]
-                    index += 1
-                    temps = random.choice(temps_choisis)
-                    daily_conjugations.append({"verb": verbe, "tense": temps})
-                conjugations.append(daily_conjugations)
-
-            # Construction des listes attendues par generate_workbook_pdf
-            operations = []
-            counts = []
-            max_digits = []
-            for param in params_list:
-                operations.append(param['operation'])
-                counts.append(param['count'])
-                max_digits.append(param['digits'])
-
-            # Récupération des paramètres grammaire dans generate_pdf
-            from grammar_generator import PHRASES, TRANSFORMATIONS, get_random_phrase, get_random_transformation, get_random_phrases
-            grammar_sentence_count = self.get_int(self.grammar_sentence_count, field_name="Grammaire - nombre de phrases")
-            grammar_types = []
-            if self.intransitive_checkbox.isChecked():
-                grammar_types.append('intransitive')
-            if self.transitive_direct_checkbox.isChecked():
-                grammar_types.append('transitive_direct')
-            if self.transitive_indirect_checkbox.isChecked():
-                grammar_types.append('transitive_indirect')
-            if self.ditransitive_checkbox.isChecked():
-                grammar_types.append('ditransitive')
-            grammar_transformations = [t.text() for t in self.transfo_checkboxes if t.isChecked()]
-            # Génération des exercices de grammaire pour chaque jour
-            grammar_exercises = []
-            for _ in range(jours):
-                phrases_choisies = get_random_phrases(grammar_types, grammar_sentence_count)
-                daily_grammar = []
-                for phrase in phrases_choisies:
-                    transformation = get_random_transformation(grammar_transformations)
-                    daily_grammar.append({
-                        'phrase': phrase,
-                        'transformation': transformation
-                    })
-                grammar_exercises.append(daily_grammar)
-
-            # --- Génération des exercices de conversion ---
+            from exercise_data_builder import ExerciseDataBuilder
+            from conjugation_generator import TENSES, VERBS
+            from grammar_generator import get_random_phrases, get_random_transformation
             from conversion_generator import generate_conversion_exercises
-            geo_ex_count = self.get_int(self.geo_ex_count, field_name="Géométrie/mesures - nombre d'exercices")
-            geo_types = self.get_selected_conversion_types()
-            geo_senses = self.get_selected_conversion_senses()
-            geo_exercises = []
-            if geo_types and geo_ex_count > 0 and geo_senses:
-                geo_exercises = generate_conversion_exercises(geo_types, geo_ex_count, geo_senses)
-
-            # --- Génération des exercices d'anglais (simple) ---
-            english_types = self.get_selected_english_types()
             from anglais_generator import PHRASES_SIMPLES, PHRASES_COMPLEXES, MOTS_A_RELIER
-            english_ex_count = self.get_int(self.english_ex_count, field_name="Anglais - nombre d'exercices")
-            relier_count = self.get_int(self.relier_count, field_name="Nombre de mots à relier")
-            english_exercises = []
-            for _ in range(jours):
-                daily = []
-                # Génère uniquement des exercices de complétion (simple/complexe)
-                completion_types = []
-                if 'simple' in english_types and PHRASES_SIMPLES:
-                    completion_types.append('simple')
-                if 'complexe' in english_types and PHRASES_COMPLEXES:
-                    completion_types.append('complexe')
-                for _ in range(english_ex_count):
-                    if not completion_types:
-                        break
-                    t = random.choice(completion_types)
-                    if t == 'simple':
-                        daily.append({'type': 'simple', 'content': random.choice(PHRASES_SIMPLES)})
-                    elif t == 'complexe':
-                        daily.append({'type': 'complexe', 'content': random.choice(PHRASES_COMPLEXES)})
-                # Ajoute un exercice relier si demandé
-                if 'relier' in english_types and relier_count > 0 and MOTS_A_RELIER:
-                    mots = random.sample(MOTS_A_RELIER, min(relier_count, len(MOTS_A_RELIER)))
-                    daily.append({'type': 'relier', 'content': mots})
-                english_exercises.append(daily)
 
-            return {
-                'days': days,
-                'operations': operations,
-                'counts': counts,
-                'max_digits': max_digits,
-                'conjugations': conjugations,
-                'params_list': params_list,
-                'grammar_exercises': grammar_exercises,
-                'geo_exercises': geo_exercises,
-                'english_exercises': english_exercises
+            # Génération des exercices d'encadrement
+            encadrement_count = self.get_int(self.encadrement_count, field_name="Encadrement - nombre d'exercices")
+            encadrement_digits = self.get_int(self.encadrement_digits, field_name="Encadrement - chiffres par nombre")
+            encadrement_types = []
+            if self.encadrement_unite.isChecked():
+                encadrement_types.append("unité")
+            if self.encadrement_dizaine.isChecked():
+                encadrement_types.append("dizaine")
+            if self.encadrement_centaine.isChecked():
+                encadrement_types.append("centaine")
+            if self.encadrement_millier.isChecked():
+                encadrement_types.append("millier")
+            encadrement_exercises = {
+                'count': encadrement_count,
+                'digits': encadrement_digits,
+                'types': encadrement_types
             }
+
+            # Génération des exercices anglais (phrases à compléter + jeux à relier)
+            from anglais_generator import generate_english_full_exercises
+            english_types = self.get_selected_english_types()
+            n_complete = self.get_int(self.english_complete_count)
+            n_relier = self.get_int(self.english_relier_count)
+            n_mots_reliés = self.get_int(self.relier_count)
+            english_exercises = []
+            n_days = self.get_int(self.days_entry)
+            for _ in range(n_days):
+                english_exercises.append(
+                    generate_english_full_exercises(english_types, n_complete, n_relier, n_mots_reliés)
+                )
+
+            params = {
+                # Enumérer un nombre
+                'enumerate_count': self.get_int(self.enumerate_count, field_name="Enumérer - nombre d'exercices"),
+                'enumerate_digits': self.get_int(self.enumerate_digits, field_name="Enumérer - chiffres par nombre"),
+                # Ranger les nombres
+                'sort_count': self.get_int(self.sort_count, field_name="Ranger - nombre d'exercices"),
+                'sort_digits': self.get_int(self.sort_digits, field_name="Ranger - chiffres par nombre"),
+                'sort_n_numbers': self.get_int(self.sort_n_numbers, field_name="Ranger - nombres à ranger"),
+                'sort_type_croissant': self.sort_type_croissant.isChecked(),
+                'sort_type_decroissant': self.sort_type_decroissant.isChecked(),
+                'days': self.get_int(self.days_entry, field_name="Nombre de jours"),
+                'relier_count': self.get_int(self.relier_count, field_name="Anglais - nombre de mots à relier"),
+                'addition_count': self.get_int(self.addition_count, field_name="Addition - nombre de calculs"),
+                'addition_digits': self.get_int(self.addition_digits, field_name="Addition - chiffres"),
+                'addition_decimals': self.get_int(self.addition_decimals, field_name="Addition - décimales"),
+                'subtraction_count': self.get_int(self.subtraction_count, field_name="Soustraction - nombre de calculs"),
+                'subtraction_digits': self.get_int(self.subtraction_digits, field_name="Soustraction - chiffres"),
+                'subtraction_decimals': self.get_int(self.subtraction_decimals, field_name="Soustraction - décimales"),
+                'subtraction_negative': self.subtraction_negative_checkbox.isChecked(),
+                'multiplication_count': self.get_int(self.multiplication_count, field_name="Multiplication - nombre de calculs"),
+                'multiplication_digits': self.get_int(self.multiplication_digits, field_name="Multiplication - chiffres"),
+                'multiplication_decimals': self.get_int(self.multiplication_decimals, field_name="Multiplication - décimales"),
+                'division_count': self.get_int(self.division_count, field_name="Division - nombre de calculs"),
+                'division_digits': self.get_int(self.division_digits, field_name="Division - chiffres"),
+                'division_decimals': self.get_int(self.division_decimals, field_name="Division - décimales"),
+                'division_reste': self.division_reste_checkbox.isChecked(),
+                'conjugation_groups': [g for g, cb in zip([1,2,3], [self.group_1_checkbox, self.group_2_checkbox, self.group_3_checkbox]) if cb.isChecked()],
+                'conjugation_usual': self.usual_verbs_checkbox.isChecked(),
+                'TENSES': TENSES,
+                'conjugation_tenses': [tense for tense, cb in zip(TENSES, self.tense_checkboxes) if cb.isChecked()],
+                'verbs_per_day': self.get_int(self.verbs_per_day_entry, field_name="Verbes par jour"),
+                'VERBS': VERBS,
+                'grammar_sentence_count': self.get_int(self.grammar_sentence_count, field_name="Grammaire - nombre de phrases"),
+                'grammar_types': [t for t, cb in zip(['intransitive', 'transitive_direct', 'transitive_indirect', 'ditransitive'], [self.intransitive_checkbox, self.transitive_direct_checkbox, self.transitive_indirect_checkbox, self.ditransitive_checkbox]) if cb.isChecked()],
+                'grammar_transformations': [t.text() for t in self.transfo_checkboxes if t.isChecked()],
+                'get_random_phrases': get_random_phrases,
+                'get_random_transformation': get_random_transformation,
+                'generate_conversion_exercises': generate_conversion_exercises,
+                'geo_ex_count': self.get_int(self.geo_ex_count, field_name="Géométrie/mesures - nombre d'exercices"),
+                'geo_types': self.get_selected_conversion_types(),
+                'geo_senses': self.get_selected_conversion_senses(),
+                'english_types': self.get_selected_english_types(),
+                'PHRASES_SIMPLES': PHRASES_SIMPLES,
+                'PHRASES_COMPLEXES': PHRASES_COMPLEXES,
+                'MOTS_A_RELIER': MOTS_A_RELIER,
+                # Anglais
+                'english_complete_count': self.get_int(self.english_complete_count, field_name="Anglais - phrases à compléter - nombre d'exercices"),
+                'english_relier_count': self.get_int(self.english_relier_count, field_name="Anglais - jeux à relier - nombre de jeux"),
+                # Orthographe
+                'orthographe_ex_count': self.get_int(self.orthographe_ex_count, field_name="Orthographe - nombre d'exercices"),
+                'orthographe_homophones': [cb.text() for cb in self.orthographe_homophone_checkboxes if cb.isChecked()],
+                # Encadrement
+                'encadrement_exercises': encadrement_exercises,
+            }
+            result = ExerciseDataBuilder.build(params)
+            result['encadrement_exercises'] = encadrement_exercises
+            result['english_exercises'] = english_exercises
+            return result
         except InvalidFieldError as e:
             print(f"Veuillez entrer une valeur numérique valide pour : {e.field_name} (valeur saisie : '{e.value}')")
         except Exception as e:
@@ -732,7 +809,11 @@ class MainWindow(QMainWindow):
             generate_workbook_pdf(
                 data['days'], data['operations'], data['counts'], data['max_digits'],
                 data['conjugations'], data['params_list'], data['grammar_exercises'],
+                data['orthographe_exercises'],
+                data['enumerate_exercises'],
+                data['sort_exercises'],
                 geo_exercises=data['geo_exercises'], english_exercises=data['english_exercises'],
+                encadrement_exercises=data.get('encadrement_exercises'),
                 header_text=header_text, show_name=show_name, show_note=show_note, filename=filename
             )
         except InvalidFieldError as e:
@@ -830,10 +911,10 @@ class MainWindow(QMainWindow):
 
     def get_selected_english_types(self):
         types = []
-        labels = ['simple', 'complexe', 'relier']
-        for cb, label in zip(self.english_type_checkboxes, labels):
-            if cb.isChecked():
-                types.append(label)
+        if self.english_type_simple.isChecked():
+            types.append('simple')
+        if self.english_type_complexe.isChecked():
+            types.append('complexe')
         return types
 
     def toggle_relier_count(self):
@@ -846,7 +927,11 @@ class MainWindow(QMainWindow):
 # Note : Pour PyInstaller, les fichiers JSON (phrases_grammaire.json, verbes.json, config.json) doivent être à côté de l'exe pour être modifiables après compilation.
 
 if __name__ == "__main__":
+    import os
+    from PyQt6.QtGui import QIcon
+    icon_path = os.path.join(os.path.dirname(__file__), "EduForge.ico")
     app = QApplication([])
+    app.setWindowIcon(QIcon(icon_path))
     window = MainWindow()
     window.show()
     app.exec()

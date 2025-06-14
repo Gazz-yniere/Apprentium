@@ -52,3 +52,30 @@ def generate_english_exercises(types, n):
             })
         # Si la liste est vide, on saute simplement
     return exercises
+
+# Nouvelle fonction adaptée à la nouvelle UI
+
+def generate_english_full_exercises(types, n_complete, n_relier, n_mots_reliés):
+    """
+    types: liste de 'simple' et/ou 'complexe'
+    n_complete: nombre de phrases à compléter
+    n_relier: nombre de jeux à relier
+    n_mots_reliés: nombre de mots par jeu
+    """
+    exercises = []
+    # Génération des phrases à compléter
+    if types and n_complete > 0:
+        for _ in range(n_complete):
+            t = random.choice(types)
+            if t == 'simple' and PHRASES_SIMPLES:
+                phrase = random.choice(PHRASES_SIMPLES)
+                exercises.append({'type': 'simple', 'content': phrase})
+            elif t == 'complexe' and PHRASES_COMPLEXES:
+                phrase = random.choice(PHRASES_COMPLEXES)
+                exercises.append({'type': 'complexe', 'content': phrase})
+    # Génération des jeux à relier
+    if n_relier > 0 and n_mots_reliés > 0 and MOTS_A_RELIER:
+        for _ in range(n_relier):
+            mots = random.sample(MOTS_A_RELIER, min(n_mots_reliés, len(MOTS_A_RELIER)))
+            exercises.append({'type': 'relier', 'content': mots})
+    return exercises
