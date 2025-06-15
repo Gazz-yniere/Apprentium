@@ -104,25 +104,40 @@ def draw_section_title(pdf, width, y, title, number, color=(0.2, 0.4, 0.8)):
     y = box_y - 12
     return y
 
-def get_output_path(filename):
+def get_output_path(filename, custom_output_dir=None):
     import sys, os
-    if getattr(sys, 'frozen', False):
-        base = os.path.dirname(sys.executable)
-    else:
-        base = os.path.dirname(__file__)
-    output_dir = os.path.join(base, 'output')
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-    return os.path.join(output_dir, filename)
+    base_dir_for_output = None
 
-def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, params_list, grammar_exercises, orthographe_exercises, enumerate_exercises, sort_exercises, geo_exercises=None, english_exercises=None, encadrement_exercises=None, header_text=None, filename="workbook.pdf", division_entier=False, show_name=False, show_note=False):
+    if custom_output_dir and custom_output_dir.strip():
+        custom_output_dir = custom_output_dir.strip()
+        if os.path.isdir(custom_output_dir):
+            base_dir_for_output = custom_output_dir
+        else:
+            try:
+                os.makedirs(custom_output_dir, exist_ok=True)
+                base_dir_for_output = custom_output_dir
+            except OSError:
+                print(f"Avertissement : Impossible de créer le dossier personnalisé '{custom_output_dir}'. Utilisation du dossier par défaut.")
+                # Fallback ci-dessous
+
+    if base_dir_for_output is None: # Si custom_output_dir n'est pas fourni ou a échoué
+        if getattr(sys, 'frozen', False): # Exécutable PyInstaller
+            app_base_path = os.path.dirname(sys.executable)
+        else: # Mode script
+            app_base_path = os.path.dirname(os.path.dirname(__file__)) # Remonte au dossier parent de src/
+        base_dir_for_output = os.path.join(app_base_path, 'output')
+
+    os.makedirs(base_dir_for_output, exist_ok=True) # S'assure que le dossier final existe
+    return os.path.join(base_dir_for_output, filename)
+
+def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, params_list, grammar_exercises, orthographe_exercises, enumerate_exercises, sort_exercises, geo_exercises=None, english_exercises=None, encadrement_exercises=None, header_text=None, filename="workbook.pdf", division_entier=False, show_name=False, show_note=False, output_dir_override=None):
     if geo_exercises is None:
         geo_exercises = []
     if english_exercises is None:
         english_exercises = []
     if encadrement_exercises is None:
         encadrement_exercises = {'count': 0, 'digits': 0, 'types': []}
-    out_path = get_output_path(filename)
+    out_path = get_output_path(filename, output_dir_override)
     pdf = canvas.Canvas(out_path, pagesize=A4)
     width, height = A4
     margin = 50
@@ -169,17 +184,19 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
             y_position -= 3
             section_num += 1
             # Enumérer un nombre
-            if enumerate_exercises and len(enumerate_exercises) > 0:
+            # enumerate_exercises est maintenant une liste de listes: enumerate_exercises[day-1]
+            if enumerate_exercises and len(enumerate_exercises) >= day and enumerate_exercises[day-1]:
                 pdf.setFont("Helvetica-Bold", 10)
                 pdf.drawString(margin + offset_section, y_position, "Écris chaque nombre en toutes lettres :")
                 y_position -= 16
                 pdf.setFont("Helvetica", 9)
-                for n in enumerate_exercises:
+                for n in enumerate_exercises[day-1]: # Utilise la liste pour le jour actuel
                     pdf.drawString(margin + offset_section, y_position, f"{n} = _____________________________________________")
                     y_position -= 22
                     if y_position < margin:
                         pdf.showPage()
                         y_position = height - margin
+                        pdf.setFont("Helvetica", 9) # Réinitialiser la police
                 y_position -= 8
             # Opérations classiques
             if any(counts):
@@ -198,6 +215,7 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                         if y_position < margin:
                             pdf.showPage()
                             y_position = height - margin
+                            pdf.setFont("Helvetica", 9) # Réinitialiser la police pour les problèmes
                     pdf.setFont("Helvetica-Bold", 10)
                 y_position -= 8
 
@@ -207,46 +225,62 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
         # (Suppression du debug encadrement_exercises)
         if encadrement_exercises and encadrement_exercises['count'] > 0 and encadrement_exercises['digits'] > 0 and encadrement_exercises['types']:
             digits = encadrement_exercises['digits']
-            min_n = 10**(digits-1)
-            max_n = 10**digits - 1
+            min_n = 10**(digits-1) if digits > 0 else 0 # S'assurer que digits > 0
+            max_n = (10**digits - 1) if digits > 0 else 0
             types = encadrement_exercises['types']
             for _ in range(encadrement_exercises['count']):
                 t = random.choice(types)
                 n = random.randint(min_n, max_n)
                 encadrement_lines.append({'number': n, 'type': t})
-        if geo_exercises or encadrement_lines or (sort_exercises and len(sort_exercises) > 0):
+        
+        # Vérifier s'il y a du contenu pour la section Mesures pour le jour actuel
+        has_mesures_content_for_day = False
+        if encadrement_lines: # Encadrement est généré par jour dans cette fonction
+            has_mesures_content_for_day = True
+        if geo_exercises and len(geo_exercises) >= day and geo_exercises[day-1]:
+            has_mesures_content_for_day = True
+        if sort_exercises and len(sort_exercises) >= day and sort_exercises[day-1]:
+            has_mesures_content_for_day = True
+
+        if has_mesures_content_for_day:
             y_position = draw_section_title(pdf, width, y_position, "Mesures", section_num, color=(0.2,0.6,0.3))
             y_position -= 3
             section_num += 1
             pdf.setFont("Helvetica", 9)
             # Exercices de conversion
-            if geo_exercises:
-                pdf.setFont("Helvetica-Bold", 10)
-                pdf.drawString(margin + offset_section, y_position, "Conversions :")
-                y_position -= 16
-                pdf.setFont("Helvetica", 9)
-                for ex in geo_exercises:
-                    pdf.drawString(margin + offset_section, y_position, ex)
-                    y_position -= 22
-                    if y_position < margin:
-                        pdf.showPage()
-                        y_position = height - margin
-                y_position -= 5
+            if geo_exercises and len(geo_exercises) >= day and geo_exercises[day-1]:
+                current_day_geo_exercises = geo_exercises[day-1]
+                if current_day_geo_exercises: # S'il y a des exos pour ce jour
+                    pdf.setFont("Helvetica-Bold", 10)
+                    pdf.drawString(margin + offset_section, y_position, "Conversions :")
+                    y_position -= 16
+                    pdf.setFont("Helvetica", 9)
+                    for ex_geo in current_day_geo_exercises:
+                        pdf.drawString(margin + offset_section, y_position, ex_geo)
+                        y_position -= 22
+                        if y_position < margin:
+                            pdf.showPage()
+                            y_position = height - margin
+                            pdf.setFont("Helvetica", 9) # Réinitialiser la police
+                    y_position -= 5
             # Exercices de rangement
-            if sort_exercises and len(sort_exercises) > 0:
-                pdf.setFont("Helvetica-Bold", 10)
-                ordre = "ordre croissant" if sort_exercises[0]['type'] == 'croissant' else "ordre décroissant"
-                pdf.drawString(margin + offset_section, y_position, f"Range les nombres suivants dans l'{ordre} :")
-                y_position -= 16
-                pdf.setFont("Helvetica", 9)
-                for idx, ex in enumerate(sort_exercises):
-                    numbers_str = ", ".join(str(n) for n in ex['numbers'])
-                    pdf.drawString(margin + offset_section, y_position, f"{numbers_str} = _____________________________________________")
-                    y_position -= 22
-                    if y_position < margin:
-                        pdf.showPage()
-                        y_position = height - margin
-                y_position -= 8
+            if sort_exercises and len(sort_exercises) >= day and sort_exercises[day-1]:
+                current_day_sort_exercises = sort_exercises[day-1]
+                if current_day_sort_exercises: # S'il y a des exos pour ce jour
+                    pdf.setFont("Helvetica-Bold", 10)
+                    ordre = "ordre croissant" if current_day_sort_exercises[0]['type'] == 'croissant' else "ordre décroissant"
+                    pdf.drawString(margin + offset_section, y_position, f"Range les nombres suivants dans l'{ordre} :")
+                    y_position -= 16
+                    pdf.setFont("Helvetica", 9)
+                    for ex_sort in current_day_sort_exercises:
+                        numbers_str = ", ".join(str(n) for n in ex_sort['numbers'])
+                        pdf.drawString(margin + offset_section, y_position, f"{numbers_str} = _____________________________________________")
+                        y_position -= 22
+                        if y_position < margin:
+                            pdf.showPage()
+                            y_position = height - margin
+                            pdf.setFont("Helvetica", 9) # Réinitialiser la police
+                    y_position -= 8
             # Exercices d'encadrement
             if encadrement_lines:
                 pdf.setFont("Helvetica-Bold", 10)
@@ -257,30 +291,32 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                     n = ex['number']
                     t = ex['type']
                     if t == 'unité':
-                        base = n
-                        sup = n + 1
+                        base = n # L'encadrement à l'unité inférieure est le nombre lui-même si on cherche l'unité précédente et suivante.
+                                 # Si on cherche l'unité qui contient n, alors c'est n et n.
+                                 # Pour "encadrer à l'unité près", on cherche souvent l'entier juste avant et juste après.
+                                 # Pour simplifier, on va considérer l'encadrement comme:  ... < n < ...
+                                 # Donc, pour l'unité, on pourrait prendre n-1 et n+1, mais la consigne "______ n ______" suggère
+                                 # d'encadrer n par les bornes de l'unité, dizaine, etc.
+                                 # Pour "à l'unité", on peut considérer l'entier précédent et suivant.
+                                 # Cependant, la structure "______ n ______" est plus typique pour dizaine/centaine.
+                                 # Pour l'unité, on va dire que c'est le nombre lui-même.
+                                 # La logique actuelle pour dizaine/centaine/millier est "borne_inf <= n < borne_sup"
+                                 # Pour l'unité, on va afficher n et laisser des blancs.
                         label = "à l'unité"
                     elif t == 'dizaine':
-                        base = (n // 10) * 10
-                        sup = base + 10
                         label = "à la dizaine"
                     elif t == 'centaine':
-                        base = (n // 100) * 100
-                        sup = base + 100
                         label = "à la centaine"
                     elif t == 'millier':
-                        base = (n // 1000) * 1000
-                        sup = base + 1000
                         label = "au millier"
                     else:
-                        base = 0
-                        sup = 0
-                        label = t
+                        label = t # Au cas où
                     pdf.drawString(margin + offset_section, y_position, f"{n} {label} : ______  {n}  ______")
                     y_position -= 22
                     if y_position < margin:
                         pdf.showPage()
                         y_position = height - margin
+                        pdf.setFont("Helvetica", 9) # Réinitialiser la police
                 y_position -= 8
 
         # Section conjugaison (affichée seulement si des conjugaisons sont générées)
@@ -296,12 +332,16 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                 tense = conjugation["tense"]
                 # Recherche du vrai groupe
                 groupe = None
-                for g in (1, 2, 3):
-                    if verb in VERBS[g]:
-                        groupe = f"{g}er groupe"
-                        break
-                if not groupe:
-                    groupe = "usuel"
+                for g_num_key in VERBS: # Itérer sur les clés de VERBS (qui peuvent être int ou str)
+                    if isinstance(g_num_key, int) or g_num_key.isdigit(): # Groupes numériques
+                        if verb in VERBS[g_num_key]:
+                            groupe = f"{g_num_key}er groupe"
+                            break
+                if not groupe and "usuels" in VERBS and verb in VERBS["usuels"]: # Vérifier les usuels
+                     groupe = "usuel"
+                if not groupe: # Fallback si non trouvé (ne devrait pas arriver si VERBS est bien structuré)
+                    groupe = "inconnu"
+
                 pdf.setFont("Helvetica-Bold", 10)
                 pdf.drawString(margin + offset_section, y_position, f"Verbe : {verb}  |  Groupe : {groupe}  |  Temps : {tense}")
                 y_position -= 13
@@ -314,16 +354,16 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                     if y_position < margin:
                         pdf.showPage()
                         y_position = height - margin
+                        pdf.setFont("Helvetica", 9) # Réinitialiser la police pour les pronoms
                 y_position -= 7
                 y_position -= 10  # espace supplémentaire entre chaque conjugaison
-            # y_position -= 5  # harmonisation : déjà fait dans la boucle
 
         # Section grammaire (affichée seulement si des exercices sont générés)
         if grammar_exercises and len(grammar_exercises) >= day and grammar_exercises[day-1]:
             y_position = draw_section_title(pdf, width, y_position, "Grammaire", section_num, color=(0.5,0.2,0.7))
             y_position -= 3
             section_num += 1
-            pdf.setFont("Helvetica", 9)
+            pdf.setFont("Helvetica", 9) # Police par défaut pour le contenu de cette section
             for ex in grammar_exercises[day-1]:
                 phrase = ex['phrase']
                 transformation = ex['transformation']
@@ -332,11 +372,19 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                 pdf.setFont("Helvetica", 9)
                 pdf.drawString(margin + offset_section + 55, y_position, phrase)
                 y_position -= 13
+                if y_position < margin:
+                    pdf.showPage(); y_position = height - margin
+                    pdf.setFont("Helvetica", 9) # Réinitialiser après saut de page
+
                 pdf.setFont("Helvetica-Bold", 9)
                 pdf.drawString(margin + offset_section, y_position, f"Transformation demandée :")
                 pdf.setFont("Helvetica", 9)
                 pdf.drawString(margin + offset_section + 130, y_position, transformation)
                 y_position -= 13
+                if y_position < margin:
+                    pdf.showPage(); y_position = height - margin
+                    pdf.setFont("Helvetica", 9) # Réinitialiser après saut de page
+
                 y_position -= 10  # espace avant la ligne de réponse
                 pdf.drawString(margin + offset_section, y_position, "Réponse : __________________________________________________________")
                 y_position -= 22  # espace réduit mais suffisant pour écrire à la main
@@ -344,80 +392,98 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                 if y_position < margin:
                     pdf.showPage()
                     y_position = height - margin
+                    pdf.setFont("Helvetica", 9) # Réinitialiser pour le prochain exercice de grammaire
+
         # Section orthographe (affichée seulement si des exercices sont générés)
         if orthographe_exercises and len(orthographe_exercises) >= day and orthographe_exercises[day-1]:
             y_position = draw_section_title(pdf, width, y_position, "Orthographe", section_num, color=(1.0,0.7,0.0))
             y_position -= 3
             section_num += 1
-            pdf.setFont("Helvetica", 9)
+            pdf.setFont("Helvetica", 9) # Police par défaut pour le contenu de cette section
             for ex in orthographe_exercises[day-1]:
                 if ex['type'] == 'homophone':
+                    # La police est déjà Helvetica 9, on la change pour le label puis on la remet
                     pdf.setFont("Helvetica-Bold", 9)
                     pdf.drawString(margin + offset_section, y_position, f"{ex['homophone']} :")
                     pdf.setFont("Helvetica", 9)
-                    pdf.drawString(margin + offset_section + 60, y_position, ex['content'])
+                    pdf.drawString(margin + offset_section + 60, y_position, ex['content']) # Ajuster le décalage si nécessaire
                     y_position -= 16
                     y_position -= 6  # espace supplémentaire entre chaque phrase
                 if y_position < margin:
                     pdf.showPage()
                     y_position = height - margin
+                    pdf.setFont("Helvetica", 9) # Réinitialiser pour le prochain exercice d'orthographe
+
         # Section anglais (exercices)
         if english_exercises and len(english_exercises) >= day and english_exercises[day-1]:
             y_position = draw_section_title(pdf, width, y_position, "Anglais", section_num, color=(0.2,0.6,0.7))
             y_position -= 3
             section_num += 1
-            pdf.setFont("Helvetica-Bold", 10)
-            y_position -= 2
-            pdf.setFont("Helvetica", 9)
+            pdf.setFont("Helvetica", 9) # Police par défaut pour le contenu de cette section
             completer_shown = False
             for ex in english_exercises[day-1]:
                 if ex['type'] in ('simple', 'complexe'):
                     if not completer_shown:
                         pdf.setFont("Helvetica-Bold", 9)
                         pdf.drawString(margin + offset_section, y_position, "Compléter :")
+                        pdf.setFont("Helvetica", 9) # Retour à la police normale pour le contenu
                         y_position -= 13
-                        pdf.setFont("Helvetica", 9)
                         completer_shown = True
                         y_position -= 10  # espace avant la première phrase à compléter
+                        if y_position < margin: # Si saut de page juste après le titre "Compléter :"
+                            pdf.showPage(); y_position = height - margin
+                            pdf.setFont("Helvetica", 9)
+
                     pdf.drawString(margin + offset_section, y_position, ex['content'])
                     y_position -= 16  # espace réduit mais suffisant pour écrire à la main
                     y_position -= 10  # espace supplémentaire entre chaque phrase à compléter
                 elif ex['type'] == 'relier':
-                    completer_shown = False
+                    completer_shown = False # Réinitialiser pour ce type d'exercice
                     pdf.setFont("Helvetica-Bold", 9)
                     pdf.drawString(margin + offset_section, y_position, "Jeu de mots à relier :")
+                    pdf.setFont("Helvetica", 9) # Retour à la police normale pour le contenu
                     y_position -= 13
                     y_position -= 10  # espace avant le début du jeu à relier
-                    pdf.setFont("Helvetica", 9)
+                    if y_position < margin: # Si saut de page juste après le titre "Jeu de mots à relier :"
+                        pdf.showPage(); y_position = height - margin
+                        pdf.setFont("Helvetica", 9)
+
                     mots = ex['content']
                     anglais = [m['english'] for m in mots]
                     francais = [m['french'] for m in mots]
                     random.shuffle(anglais)
                     random.shuffle(francais)
                     max_len = max(len(anglais), len(francais))
-                    col1_x = margin + offset_section + 10
-                    col2_x = margin + offset_section + 60  # point anglais
-                    col3_x = margin + offset_section + 110 # point français
-                    col4_x = margin + offset_section + 130 # mot français
+                    # Positions X pour l'alignement
+                    x_anglais = margin + offset_section
+                    x_bullet1 = margin + offset_section + 70 # Ajustez cette valeur pour l'espacement
+                    x_bullet2 = margin + offset_section + 120 # Ajustez cette valeur pour l'espacement
+                    x_francais = margin + offset_section + 140 # Ajustez cette valeur pour l'espacement
+
                     for i in range(max_len):
                         a = anglais[i] if i < len(anglais) else ''
                         f = francais[i] if i < len(francais) else ''
-                        pdf.drawString(margin + offset_section, y_position, a)
-                        pdf.drawString(margin + offset_section + 60, y_position, '\u2022')
-                        pdf.drawString(margin + offset_section + 110, y_position, '\u2022')
-                        pdf.drawString(margin + offset_section + 130, y_position, f)
+                        pdf.drawString(x_anglais, y_position, a)
+                        pdf.drawString(x_bullet1, y_position, '\u2022')
+                        pdf.drawString(x_bullet2, y_position, '\u2022')
+                        pdf.drawString(x_francais, y_position, f)
                         y_position -= 13
+                        if y_position < margin:
+                            pdf.showPage(); y_position = height - margin
+                            pdf.setFont("Helvetica", 9) # Réinitialiser pour la suite des mots à relier
                     y_position -= 10  # espace supplémentaire entre chaque bloc à relier
+
                 if y_position < margin:
                     pdf.showPage()
                     y_position = height - margin
+                    pdf.setFont("Helvetica", 9) # Réinitialiser pour le prochain exercice d'anglais
             # Saut de page forcé entre chaque jour (sauf le dernier)
         if day < days:
             pdf.showPage()
 
     pdf.save()
     print(f"PDF généré : {out_path}")
-
+    return out_path
 def get_resource_path(filename):
     if hasattr(sys, '_MEIPASS'):
         return os.path.join(sys._MEIPASS, filename)

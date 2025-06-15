@@ -132,9 +132,14 @@ class ExerciseDataBuilder:
             geo_ex_count = params.get('geo_ex_count', 0)
             geo_types = params.get('geo_types', [])
             geo_senses = params.get('geo_senses', [])
-            geo_exercises = []
-            if geo_types and geo_ex_count > 0 and geo_senses:
-                geo_exercises = generate_conversion_exercises(geo_types, geo_ex_count, geo_senses)
+            all_geo_exercises = [] # Sera une liste de listes (une par jour)
+            if geo_types and geo_ex_count > 0 and geo_senses and generate_conversion_exercises:
+                for _ in range(days): # Générer pour chaque jour
+                    daily_geo_ex = generate_conversion_exercises(geo_types, geo_ex_count, geo_senses)
+                    all_geo_exercises.append(daily_geo_ex)
+            else: # S'il n'y a pas d'exercices de conversion, s'assurer que la structure est cohérente
+                for _ in range(days):
+                    all_geo_exercises.append([])
 
             # Anglais
             english_types = params.get('english_types', [])
@@ -191,26 +196,41 @@ class ExerciseDataBuilder:
             # Enumérer un nombre
             enumerate_count = params.get('enumerate_count', 0)
             enumerate_digits = params.get('enumerate_digits', 0)
-            enumerate_exercises = []
-            for _ in range(enumerate_count):
-                if enumerate_digits > 0:
-                    n = random.randint(0, 10**enumerate_digits-1)
-                    enumerate_exercises.append(n)
+            all_enumerate_exercises = [] # Sera une liste de listes (une par jour)
+            if enumerate_count > 0 and enumerate_digits > 0:
+                for _ in range(days): # Générer pour chaque jour
+                    daily_enum_ex = []
+                    for _ in range(enumerate_count):
+                        n = random.randint(0, 10**enumerate_digits-1)
+                        daily_enum_ex.append(n)
+                    all_enumerate_exercises.append(daily_enum_ex)
 
             # Ranger les nombres
             sort_count = params.get('sort_count', 0)
             sort_digits = params.get('sort_digits', 0)
             sort_n_numbers = params.get('sort_n_numbers', 0)
             sort_type_croissant = params.get('sort_type_croissant', True)
-            sort_type_decroissant = params.get('sort_type_decroissant', False)
-            sort_exercises = []
-            for _ in range(sort_count):
-                if sort_digits > 0 and sort_n_numbers > 0:
-                    numbers = [random.randint(0, 10**sort_digits-1) for _ in range(sort_n_numbers)]
-                    sort_exercises.append({
-                        'numbers': numbers,
-                        'type': 'croissant' if sort_type_croissant else 'decroissant'
-                    })
+            # sort_type_decroissant est aussi passé par params
+
+            all_sort_exercises = [] # Sera une liste de listes (une par jour)
+            if sort_count > 0 and sort_digits > 0 and sort_n_numbers > 0:
+                # Déterminer le type de tri basé sur les paramètres. 'decroissant' a la priorité.
+                actual_sort_type = 'decroissant' if params.get('sort_type_decroissant', False) else 'croissant'
+
+                for _ in range(days): # Générer pour chaque jour
+                    daily_sort_ex = []
+                    for _ in range(sort_count): # N exercices de rangement par jour
+                        # S'assurer que sort_digits > 0 avant d'appeler 10**sort_digits-1
+                        max_val = (10**sort_digits - 1) if sort_digits > 0 else 0
+                        numbers = [random.randint(0, max_val) for _ in range(sort_n_numbers)]
+                        daily_sort_ex.append({
+                            'numbers': numbers,
+                            'type': actual_sort_type
+                        })
+                    all_sort_exercises.append(daily_sort_ex)
+            else: # Assurer la cohérence de la structure
+                for _ in range(days):
+                    all_sort_exercises.append([])
 
             # Encadrement de nombre
             encadrement_count = params.get('encadrement_count', 0)
@@ -239,11 +259,11 @@ class ExerciseDataBuilder:
                 'conjugations': conjugations,
                 'params_list': params_list,
                 'grammar_exercises': grammar_exercises,
-                'geo_exercises': geo_exercises,
+                'geo_exercises': all_geo_exercises, # Modifié
                 'english_exercises': english_exercises,
                 'orthographe_exercises': orthographe_exercises,
-                'enumerate_exercises': enumerate_exercises,
-                'sort_exercises': sort_exercises,
+                'enumerate_exercises': all_enumerate_exercises,
+                'sort_exercises': all_sort_exercises, # Modifié
                 'encadrement_exercises': encadrement_exercises
             }
         except InvalidFieldError as e:

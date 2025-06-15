@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QLabel, QLineEdit, QCheckBox, QPushButton, QFrame, QSizePolicy, QGroupBox, QSplitter)
+from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QLabel, QLineEdit, QCheckBox, QPushButton, QFrame, QSizePolicy, QGroupBox, QSplitter, QSpacerItem, QFileDialog)
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
 from PyQt6.QtGui import QPalette, QColor
@@ -24,6 +24,7 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(QIcon(icon_path))
         self.setMinimumWidth(1400)
         #self.setMinimumHeight(900)
+        self.selected_output_path = None # Pour stocker le chemin choisi par l'utilisateur
         # Fenêtre redimensionnable
 
         # Mode dark
@@ -74,6 +75,7 @@ class MainWindow(QMainWindow):
         sep = QFrame()
         sep.setFrameShape(QFrame.Shape.HLine)
         sep.setFrameShadow(QFrame.Shadow.Sunken)
+        sep.setStyleSheet("border-top: 1px solid #505050;") # Couleur pour le séparateur
         main_layout.addWidget(sep)
 
         # --- Colonne Calculs ---
@@ -515,17 +517,44 @@ class MainWindow(QMainWindow):
         splitter.setStretchFactor(4, 2)
         main_layout.addWidget(splitter)
 
+        # Séparateur avant les contrôles de fichier/génération
+        sep_bottom = QFrame()
+        sep_bottom.setFrameShape(QFrame.Shape.HLine)
+        sep_bottom.setFrameShadow(QFrame.Shadow.Sunken)
+        sep_bottom.setStyleSheet("border-top: 1px solid #505050;") # Couleur pour le séparateur
+        main_layout.addWidget(sep_bottom)
+
         # Bandeau bas : boutons générer + nom du fichier sur la même ligne
-        bottom_layout = QHBoxLayout()
+        bottom_controls_layout = QHBoxLayout() # Layout principal pour le bas
+
+        # Partie gauche pour chemin et nom de fichier
+        left_file_controls_layout = QGridLayout()
+        self.output_path_button = QPushButton("Dossier ...")
+        # Style sera appliqué plus bas avec les autres boutons
+        self.output_path_button.clicked.connect(self.select_output_directory)
+        self.output_path_display_label = QLabel("Dossier : output/") # Affichage du chemin
+        self.output_path_display_label.setWordWrap(True)
+        self.output_path_display_label.setMinimumWidth(200) # Réduit un peu pour faire de la place
+        self.output_path_display_label.setStyleSheet("font-style: italic; color: #B0BEC5;")
+
         self.filename_label = QLabel("Nom du fichier :")
         self.filename_label.setStyleSheet("font-weight: bold; font-size: 14px;")
         self.filename_entry = QLineEdit()
-        self.filename_entry.setMaximumWidth(250)
-        self.filename_entry.setStyleSheet("color: black; background-color: white; font-size: 14px; border-radius: 4px; padding: 2px 6px;")
-        self.filename_entry.setText("workbook")
-        bottom_layout.addWidget(self.filename_label)
-        bottom_layout.addWidget(self.filename_entry)
-        bottom_layout.addStretch()
+        self.filename_entry.setMinimumWidth(150) # Donne une largeur minimale
+        self.filename_entry.setMaximumWidth(200)
+        self.filename_entry.setText("workbook")        
+
+        # Layout horizontal pour tous les contrôles de fichier
+        file_controls_line_layout = QHBoxLayout()
+        file_controls_line_layout.addWidget(self.output_path_button)
+        file_controls_line_layout.addWidget(self.output_path_display_label)
+        file_controls_line_layout.addWidget(self.filename_label)
+        file_controls_line_layout.addWidget(self.filename_entry)
+        file_controls_line_layout.addStretch(0) # Ajoute un peu d'espace extensible si nécessaire avant le stretch principal
+
+        bottom_controls_layout.addLayout(left_file_controls_layout)
+        bottom_controls_layout.addStretch(1) # Espace flexible pour pousser les boutons à droite
+
         # Styles pour les boutons (normal, désactivé, pressé)
         pdf_btn_style = """
             QPushButton {
@@ -533,7 +562,7 @@ class MainWindow(QMainWindow):
                 color: white;
                 font-weight: bold;
                 font-size: 16px;
-                padding: 10px 30px;
+                padding: 8px 20px; /* Taille réduite */
                 border-radius: 8px;
             }
             QPushButton:disabled {
@@ -550,7 +579,7 @@ class MainWindow(QMainWindow):
                 color: white;
                 font-weight: bold;
                 font-size: 16px;
-                padding: 10px 30px;
+                padding: 8px 20px; /* Taille réduite */
                 border-radius: 8px;
             }
             QPushButton:disabled {
@@ -561,25 +590,61 @@ class MainWindow(QMainWindow):
                 background-color: #0d47a1;
             }
         """
+        preview_btn_style = """
+            QPushButton {
+                background-color: #78909C; /* Blue Grey */
+                color: white;
+                font-weight: bold;
+                font-size: 16px;
+                padding: 8px 15px; /* Taille réduite */
+                border-radius: 8px;
+            }
+            QPushButton:disabled {
+                background-color: #B0BEC5;
+                color: #ECEFF1;
+            }
+            QPushButton:pressed {
+                background-color: #546E7A;
+            }
+        """
+        self.output_path_button.setStyleSheet(preview_btn_style) # Appliquer le style ici
+        self.output_path_button.setMinimumWidth(100) # Pour que "Dossier..." soit visible
+        left_file_controls_layout.addLayout(file_controls_line_layout, 0, 0, 1, 2) # Ajout du layout de ligne
+        # Partie droite pour les boutons
+        action_buttons_layout = QHBoxLayout()
         self.generate_pdf_button = QPushButton("Générer PDF")
         self.generate_pdf_button.setStyleSheet(pdf_btn_style)
         self.generate_pdf_button.clicked.connect(self.generate_pdf)
-        bottom_layout.addWidget(self.generate_pdf_button)
+        action_buttons_layout.addWidget(self.generate_pdf_button)
+
         self.generate_word_button = QPushButton("Générer Word")
         self.generate_word_button.setStyleSheet(word_btn_style)
         self.generate_word_button.clicked.connect(self.generate_word)
-        bottom_layout.addWidget(self.generate_word_button)
-        bottom_layout.addStretch()
-        main_layout.addLayout(bottom_layout)
+        action_buttons_layout.addWidget(self.generate_word_button)
+
+        self.preview_pdf_button = QPushButton("Prévisualiser PDF")
+        self.preview_pdf_button.setStyleSheet(preview_btn_style)
+        self.preview_pdf_button.clicked.connect(self.preview_pdf)
+        action_buttons_layout.addWidget(self.preview_pdf_button)
+
+        self.preview_word_button = QPushButton("Prévisualiser Word")
+        self.preview_word_button.setStyleSheet(preview_btn_style)
+        self.preview_word_button.clicked.connect(self.preview_word)
+        action_buttons_layout.addWidget(self.preview_word_button)
+        action_buttons_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
+
+        bottom_controls_layout.addLayout(action_buttons_layout)
+        main_layout.addLayout(bottom_controls_layout)
 
         # Correction du style pour les QLineEdit (texte noir sur fond sombre)
         lineedit_style = "color: black; background-color: white; font-size: 14px; border-radius: 4px; padding: 2px 6px;"
         for le in [self.days_entry, self.enumerate_count, self.enumerate_digits, self.sort_count, self.sort_digits, self.sort_n_numbers,
                    self.addition_count, self.addition_digits, self.addition_decimals,
                    self.subtraction_count, self.subtraction_digits, self.subtraction_decimals,
-                   self.multiplication_count, self.multiplication_digits, self.multiplication_decimals,
+                   self.multiplication_count, self.multiplication_digits, self.multiplication_decimals, # self.output_path_entry est retiré
                    self.division_count, self.division_digits, self.division_decimals, self.verbs_per_day_entry,
-                   self.grammar_sentence_count, self.geo_ex_count, self.english_complete_count, self.english_relier_count, self.orthographe_ex_count]:
+                   self.grammar_sentence_count, self.geo_ex_count, self.english_complete_count, self.english_relier_count, self.orthographe_ex_count,
+                   self.filename_entry]:
             le.setStyleSheet(lineedit_style)
 
         # Style pour les labels
@@ -644,6 +709,7 @@ class MainWindow(QMainWindow):
             ('show_name_checkbox', self.show_name_checkbox, 'checked'),
             ('show_note_checkbox', self.show_note_checkbox, 'checked'),
             ('filename_entry', self.filename_entry, 'text'),
+            ('selected_output_path', self, 'path_variable'), # Nouveau mode pour variable de chemin
             ('usual_verbs_checkbox', self.usual_verbs_checkbox, 'checked'),
             ('tense_checkboxes', self.tense_checkboxes, 'checked_list'),
             ('geo_ex_count', self.geo_ex_count, 'text'),
@@ -671,6 +737,17 @@ class MainWindow(QMainWindow):
 
         # --- Début des méthodes ---
 
+    def select_output_directory(self):
+        directory = QFileDialog.getExistingDirectory(self, "Choisir le dossier de sortie", self.selected_output_path or os.getcwd())
+        if directory:
+            self.selected_output_path = os.path.normpath(directory) # Normaliser le chemin
+            self.output_path_display_label.setText(f"Dossier de sortie : {directory}")
+            self.output_path_display_label.setStyleSheet("font-style: normal; color: #E0E0E0;") # Style normal si chemin choisi
+        elif not self.selected_output_path: # Si l'utilisateur annule et qu'aucun chemin n'était défini
+            self.output_path_display_label.setText("Dossier de sortie : output/")
+            self.output_path_display_label.setStyleSheet("font-style: italic; color: #B0BEC5;")
+
+
     def get_int(self, lineedit, default=0, field_name=None):
         value = lineedit.text().strip()
         if value == '':
@@ -689,6 +766,8 @@ class MainWindow(QMainWindow):
         self.days_entry.setStyleSheet(style)
         self.generate_pdf_button.setEnabled(is_valid)
         self.generate_word_button.setEnabled(is_valid)
+        self.preview_pdf_button.setEnabled(is_valid)
+        self.preview_word_button.setEnabled(is_valid)
 
     def build_exercise_data(self):
         try:
@@ -804,18 +883,21 @@ class MainWindow(QMainWindow):
             show_name = self.show_name_checkbox.isChecked()
             show_note = self.show_note_checkbox.isChecked()
             filename = self.filename_entry.text().strip() or "workbook"
+            output_directory = self.selected_output_path # Utilise le chemin stocké
             if not filename.lower().endswith(".pdf"):
                 filename += ".pdf"
-            generate_workbook_pdf(
+            output_path = generate_workbook_pdf(
                 data['days'], data['operations'], data['counts'], data['max_digits'],
                 data['conjugations'], data['params_list'], data['grammar_exercises'],
                 data['orthographe_exercises'],
-                data['enumerate_exercises'],
-                data['sort_exercises'],
+                data['enumerate_exercises'], data['sort_exercises'],
                 geo_exercises=data['geo_exercises'], english_exercises=data['english_exercises'],
                 encadrement_exercises=data.get('encadrement_exercises'),
-                header_text=header_text, show_name=show_name, show_note=show_note, filename=filename
+                header_text=header_text, show_name=show_name, show_note=show_note, filename=filename,
+                output_dir_override=output_directory
             )
+            if output_path and os.path.exists(output_path):
+                print(f"PDF généré avec succès : {output_path}")
         except InvalidFieldError as e:
             print(f"Veuillez entrer une valeur numérique valide pour : {e.field_name} (valeur saisie : '{e.value}')")
         except Exception as e:
@@ -833,19 +915,100 @@ class MainWindow(QMainWindow):
             show_name = self.show_name_checkbox.isChecked()
             show_note = self.show_note_checkbox.isChecked()
             filename = self.filename_entry.text().strip() or "workbook"
+            output_directory = self.selected_output_path # Utilise le chemin stocké
             if not filename.lower().endswith(".docx"):
                 filename += ".docx"
-            generate_workbook_docx(
+            output_path = generate_workbook_docx(
                 data['days'], data['operations'], data['counts'], data['max_digits'],
                 data['conjugations'], data['params_list'], data['grammar_exercises'],
-                geo_exercises=data['geo_exercises'], english_exercises=data['english_exercises'],
-                header_text=header_text, show_name=show_name, show_note=show_note, filename=filename
+                # Passer toutes les données d'exercices comme pour le PDF
+                orthographe_exercises=data['orthographe_exercises'],
+                enumerate_exercises=data['enumerate_exercises'],
+                sort_exercises=data['sort_exercises'],
+                geo_exercises=data['geo_exercises'], 
+                english_exercises=data['english_exercises'],
+                encadrement_exercises=data.get('encadrement_exercises'),
+                header_text=header_text, show_name=show_name, show_note=show_note, filename=filename,
+                output_dir_override=output_directory
             )
+            if output_path and os.path.exists(output_path):
+                print(f"Word généré avec succès : {output_path}")
         except InvalidFieldError as e:
             print(f"Veuillez entrer une valeur numérique valide pour : {e.field_name} (valeur saisie : '{e.value}')")
         except Exception as e:
             import traceback
             print(f"Une erreur s'est produite : {type(e).__name__} : {e}")
+            traceback.print_exc()
+
+    def preview_pdf(self):
+        try:
+            data = self.build_exercise_data()
+            if data is None:
+                return
+
+            from pdf_generator import generate_workbook_pdf
+            header_text = self.header_entry.text().strip()
+            show_name = self.show_name_checkbox.isChecked()
+            show_note = self.show_note_checkbox.isChecked()
+            filename = self.filename_entry.text().strip() or "apercu_EduForge"
+            output_directory = self.selected_output_path # Utiliser le chemin pour l'aperçu aussi
+            if not filename.lower().endswith(".pdf"):
+                filename += ".pdf"
+
+            output_path = generate_workbook_pdf(
+                data['days'], data['operations'], data['counts'], data['max_digits'],
+                data['conjugations'], data['params_list'], data['grammar_exercises'],
+                data['orthographe_exercises'], data['enumerate_exercises'], data['sort_exercises'],
+                geo_exercises=data['geo_exercises'], english_exercises=data['english_exercises'],
+                encadrement_exercises=data.get('encadrement_exercises'),
+                header_text=header_text, show_name=show_name, show_note=show_note, filename=filename,
+                output_dir_override=output_directory
+            )
+
+            if output_path and os.path.exists(output_path):
+                os.startfile(output_path)  # Ouvre le fichier avec l'application par défaut (Windows)
+            else:
+                print(f"Erreur : Fichier PDF non trouvé à {output_path} après la génération pour l'aperçu.")
+        except InvalidFieldError as e:
+            print(f"Veuillez entrer une valeur numérique valide pour : {e.field_name} (valeur saisie : '{e.value}')")
+        except Exception as e:
+            import traceback
+            print(f"Une erreur s'est produite lors de la prévisualisation PDF : {type(e).__name__} : {e}")
+            traceback.print_exc()
+
+    def preview_word(self):
+        try:
+            data = self.build_exercise_data()
+            if data is None:
+                return
+            from word_generator import generate_workbook_docx
+            header_text = self.header_entry.text().strip()
+            show_name = self.show_name_checkbox.isChecked()
+            show_note = self.show_note_checkbox.isChecked()
+            filename = self.filename_entry.text().strip() or "apercu_EduForge"
+            output_directory = self.selected_output_path # Utiliser le chemin pour l'aperçu aussi
+            if not filename.lower().endswith(".docx"):
+                filename += ".docx"
+            output_path = generate_workbook_docx(
+                data['days'], data['operations'], data['counts'], data['max_digits'],
+                data['conjugations'], data['params_list'], data['grammar_exercises'],
+                orthographe_exercises=data['orthographe_exercises'],
+                enumerate_exercises=data['enumerate_exercises'],
+                sort_exercises=data['sort_exercises'],
+                geo_exercises=data['geo_exercises'], 
+                english_exercises=data['english_exercises'],
+                encadrement_exercises=data.get('encadrement_exercises'),
+                header_text=header_text, show_name=show_name, show_note=show_note, filename=filename,
+                output_dir_override=output_directory)
+            if output_path and os.path.exists(output_path):
+                os.startfile(output_path) # Ouvre le fichier avec l'application par défaut (Windows)
+            else:
+                print(f"Erreur : Fichier Word non trouvé à {output_path} après la génération pour l'aperçu.")
+        except InvalidFieldError as e:
+            print(f"Veuillez entrer une valeur numérique valide pour : {e.field_name} (valeur saisie : '{e.value}')")
+        except Exception as e:
+            import traceback
+            print(f"Une erreur s'est produite lors de la prévisualisation Word : {type(e).__name__} : {e}")
             traceback.print_exc()
 
     def save_config(self):
@@ -857,6 +1020,8 @@ class MainWindow(QMainWindow):
                 config[name] = widget.isChecked()
             elif mode == 'checked_list':
                 config[name] = [cb.isChecked() for cb in widget]
+            elif mode == 'path_variable':
+                config[name] = self.selected_output_path # Sauvegarde la variable directement
         try:
             with open(self.config_path, 'w', encoding='utf-8') as f:
                 json.dump(config, f, ensure_ascii=False, indent=2)
@@ -886,6 +1051,13 @@ class MainWindow(QMainWindow):
                     states = config.get(name, [False]*len(widget))
                     for cb, state in zip(widget, states):
                         cb.setChecked(state)
+                elif mode == 'path_variable':
+                    self.selected_output_path = config.get(name, None)
+                    if self.selected_output_path:
+                        self.output_path_display_label.setText(f"Dossier de sortie : {self.selected_output_path}")
+                        self.output_path_display_label.setStyleSheet("font-style: normal; color: #E0E0E0;")
+                    else:
+                        self.output_path_display_label.setText("Dossier de sortie : output/")
         except Exception as e:
             print(f"Erreur lors du chargement de la configuration : {e}")
 
