@@ -50,7 +50,7 @@ pip install -r requirements.txt
 ## Utilisation (exécutable Windows autonome)
 1. Compilez avec PyInstaller (logo et dossier JSON à côté de l'exe) :
    ```
-   pyinstaller --onefile --noconsole --icon=src/EduForge.ico --add-data "src/json;json" --add-data "src/EduForge.ico;." --add-data "src/config.json;." src/EduForge.py
+   pyinstaller --onefile --noconsole --icon=src/EduForge.ico --add-data "src/json;json" --add-data "src/img,img" --add-data "src/EduForge.ico;." --add-data "src/config.json;." src/EduForge.py
    ```
 2. Dans le dossier `dist/`, copiez `EduForge.exe`, `config.json`, `EduForge.ico`, et le dossier `json`.
 3. Lancez `EduForge.exe` sur n'importe quel PC Windows (aucune installation Python requise).

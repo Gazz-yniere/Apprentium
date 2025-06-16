@@ -1,5 +1,5 @@
-from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QLabel, QLineEdit, QCheckBox, QPushButton, QFrame, QSizePolicy, QGroupBox, QSplitter, QSpacerItem, QFileDialog)
-from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QLabel, QLineEdit, QCheckBox, QPushButton, QFrame, QSizePolicy, QGroupBox, QSplitter, QSpacerItem, QFileDialog, QLayout, QGraphicsOpacityEffect)
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QIcon
 from PyQt6.QtGui import QPalette, QColor
 from pdf_generator import generate_workbook_pdf
@@ -15,6 +15,15 @@ class InvalidFieldError(Exception):
         self.field_name = field_name
         self.value = value
 
+def get_resource_path(filename):
+    """ Obtient le chemin absolu d'une ressource JSON, que ce soit en mode script ou compilé. """
+    # base_path = os.path.dirname(__file__) # Chemin du script EduForge.py
+    if hasattr(sys, '_MEIPASS'):
+        # Chemin pour l'exécutable PyInstaller (le dossier 'json' est au même niveau que l'exécutable)
+        return os.path.join(sys._MEIPASS, "json", filename)
+    # Chemin pour l'exécution en tant que script (le dossier 'json' est dans le même dossier que ce script)
+    return os.path.join(os.path.dirname(__file__), "json", filename)
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -24,7 +33,60 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(QIcon(icon_path))
         self.setMinimumWidth(1400)
         #self.setMinimumHeight(900)
+
+        # --- Constants for Level Selection ---
+        self.LEVEL_COLORS = {
+            "CP": "#A5D6A7",  # Light Green
+            "CE1": "#90CAF9", # Light Blue
+            "CE2": "#FFCC80", # Light Orange
+            "CM1": "#CE93D8", # Light Purple
+            "CM2": "#EF9A9A"  # Light Red
+        }
+        self.BASE_LEVEL_BUTTON_STYLE = """
+        QPushButton {{
+            color: black; /* Texte noir pour contraste sur fond clair */
+            font-weight: bold;
+            font-size: 14px;
+            padding: 6px 15px;
+            border-radius: 8px; /* Garde les coins arrondis */
+            border: none; /* Supprime la ligne de bordure */
+            background-color: {bg_color};
+        }}
+        QPushButton:hover {{
+            background-color: {hover_bg_color};
+        }}
+        QPushButton:pressed {{
+            background-color: {pressed_bg_color};
+        }}
+        QPushButton[selected="true"] {{
+            /* Plus de bordure spécifique pour l'état sélectionné */
+            /* Le padding reste le même que l'état non sélectionné car pas de bordure */
+            padding: 6px 15px; 
+        }}
+        """
+        self.current_selected_level_button = None
+        self.current_level = None # To store the string name of the level
+
+        self._all_row_widgets_for_map = {} # Pour accumuler les widgets de ligne
         self.selected_output_path = None # Pour stocker le chemin choisi par l'utilisateur
+        self.all_line_edits = [] # Liste pour stocker tous les QLineEdit à styler
+
+        # --- Chargement de la configuration des niveaux ---
+        self.level_configuration_data = {}
+        default_level_order = ["CP", "CE1", "CE2", "CM1", "CM2"]
+        default_exercises_by_level = {} # Fallback vide
+        try:
+            levels_config_path = get_resource_path('levels_config.json')
+            with open(levels_config_path, 'r', encoding='utf-8') as f:
+                self.level_configuration_data = json.load(f)
+            print(f"Configuration des niveaux chargée depuis : {levels_config_path}")
+        except FileNotFoundError:
+            print(f"ERREUR: Fichier de configuration des niveaux '{levels_config_path}' introuvable. Utilisation des valeurs par défaut.")
+        except json.JSONDecodeError:
+            print(f"ERREUR: Fichier de configuration des niveaux '{levels_config_path}' JSON invalide. Utilisation des valeurs par défaut.")
+        
+        self.LEVEL_ORDER = self.level_configuration_data.get("level_order", default_level_order)
+        self.EXERCISES_BY_LEVEL_INCREMENTAL = self.level_configuration_data.get("exercises_by_level", default_exercises_by_level)
         # Fenêtre redimensionnable
 
         # Mode dark
@@ -49,173 +111,189 @@ class MainWindow(QMainWindow):
         main_layout = QVBoxLayout()
         central_widget.setLayout(main_layout)
 
-        # Partie supérieure : nombre de jours
-        top_layout = QHBoxLayout()
-        self.days_label = QLabel("Nombre de jours :")
-        self.days_label.setStyleSheet("font-weight: bold; font-size: 16px;")
-        self.days_entry = QLineEdit()
-        self.days_entry.setMaximumWidth(60)
-        self.header_label = QLabel("En-tête (optionnel) :")
-        self.header_label.setStyleSheet("font-weight: bold; font-size: 14px;")
+        # Partie supérieure : En-tête et Nombre de jours
+        top_layout = QHBoxLayout() # Layout principal pour cette ligne
+        top_layout.setContentsMargins(10, 5, 10, 5) # Harmonisation avec level_selection_layout
+
+        # Section En-tête (à gauche)
+        header_section_layout = QHBoxLayout()
+        self.header_label = QLabel("Titre :")
+        self.header_label.setStyleSheet("font-weight: bold; font-size: 16px; color: #E0E0E0; margin-right: 10px;")
         self.header_entry = QLineEdit()
-        self.header_entry.setMaximumWidth(400)
+        self.all_line_edits.append(self.header_entry)
+        self.header_entry.setPlaceholderText("Optionnel")
         self.header_entry.setStyleSheet("color: black; background-color: white; font-size: 14px; border-radius: 4px; padding: 2px 6px;")
-        self.show_name_checkbox = QCheckBox("Afficher un champ Nom à gauche")
-        self.show_note_checkbox = QCheckBox("Afficher un champ Note à droite")
-        top_layout.addWidget(self.header_label)
-        top_layout.addWidget(self.header_entry)
-        top_layout.addWidget(self.show_name_checkbox)
-        top_layout.addWidget(self.show_note_checkbox)
-        top_layout.addStretch()
-        top_layout.addWidget(self.days_label)
-        top_layout.addWidget(self.days_entry)
+        self.header_entry.setMinimumWidth(250) # Donner une largeur minimale pour la visibilité
+        self.show_name_checkbox = QCheckBox("Afficher Nom")
+        self.show_note_checkbox = QCheckBox("Afficher Note")
+
+        header_section_layout.addWidget(self.header_label)
+        header_section_layout.addWidget(self.header_entry)
+        header_section_layout.addWidget(self.show_name_checkbox)
+        header_section_layout.addWidget(self.show_note_checkbox)
+        header_section_layout.setSpacing(10)
+
+        top_layout.addLayout(header_section_layout)
+        top_layout.addStretch() # Pousse la section "jours" vers la droite
+
+        # Section Nombre de jours (à droite)
+        days_section_layout = QHBoxLayout()
+        self.days_label = QLabel("Nombre de jours :")
+        self.days_label.setStyleSheet("font-weight: bold; font-size: 16px; color: #E0E0E0;")
+        self.days_entry = QLineEdit()
+        self.all_line_edits.append(self.days_entry)
+        self.days_entry.setMaximumWidth(60)
+
+        days_section_layout.addWidget(self.days_label)
+        days_section_layout.addWidget(self.days_entry)
+        days_section_layout.addStretch(1) # Pousse le label et l'input ensemble vers la gauche de ce layout
+        days_section_layout.setSpacing(5)
+
+        top_layout.addLayout(days_section_layout)
         main_layout.addLayout(top_layout)
 
         # Séparateur
-        sep = QFrame()
-        sep.setFrameShape(QFrame.Shape.HLine)
-        sep.setFrameShadow(QFrame.Shadow.Sunken)
-        sep.setStyleSheet("border-top: 1px solid #505050;") # Couleur pour le séparateur
-        main_layout.addWidget(sep)
+        sep1 = QFrame()
+        sep1.setFrameShape(QFrame.Shape.HLine)
+        sep1.setFrameShadow(QFrame.Shadow.Sunken)
+        sep1.setStyleSheet("border-top: 3px solid #505050;")
+        main_layout.addWidget(sep1)
 
+        # --- Level Selection ---
+        level_selection_layout = QHBoxLayout()
+        level_selection_layout.setContentsMargins(10, 5, 10, 5)
+        level_selection_label = QLabel("Niveau :")
+        level_selection_label.setStyleSheet("font-weight: bold; font-size: 16px; color: #E0E0E0; margin-right: 10px;")
+        level_selection_layout.addWidget(level_selection_label)
+
+        self.level_buttons = {}
+        # Utilise self.LEVEL_ORDER chargé depuis le JSON (ou la valeur par défaut)
+        for level_name in self.LEVEL_ORDER: 
+            color_hex = self.LEVEL_COLORS[level_name]
+            button = QPushButton(level_name)
+            hover_color = self.darken_color(color_hex, 0.95) # Lighter hover for dark theme
+            pressed_color = self.darken_color(color_hex, 0.85)
+            border_c = self.darken_color(color_hex, 0.7)
+
+            button.setStyleSheet(self.BASE_LEVEL_BUTTON_STYLE.format(
+                bg_color=color_hex,
+                hover_bg_color=hover_color,
+                pressed_bg_color=pressed_color,
+                border_color=border_c
+            ))
+            button.setProperty("selected", False)
+            button.clicked.connect(lambda checked, b=button, ln=level_name: self.select_level(ln, b))
+            button.setFixedWidth(150) # Largeur fixe pour les boutons de niveau
+            self.level_buttons[level_name] = button
+            level_selection_layout.addWidget(button)
+
+        level_selection_layout.addStretch()
+        main_layout.addLayout(level_selection_layout)
+
+        # Séparateur
+        sep2 = QFrame()
+        sep2.setFrameShape(QFrame.Shape.HLine)
+        sep2.setFrameShadow(QFrame.Shadow.Sunken)
+        sep2.setStyleSheet("border-top: 3px solid #505050;")
+        main_layout.addWidget(sep2)
+
+        # self.EXERCISES_BY_LEVEL_INCREMENTAL est maintenant chargé depuis le JSON
         # --- Colonne Calculs ---
         calc_layout = QVBoxLayout()
-        calc_title = QLabel("Calculs")
-        calc_title.setStyleSheet("font-weight: bold; font-size: 20px; color: #4FC3F7; margin-bottom: 8px; margin-top: 0px;")
-        calc_layout.addWidget(calc_title)
+        self.calc_title_label = QLabel("Calculs")
+        self.calc_title_label.setStyleSheet("font-weight: bold; font-size: 20px; color: #4FC3F7; margin-bottom: 8px; margin-top: 0px;")
+        calc_layout.addWidget(self.calc_title_label)
         calc_layout.setContentsMargins(5, 5, 5, 5)
-        calc_layout.setSpacing(6)
-        # Exercice : Enumérer un nombre
-        enumerate_group = QGroupBox("Enumérer un nombre")
-        enumerate_layout = QVBoxLayout()
-        row = QHBoxLayout()
-        row.addWidget(QLabel("Nombre d'exercices :"))
-        self.enumerate_count = QLineEdit(); self.enumerate_count.setMaximumWidth(60)
-        row.addWidget(self.enumerate_count)
-        enumerate_layout.addLayout(row)
-        row = QHBoxLayout()
-        row.addWidget(QLabel("Chiffres par nombre :"))
-        self.enumerate_digits = QLineEdit(); self.enumerate_digits.setMaximumWidth(60)
-        row.addWidget(self.enumerate_digits)
-        enumerate_layout.addLayout(row)
-        enumerate_group.setLayout(enumerate_layout)
+        calc_layout.setSpacing(6)        
 
-        # (Suppression de la création de sort_group ici, il sera déplacé dans la colonne Mesures)
+        # Exercice : Enumérer un nombre
+        enumerate_fields = [
+            ("Nombre d'exercices :", "enumerate_count", 60),
+            ("Chiffres par nombre :", "enumerate_digits", 60)
+        ]
+        self.enumerate_group, enumerate_les, enum_rows = self._create_generic_groupbox("Enumérer un nombre", enumerate_fields)
+        self.all_line_edits.extend(enumerate_les)
+        self._all_row_widgets_for_map.update(enum_rows)
 
         # Addition
-        addition_group = QGroupBox("Addition")
-        addition_layout = QVBoxLayout()
-        row = QHBoxLayout()
-        row.addWidget(QLabel("Nombre de calculs :"))
-        self.addition_count = QLineEdit(); self.addition_count.setMaximumWidth(60)
-        row.addWidget(self.addition_count)
-        addition_layout.addLayout(row)
-        row = QHBoxLayout()
-        row.addWidget(QLabel("Chiffres par nombre :"))
-        self.addition_digits = QLineEdit(); self.addition_digits.setMaximumWidth(60)
-        row.addWidget(self.addition_digits)
-        addition_layout.addLayout(row)
-        row = QHBoxLayout()
-        row.addWidget(QLabel("Nb décimales :"))
-        self.addition_decimals = QLineEdit(); self.addition_decimals.setMaximumWidth(60)
-        row.addWidget(self.addition_decimals)
-        addition_layout.addLayout(row)
-        addition_group.setLayout(addition_layout)
+        addition_fields = [
+            ("Nombre de calculs :", "addition_count", 60),
+            ("Chiffres par nombre :", "addition_digits", 60),
+            ("Nb décimales :", "addition_decimals", 60) # Clé: addition
+        ]
+        self.addition_group, addition_les, add_rows = self._create_generic_groupbox("Addition", addition_fields)
+        self.all_line_edits.extend(addition_les)
+        self._all_row_widgets_for_map.update(add_rows)
+
         # Soustraction
-        subtraction_group = QGroupBox("Soustraction")
-        subtraction_layout = QVBoxLayout()
-        row = QHBoxLayout()
-        row.addWidget(QLabel("Nombre de calculs :"))
-        self.subtraction_count = QLineEdit(); self.subtraction_count.setMaximumWidth(60)
-        row.addWidget(self.subtraction_count)
-        subtraction_layout.addLayout(row)
-        row = QHBoxLayout()
-        row.addWidget(QLabel("Chiffres par nombre :"))
-        self.subtraction_digits = QLineEdit(); self.subtraction_digits.setMaximumWidth(60)
-        row.addWidget(self.subtraction_digits)
-        subtraction_layout.addLayout(row)
-        row = QHBoxLayout()
-        row.addWidget(QLabel("Nb décimales :"))
-        self.subtraction_decimals = QLineEdit(); self.subtraction_decimals.setMaximumWidth(60)
-        row.addWidget(self.subtraction_decimals)
-        subtraction_layout.addLayout(row)
         self.subtraction_negative_checkbox = QCheckBox("Soustraction négative possible")
-        subtraction_layout.addWidget(self.subtraction_negative_checkbox)
-        subtraction_group.setLayout(subtraction_layout)
+        subtraction_fields = [
+            ("Nombre de calculs :", "subtraction_count", 60),
+            ("Chiffres par nombre :", "subtraction_digits", 60), # Clé: subtraction
+            ("Nb décimales :", "subtraction_decimals", 60)
+        ]
+        self.subtraction_group, subtraction_les, sub_rows = self._create_generic_groupbox(
+            "Soustraction", subtraction_fields, extra_items=[self.subtraction_negative_checkbox]
+        )
+        self.all_line_edits.extend(subtraction_les)
+        self._all_row_widgets_for_map.update(sub_rows)
+
         # Multiplication
-        multiplication_group = QGroupBox("Multiplication")
-        multiplication_layout = QVBoxLayout()
-        row = QHBoxLayout()
-        row.addWidget(QLabel("Nombre de calculs :"))
-        self.multiplication_count = QLineEdit(); self.multiplication_count.setMaximumWidth(60)
-        row.addWidget(self.multiplication_count)
-        multiplication_layout.addLayout(row)
-        row = QHBoxLayout()
-        row.addWidget(QLabel("Chiffres par nombre :"))
-        self.multiplication_digits = QLineEdit(); self.multiplication_digits.setMaximumWidth(60)
-        row.addWidget(self.multiplication_digits)
-        multiplication_layout.addLayout(row)
-        row = QHBoxLayout()
-        row.addWidget(QLabel("Nb décimales :"))
-        self.multiplication_decimals = QLineEdit(); self.multiplication_decimals.setMaximumWidth(60)
-        row.addWidget(self.multiplication_decimals)
-        multiplication_layout.addLayout(row)
-        multiplication_group.setLayout(multiplication_layout)
+        multiplication_fields = [
+            ("Nombre de calculs :", "multiplication_count", 60), # Clé: multiplication
+            ("Chiffres par nombre :", "multiplication_digits", 60),
+            ("Nb décimales :", "multiplication_decimals", 60)
+        ]
+        self.multiplication_group, multiplication_les, mult_rows = self._create_generic_groupbox("Multiplication", multiplication_fields)
+        self.all_line_edits.extend(multiplication_les)
+        self._all_row_widgets_for_map.update(mult_rows)
+
         # Division
-        division_group = QGroupBox("Division")
-        division_layout = QVBoxLayout()
-        row = QHBoxLayout()
-        row.addWidget(QLabel("Nombre de calculs :"))
-        self.division_count = QLineEdit(); self.division_count.setMaximumWidth(60)
-        row.addWidget(self.division_count)
-        division_layout.addLayout(row)
-        row = QHBoxLayout()
-        row.addWidget(QLabel("Chiffres par nombre :"))
-        self.division_digits = QLineEdit(); self.division_digits.setMaximumWidth(60)
-        row.addWidget(self.division_digits)
-        division_layout.addLayout(row)
         self.division_reste_checkbox = QCheckBox("Division avec reste")
-        division_layout.addWidget(self.division_reste_checkbox)
-        row = QHBoxLayout()
-        row.addWidget(QLabel("Nb décimales :"))
-        self.division_decimals = QLineEdit(); self.division_decimals.setMaximumWidth(60)
-        row.addWidget(self.division_decimals)
-        division_layout.addLayout(row)
-        division_group.setLayout(division_layout)
+        division_fields = [
+            ("Nombre de calculs :", "division_count", 60), # Clé: division
+            ("Chiffres par nombre :", "division_digits", 60),
+            ("Nb décimales :", "division_decimals", 60)
+        ]
+        self.division_group, division_les, div_rows = self._create_generic_groupbox(
+            "Division", division_fields, extra_items=[self.division_reste_checkbox]
+        )
+        self.all_line_edits.extend(division_les)
+        self._all_row_widgets_for_map.update(div_rows)
+
         # Fonction utilitaire pour appliquer le style compact à une liste de QGroupBox
         def set_groupbox_style(groups, color):
             for group in groups:
                 group.setStyleSheet(f"QGroupBox {{ margin-top: 2px; margin-bottom: 2px; padding: 10px 12px 10px 12px; border: 2px solid {color}; border-radius: 8px; }} QGroupBox:title {{ subcontrol-origin: margin; subcontrol-position: top left; left: 10px; top: 0px; padding: 0 12px; color: #ffffff; font-weight: bold; font-size: 15px; background: #232323; }}")
-
+        
         # Harmonisation des couleurs des bordures des QGroupBox selon la couleur du titre de colonne
-        set_groupbox_style([enumerate_group, addition_group, subtraction_group, multiplication_group, division_group], "#4FC3F7")
-        calc_layout.addWidget(enumerate_group)
-        calc_layout.addWidget(addition_group)
-        calc_layout.addWidget(subtraction_group)
-        calc_layout.addWidget(multiplication_group)
-        calc_layout.addWidget(division_group)
+        calc_groups = [self.enumerate_group, self.addition_group, self.subtraction_group, self.multiplication_group, self.division_group]
+        set_groupbox_style(calc_groups, "#4FC3F7")
+        
+        calc_layout.addWidget(self.enumerate_group)
+        calc_layout.addWidget(self.addition_group)
+        calc_layout.addWidget(self.subtraction_group)
+        calc_layout.addWidget(self.multiplication_group)
+        calc_layout.addWidget(self.division_group)
         calc_layout.addStretch()
-
-        # (Suppression de l'appel fautif à set_groupbox_style et des widgets non définis)
 
         # --- Colonne Géométrie/Mesures ---
         geo_layout = QVBoxLayout()
-        geo_title = QLabel("Mesures")
-        geo_title.setStyleSheet("font-weight: bold; font-size: 20px; color: #BA68C8; margin-bottom: 8px; margin-top: 0px;")
-        geo_layout.addWidget(geo_title)
+        self.geo_title_label = QLabel("Mesures")
+        self.geo_title_label.setStyleSheet("font-weight: bold; font-size: 20px; color: #BA68C8; margin-bottom: 8px; margin-top: 0px;")
+        geo_layout.addWidget(self.geo_title_label)
         geo_layout.setContentsMargins(5, 5, 5, 5)
         geo_layout.setSpacing(6)
-        # (Suppression de la section Paramètres de mesures qui est maintenant vide)
+
         # Section conversions
-        geo_conv_group = QGroupBox("Conversions")
+        self.geo_conv_group = QGroupBox("Conversions") # Clé: geo_conversion
         geo_conv_layout = QVBoxLayout()
-        row = QHBoxLayout()
-        self.geo_ex_count_label = QLabel("Nombre d'exercices :")
-        self.geo_ex_count = QLineEdit()
-        self.geo_ex_count.setMaximumWidth(60)
-        row.addWidget(self.geo_ex_count_label)
-        row.addWidget(self.geo_ex_count)
-        geo_conv_layout.addLayout(row)
+
+        row_widget_geo_count, self.geo_ex_count = self._create_input_row("Nombre d'exercices :", 60)
+        self.all_line_edits.append(self.geo_ex_count)
+        self._all_row_widgets_for_map["geo_ex_count_row"] = row_widget_geo_count # Ajout manuel car pas via _create_generic_groupbox
+        geo_conv_layout.addWidget(row_widget_geo_count)
+
         self.conv_type_longueur = QCheckBox("Longueur")
         self.conv_type_masse = QCheckBox("Masse")
         self.conv_type_volume = QCheckBox("Volume")
@@ -235,191 +313,175 @@ class MainWindow(QMainWindow):
         sens_layout.addWidget(self.conv_sens_direct)
         sens_layout.addWidget(self.conv_sens_inverse)
         geo_conv_layout.addLayout(sens_layout)
-        geo_conv_group.setLayout(geo_conv_layout)
-        geo_layout.addWidget(geo_conv_group)
+        self.geo_conv_group.setLayout(geo_conv_layout)
+        geo_layout.addWidget(self.geo_conv_group)
 
         # Section : Ranger les nombres (déplacée ici)
-        sort_group = QGroupBox("Ranger les nombres")
-        sort_layout = QVBoxLayout()
-        row = QHBoxLayout()
-        row.addWidget(QLabel("Nombre d'exercices :"))
-        self.sort_count = QLineEdit(); self.sort_count.setMaximumWidth(60)
-        row.addWidget(self.sort_count)
-        sort_layout.addLayout(row)
-        row = QHBoxLayout()
-        row.addWidget(QLabel("Chiffres par nombre :"))
-        self.sort_digits = QLineEdit(); self.sort_digits.setMaximumWidth(60)
-        row.addWidget(self.sort_digits)
-        sort_layout.addLayout(row)
-        row = QHBoxLayout()
-        row.addWidget(QLabel("Nombres à ranger :"))
-        self.sort_n_numbers = QLineEdit(); self.sort_n_numbers.setMaximumWidth(60)
-        row.addWidget(self.sort_n_numbers)
-        sort_layout.addLayout(row)
-        row = QHBoxLayout()
-        row.addWidget(QLabel("Type :"))
         self.sort_type_croissant = QCheckBox("Croissant")
         self.sort_type_decroissant = QCheckBox("Décroissant")
         self.sort_type_croissant.setChecked(True)
         sort_type_layout = QHBoxLayout()
         sort_type_layout.addWidget(self.sort_type_croissant)
         sort_type_layout.addWidget(self.sort_type_decroissant)
-        row.addLayout(sort_type_layout)
-        sort_layout.addLayout(row)
-        sort_group.setLayout(sort_layout)
-        geo_layout.addWidget(sort_group)
+        
+        sort_type_row_layout = QHBoxLayout()
+        sort_type_row_layout.addWidget(QLabel("Type :"))
+        sort_type_row_layout.addLayout(sort_type_layout)
+
+        sort_fields = [
+            ("Nombre d'exercices :", "sort_count", 60),
+            ("Chiffres par nombre :", "sort_digits", 60),
+            ("Nombres à ranger :", "sort_n_numbers", 60)
+        ]
+        self.sort_group, sort_les, sort_rows = self._create_generic_groupbox( # Clé: geo_sort
+            "Ranger les nombres", sort_fields, extra_items=[sort_type_row_layout]
+        )
+        self.all_line_edits.extend(sort_les)
+        self._all_row_widgets_for_map.update(sort_rows)
+        geo_layout.addWidget(self.sort_group)
 
         # Section : Encadrer un nombre
-        encadrement_group = QGroupBox("Encadrer un nombre")
-        encadrement_layout = QVBoxLayout()
-        # Nombre d'exercices
-        row = QHBoxLayout()
-        row.addWidget(QLabel("Nombre d'exercices :"))
-        self.encadrement_count = QLineEdit(); self.encadrement_count.setMaximumWidth(60)
-        self.encadrement_count.setStyleSheet("color: black; background-color: white; font-size: 14px; border-radius: 4px; padding: 2px 6px;")
-        row.addWidget(self.encadrement_count)
-        encadrement_layout.addLayout(row)
-        # Chiffres par nombre
-        row = QHBoxLayout()
-        row.addWidget(QLabel("Chiffres par nombre :"))
-        self.encadrement_digits = QLineEdit(); self.encadrement_digits.setMaximumWidth(60)
-        self.encadrement_digits.setStyleSheet("color: black; background-color: white; font-size: 14px; border-radius: 4px; padding: 2px 6px;")
-        row.addWidget(self.encadrement_digits)
-        encadrement_layout.addLayout(row)
+        encadrement_fields = [
+            ("Nombre d'exercices :", "encadrement_count", 60),
+            ("Chiffres par nombre :", "encadrement_digits", 60) # Clé: geo_encadrement
+        ]
+
         # Types d'encadrement
         type_label = QLabel("Type :")
-        encadrement_layout.addWidget(type_label)
         self.encadrement_unite = QCheckBox("Unité")
         self.encadrement_dizaine = QCheckBox("Dizaine")
         self.encadrement_centaine = QCheckBox("Centaine")
         self.encadrement_millier = QCheckBox("Millier")
+        
         type_layout1 = QHBoxLayout()
         type_layout1.addWidget(self.encadrement_unite)
         type_layout1.addWidget(self.encadrement_dizaine)
         type_layout2 = QHBoxLayout()
         type_layout2.addWidget(self.encadrement_centaine)
         type_layout2.addWidget(self.encadrement_millier)
-        encadrement_layout.addLayout(type_layout1)
-        encadrement_layout.addLayout(type_layout2)
-        encadrement_group.setLayout(encadrement_layout)
-        geo_layout.addWidget(encadrement_group)
+
+        self.encadrement_group, encadrement_les, enc_rows = self._create_generic_groupbox(
+            "Encadrer un nombre", encadrement_fields, extra_items=[type_label, type_layout1, type_layout2]
+        )
+        self.all_line_edits.extend(encadrement_les)
+        self._all_row_widgets_for_map.update(enc_rows)
+        geo_layout.addWidget(self.encadrement_group)
 
         # Mesures : violet (#BA68C8)
-        set_groupbox_style([geo_conv_group, sort_group, encadrement_group], "#BA68C8")
+        geo_groups = [self.geo_conv_group, self.sort_group, self.encadrement_group]
+        set_groupbox_style(geo_groups, "#BA68C8")
         geo_layout.addStretch()
 
         # --- Colonne Conjugaison ---
         conj_layout = QVBoxLayout()
-        conj_title = QLabel("Conjugaison")
-        conj_title.setStyleSheet("font-weight: bold; font-size: 20px; color: #81C784; margin-bottom: 8px; margin-top: 0px;")
-        conj_layout.addWidget(conj_title)
+        self.conj_title_label = QLabel("Conjugaison")
+        self.conj_title_label.setStyleSheet("font-weight: bold; font-size: 20px; color: #81C784; margin-bottom: 8px; margin-top: 0px;")
+        conj_layout.addWidget(self.conj_title_label)
         conj_layout.setContentsMargins(5, 5, 5, 5)
         conj_layout.setSpacing(6)
         # Paramètres de conjugaison (d'abord)
-        number_group = QGroupBox("Paramètres de conjugaison")
-        number_layout = QVBoxLayout()
-        row = QHBoxLayout()
-        row.addWidget(QLabel("Nombre de verbes par jour :"))
-        self.verbs_per_day_entry = QLineEdit()
-        self.verbs_per_day_entry.setMaximumWidth(60)
-        row.addWidget(self.verbs_per_day_entry)
-        number_layout.addLayout(row)
-        number_group.setLayout(number_layout)
-        conj_layout.addWidget(number_group)
+        conj_param_fields = [("Nombre de verbes par jour :", "verbs_per_day_entry", 60)]
+        self.conj_number_group, conj_param_les, conj_param_rows = self._create_generic_groupbox( # Clé: conj_params
+            "Paramètres de conjugaison", conj_param_fields
+        )
+        self.all_line_edits.extend(conj_param_les)
+        self._all_row_widgets_for_map.update(conj_param_rows)
+        conj_layout.addWidget(self.conj_number_group)
+
         # Groupes de verbes
-        group_group = QGroupBox("Groupes de verbes")
+        self.conj_group_group = QGroupBox("Groupes de verbes") # Clé: conj_groups
         group_layout = QVBoxLayout()
         self.group_1_checkbox = QCheckBox("1er groupe")
         self.group_2_checkbox = QCheckBox("2ème groupe")
         self.group_3_checkbox = QCheckBox("3ème groupe")
         self.usual_verbs_checkbox = QCheckBox("Verbes usuels (à connaître par cœur)")
-        group_layout.addWidget(self.group_1_checkbox)
-        group_layout.addWidget(self.group_2_checkbox)
-        group_layout.addWidget(self.group_3_checkbox)
-        group_layout.addWidget(self.usual_verbs_checkbox)
-        group_group.setLayout(group_layout)
-        conj_layout.addWidget(group_group)
+        self.conj_group_group_checkboxes = [self.group_1_checkbox, self.group_2_checkbox, self.group_3_checkbox, self.usual_verbs_checkbox]
+        for cb in self.conj_group_group_checkboxes:
+            group_layout.addWidget(cb)
+        self.conj_group_group.setLayout(group_layout)
+        conj_layout.addWidget(self.conj_group_group)
+
         # Temps (dynamique depuis conjugation_generator.TENSES)
         from conjugation_generator import TENSES
-        tense_group = QGroupBox("Temps")
+        self.conj_tense_group = QGroupBox("Temps") # Clé: conj_tenses
         tense_layout = QVBoxLayout()
         self.tense_checkboxes = []
         for tense in TENSES:
             cb = QCheckBox(tense.capitalize())
             tense_layout.addWidget(cb)
             self.tense_checkboxes.append(cb)
-        tense_group.setLayout(tense_layout)
-        conj_layout.addWidget(tense_group)
+        self.conj_tense_group.setLayout(tense_layout)
+        conj_layout.addWidget(self.conj_tense_group)
         # Conjugaison : vert (#81C784)
-        set_groupbox_style([number_group, group_group, tense_group], "#81C784")
+        conj_groups = [self.conj_number_group, self.conj_group_group, self.conj_tense_group]
+        set_groupbox_style(conj_groups, "#81C784")
         conj_layout.addStretch()
 
         # --- Colonne Grammaire ---
         grammar_layout = QVBoxLayout()
-        grammar_title = QLabel("Grammaire")
-        grammar_title.setStyleSheet("font-weight: bold; font-size: 20px; color: #FFD54F; margin-bottom: 8px; margin-top: 0px;")
-        grammar_layout.addWidget(grammar_title)
+        self.grammar_title_label = QLabel("Grammaire")
+        self.grammar_title_label.setStyleSheet("font-weight: bold; font-size: 20px; color: #FFD54F; margin-bottom: 8px; margin-top: 0px;") # Jaune
+        grammar_layout.addWidget(self.grammar_title_label)
         grammar_layout.setContentsMargins(5, 5, 5, 5)
         grammar_layout.setSpacing(6)
-        grammar_number_group = QGroupBox("Paramètres de grammaire")
-        grammar_number_layout = QVBoxLayout()
-        row = QHBoxLayout()
-        self.grammar_sentence_count_label = QLabel("Nombre de phrases :")
-        self.grammar_sentence_count = QLineEdit()
-        self.grammar_sentence_count.setMaximumWidth(60)
-        row.addWidget(self.grammar_sentence_count_label)
-        row.addWidget(self.grammar_sentence_count)
-        grammar_number_layout.addLayout(row)
-        grammar_number_group.setLayout(grammar_number_layout)
-        grammar_layout.addWidget(grammar_number_group)
-        grammar_type_group = QGroupBox("Type de phrase")
+
+        grammar_param_fields = [("Nombre de phrases :", "grammar_sentence_count", 60)]
+        grammar_number_group, grammar_param_les, grammar_param_rows = self._create_generic_groupbox(
+            "Paramètres de grammaire", grammar_param_fields
+        ) # Clé: grammar_params (sera self.grammar_number_group)
+        self.grammar_number_group = grammar_number_group # Assign to self
+        self.all_line_edits.extend(grammar_param_les)
+        grammar_layout.addWidget(self.grammar_number_group)
+        self._all_row_widgets_for_map.update(grammar_param_rows)
+
+        self.grammar_type_group = QGroupBox("Type de phrase") # Clé: grammar_types
         grammar_type_layout = QVBoxLayout()
         self.intransitive_checkbox = QCheckBox("Sans complément d'objet")
         self.transitive_direct_checkbox = QCheckBox("Avec complément d'objet direct")
         self.transitive_indirect_checkbox = QCheckBox("Avec complément d'objet indirect")
         self.ditransitive_checkbox = QCheckBox("Avec deux compléments d'objet")
-        grammar_type_layout.addWidget(self.intransitive_checkbox)
-        grammar_type_layout.addWidget(self.transitive_direct_checkbox)
-        grammar_type_layout.addWidget(self.transitive_indirect_checkbox)
-        grammar_type_layout.addWidget(self.ditransitive_checkbox)
-        grammar_type_group.setLayout(grammar_type_layout)
-        grammar_layout.addWidget(grammar_type_group)
+        self.grammar_type_checkboxes = [self.intransitive_checkbox, self.transitive_direct_checkbox, self.transitive_indirect_checkbox, self.ditransitive_checkbox]
+        for cb in self.grammar_type_checkboxes:
+            grammar_type_layout.addWidget(cb)
+        self.grammar_type_group.setLayout(grammar_type_layout)
+        grammar_layout.addWidget(self.grammar_type_group)
+
         from grammar_generator import TRANSFORMATIONS
-        grammar_transfo_group = QGroupBox("Transformations")
+        self.grammar_transfo_group = QGroupBox("Transformations") # Clé: grammar_transfo
         grammar_transfo_layout = QVBoxLayout()
         self.transfo_checkboxes = []
         for t in TRANSFORMATIONS:
             cb = QCheckBox(t)
             grammar_transfo_layout.addWidget(cb)
             self.transfo_checkboxes.append(cb)
-        grammar_transfo_group.setLayout(grammar_transfo_layout)
-        grammar_layout.addWidget(grammar_transfo_group)
+        self.grammar_transfo_group.setLayout(grammar_transfo_layout)
+        grammar_layout.addWidget(self.grammar_transfo_group)
+
         # Grammaire : jaune (#FFD54F)
-        set_groupbox_style([grammar_number_group, grammar_type_group, grammar_transfo_group], "#FFD54F")
+        grammar_groups = [self.grammar_number_group, self.grammar_type_group, self.grammar_transfo_group]
+        set_groupbox_style(grammar_groups, "#FFD54F")
         grammar_layout.addStretch()
 
         # --- Colonne Orthographe ---
         orthographe_layout = QVBoxLayout()
-        orthographe_title = QLabel("Orthographe")
-        orthographe_title.setStyleSheet("font-weight: bold; font-size: 20px; color: #FFB300; margin-bottom: 8px; margin-top: 0px;")
-        orthographe_layout.addWidget(orthographe_title)
+        self.orthographe_title_label = QLabel("Orthographe")
+        self.orthographe_title_label.setStyleSheet("font-weight: bold; font-size: 20px; color: #FFB300; margin-bottom: 8px; margin-top: 0px;")
+        orthographe_layout.addWidget(self.orthographe_title_label)
         orthographe_layout.setContentsMargins(5, 5, 5, 5)
         orthographe_layout.setSpacing(6)
         # Paramètres orthographe
-        orthographe_number_group = QGroupBox("Paramètres d'orthographe")
-        orthographe_number_layout = QVBoxLayout()
-        row = QHBoxLayout()
-        self.orthographe_ex_count_label = QLabel("Nombre d'exercices :")
-        self.orthographe_ex_count = QLineEdit()
-        self.orthographe_ex_count.setMaximumWidth(60)
-        row.addWidget(self.orthographe_ex_count_label)
-        row.addWidget(self.orthographe_ex_count)
-        orthographe_number_layout.addLayout(row)
-        orthographe_number_group.setLayout(orthographe_number_layout)
-        orthographe_layout.addWidget(orthographe_number_group)
+        ortho_param_fields = [("Nombre d'exercices :", "orthographe_ex_count", 60)]
+        self.orthographe_number_group, ortho_param_les, ortho_param_rows = self._create_generic_groupbox( # Clé: ortho_params
+            "Paramètres d'orthographe", ortho_param_fields
+        )
+        self.all_line_edits.extend(ortho_param_les)
+        self._all_row_widgets_for_map.update(ortho_param_rows)
+        orthographe_layout.addWidget(self.orthographe_number_group)
+
         # Section homophones
-        orthographe_homophone_group = QGroupBox("Homophones")
+        self.orthographe_homophone_group = QGroupBox("Homophones") # Clé: ortho_homophones
         orthographe_homophone_layout = QVBoxLayout()
+        # ... (checkboxes for homophones)
         self.homophone_a_checkbox = QCheckBox("a / à")
         self.homophone_et_checkbox = QCheckBox("et / est")
         self.homophone_on_checkbox = QCheckBox("on / ont")
@@ -435,60 +497,50 @@ class MainWindow(QMainWindow):
         ]
         for cb in self.orthographe_homophone_checkboxes:
             orthographe_homophone_layout.addWidget(cb)
-        orthographe_homophone_group.setLayout(orthographe_homophone_layout)
-        orthographe_layout.addWidget(orthographe_homophone_group)
+        self.orthographe_homophone_group.setLayout(orthographe_homophone_layout)
+        orthographe_layout.addWidget(self.orthographe_homophone_group)
         # Orthographe : orange foncé (#FFB300)
-        set_groupbox_style([orthographe_number_group, orthographe_homophone_group], "#FFB300")
+        ortho_groups = [self.orthographe_number_group, self.orthographe_homophone_group]
+        set_groupbox_style(ortho_groups, "#FFB300")
         orthographe_layout.addStretch()
 
         # --- Colonne Anglais ---
         english_layout = QVBoxLayout()
-        english_title = QLabel("Anglais")
-        english_title.setStyleSheet("font-weight: bold; font-size: 20px; color: #64B5F6; margin-bottom: 8px; margin-top: 0px;")
-        english_layout.addWidget(english_title)
+        self.english_title_label = QLabel("Anglais")
+        self.english_title_label.setStyleSheet("font-weight: bold; font-size: 20px; color: #64B5F6; margin-bottom: 8px; margin-top: 0px;")
+        english_layout.addWidget(self.english_title_label)
         english_layout.setContentsMargins(5, 5, 5, 5)
         english_layout.setSpacing(6)
         # Section 1 : Phrases à compléter
-        english_complete_group = QGroupBox("Phrases à compléter")
-        english_complete_layout = QVBoxLayout()
-        row = QHBoxLayout()
-        self.english_complete_count_label = QLabel("Nombre d'exercices :")
-        self.english_complete_count = QLineEdit()
-        self.english_complete_count.setMaximumWidth(60)
-        self.english_complete_count.setStyleSheet("color: black; background-color: white; font-size: 14px; border-radius: 4px; padding: 2px 6px;")
-        row.addWidget(self.english_complete_count_label)
-        row.addWidget(self.english_complete_count)
-        english_complete_layout.addLayout(row)
+        english_complete_fields = [("Nombre d'exercices :", "english_complete_count", 60)]
         self.english_type_simple = QCheckBox("Phrase à compléter simple")
         self.english_type_complexe = QCheckBox("Phrase à compléter complexe")
-        english_complete_layout.addWidget(self.english_type_simple)
-        english_complete_layout.addWidget(self.english_type_complexe)
-        english_complete_group.setLayout(english_complete_layout)
-        english_layout.addWidget(english_complete_group)
+        self.english_complete_group, english_complete_les, eng_comp_rows = self._create_generic_groupbox( # Clé: english_complete
+            "Phrases à compléter",
+            english_complete_fields,
+            extra_items=[self.english_type_simple, self.english_type_complexe]
+        )
+        self.all_line_edits.extend(english_complete_les)
+        self._all_row_widgets_for_map.update(eng_comp_rows)
+        english_layout.addWidget(self.english_complete_group)
+
         # Section 2 : Jeux à relier
-        english_relier_group = QGroupBox("Jeux à relier")
-        english_relier_layout = QVBoxLayout()
-        row = QHBoxLayout()
-        self.english_relier_count_label = QLabel("Nombre de jeux à relier :")
-        self.english_relier_count = QLineEdit()
-        self.english_relier_count.setMaximumWidth(60)
-        self.english_relier_count.setStyleSheet("color: black; background-color: white; font-size: 14px; border-radius: 4px; padding: 2px 6px;")
-        row.addWidget(self.english_relier_count_label)
-        row.addWidget(self.english_relier_count)
-        english_relier_layout.addLayout(row)
-        row = QHBoxLayout()
-        self.relier_count_label = QLabel("Nombre de mots par jeu :")
-        self.relier_count = QLineEdit()
-        self.relier_count.setMaximumWidth(60)
-        self.relier_count.setStyleSheet("color: black; background-color: white; font-size: 14px; border-radius: 4px; padding: 2px 6px;")
-        row.addWidget(self.relier_count_label)
-        row.addWidget(self.relier_count)
-        english_relier_layout.addLayout(row)
-        english_relier_group.setLayout(english_relier_layout)
-        english_layout.addWidget(english_relier_group)
+        english_relier_fields = [
+            ("Nombre de jeux à relier :", "english_relier_count", 60),
+            ("Nombre de mots par jeu :", "relier_count", 60)
+        ]
+        self.english_relier_group, english_relier_les, eng_rel_rows = self._create_generic_groupbox( # Clé: english_relier
+            "Jeux à relier", english_relier_fields
+        )
+        self.all_line_edits.extend(english_relier_les)
+        self._all_row_widgets_for_map.update(eng_rel_rows)
+        english_layout.addWidget(self.english_relier_group)
+
         # Anglais : bleu moyen (#64B5F6)
-        set_groupbox_style([english_complete_group, english_relier_group], "#64B5F6")
+        english_groups = [self.english_complete_group, self.english_relier_group]
+        set_groupbox_style(english_groups, "#64B5F6")
         english_layout.addStretch()
+
         # --- Splitter pour 6 colonnes ---
         calc_widget = QWidget(); calc_widget.setLayout(calc_layout); calc_widget.setMinimumWidth(270)
         geo_widget = QWidget(); geo_widget.setLayout(geo_layout); geo_widget.setMinimumWidth(270)
@@ -502,26 +554,131 @@ class MainWindow(QMainWindow):
         ortho_anglais_layout.setSpacing(0)
         ortho_anglais_layout.addWidget(orthographe_widget, alignment=Qt.AlignmentFlag.AlignTop)
         ortho_anglais_layout.addWidget(english_widget, alignment=Qt.AlignmentFlag.AlignTop)
-        ortho_anglais_widget = QWidget(); ortho_anglais_widget.setLayout(ortho_anglais_layout); ortho_anglais_widget.setMinimumWidth(270)
+        self.ortho_anglais_widget = QWidget(); self.ortho_anglais_widget.setLayout(ortho_anglais_layout); self.ortho_anglais_widget.setMinimumWidth(270) # Fait un attribut
         splitter = QSplitter(Qt.Orientation.Horizontal)
         splitter.addWidget(calc_widget)
         splitter.addWidget(geo_widget)
         splitter.addWidget(conj_widget)
-        splitter.addWidget(grammar_widget)
-        splitter.addWidget(ortho_anglais_widget)
-        splitter.setSizes([100, 100, 100, 100, 200])
+        splitter.addWidget(self.ortho_anglais_widget) # Ortho/Anglais en 4ème
+        splitter.addWidget(grammar_widget)           # Grammaire en 5ème
+        splitter.setSizes([100, 100, 100, 200, 100]) # Ajustement des tailles
         splitter.setStretchFactor(0, 1)
         splitter.setStretchFactor(1, 1)
         splitter.setStretchFactor(2, 1)
-        splitter.setStretchFactor(3, 1)
-        splitter.setStretchFactor(4, 2)
+        splitter.setStretchFactor(3, 2) # ortho_anglais_widget
+        splitter.setStretchFactor(4, 1) # grammar_widget
         main_layout.addWidget(splitter)
+
+        # --- Initialize exercise_widgets_map ---
+        # This map will store all controllable widgets with unique keys.
+        self.exercise_widgets_map = {
+            # Calculs
+            "enumerate_group": self.enumerate_group,
+            "enumerate_count_input": self.enumerate_count, "enumerate_digits_input": self.enumerate_digits,
+            "addition_group": self.addition_group,
+            "addition_count_input": self.addition_count, "addition_digits_input": self.addition_digits, "addition_decimals_input": self.addition_decimals,
+            "subtraction_group": self.subtraction_group,
+            "subtraction_count_input": self.subtraction_count, "subtraction_digits_input": self.subtraction_digits, "subtraction_decimals_input": self.subtraction_decimals,
+            "subtraction_negative_cb": self.subtraction_negative_checkbox,
+            "multiplication_group": self.multiplication_group,
+            "multiplication_count_input": self.multiplication_count, "multiplication_digits_input": self.multiplication_digits, "multiplication_decimals_input": self.multiplication_decimals,
+            "division_group": self.division_group,
+            "division_count_input": self.division_count, "division_digits_input": self.division_digits, "division_decimals_input": self.division_decimals,
+            "division_reste_cb": self.division_reste_checkbox,
+
+            # Mesures
+            "geo_conv_group": self.geo_conv_group,
+            "geo_ex_count_input": self.geo_ex_count,
+            "conv_type_longueur_cb": self.conv_type_longueur, "conv_type_masse_cb": self.conv_type_masse, "conv_type_volume_cb": self.conv_type_volume, "conv_type_temps_cb": self.conv_type_temps, "conv_type_monnaie_cb": self.conv_type_monnaie,
+            "conv_sens_direct_cb": self.conv_sens_direct, "conv_sens_inverse_cb": self.conv_sens_inverse,
+            
+            "geo_sort_group": self.sort_group,
+            "sort_count_input": self.sort_count, "sort_digits_input": self.sort_digits, "sort_n_numbers_input": self.sort_n_numbers,
+            "sort_type_croissant_cb": self.sort_type_croissant, "sort_type_decroissant_cb": self.sort_type_decroissant,
+
+            "geo_encadrement_group": self.encadrement_group,
+            "encadrement_count_input": self.encadrement_count, "encadrement_digits_input": self.encadrement_digits,
+            "encadrement_unite_cb": self.encadrement_unite, "encadrement_dizaine_cb": self.encadrement_dizaine, "encadrement_centaine_cb": self.encadrement_centaine, "encadrement_millier_cb": self.encadrement_millier,
+
+            # Conjugaison
+            "conj_params_group": self.conj_number_group, # Renamed for clarity from conj_number_group
+            "verbs_per_day_entry_input": self.verbs_per_day_entry,
+            "conj_groups_group": self.conj_group_group, # Renamed for clarity
+            "group_1_cb": self.group_1_checkbox, "group_2_cb": self.group_2_checkbox, "group_3_cb": self.group_3_checkbox, "usual_verbs_cb": self.usual_verbs_checkbox,
+            "conj_tenses_group": self.conj_tense_group, # Renamed for clarity
+            # Individual tense checkboxes
+            "tense_present_cb": self.tense_checkboxes[0] if len(self.tense_checkboxes) > 0 else None,
+            "tense_imparfait_cb": self.tense_checkboxes[1] if len(self.tense_checkboxes) > 1 else None,
+            "tense_passe_simple_cb": self.tense_checkboxes[2] if len(self.tense_checkboxes) > 2 else None,
+            "tense_futur_simple_cb": self.tense_checkboxes[3] if len(self.tense_checkboxes) > 3 else None,
+            "tense_passe_compose_cb": self.tense_checkboxes[4] if len(self.tense_checkboxes) > 4 else None,
+            "tense_plus_que_parfait_cb": self.tense_checkboxes[5] if len(self.tense_checkboxes) > 5 else None,
+            "tense_conditionnel_present_cb": self.tense_checkboxes[6] if len(self.tense_checkboxes) > 6 else None,
+            "tense_imperatif_present_cb": self.tense_checkboxes[7] if len(self.tense_checkboxes) > 7 else None,
+            # Add more if TENSES list grows, ensure TENSES order matches these keys in EXERCISES_BY_LEVEL_INCREMENTAL
+
+            # Grammaire
+            "grammar_params_group": self.grammar_number_group, # Renamed for clarity
+            "grammar_sentence_count_input": self.grammar_sentence_count,
+            "grammar_types_group": self.grammar_type_group,
+            "intransitive_cb": self.intransitive_checkbox, "transitive_direct_cb": self.transitive_direct_checkbox, "transitive_indirect_cb": self.transitive_indirect_checkbox, "ditransitive_cb": self.ditransitive_checkbox,
+            "grammar_transfo_group": self.grammar_transfo_group,
+            # Individual transformation checkboxes (key based on transformation text for simplicity, ensure no special chars or make them safe)
+            "transfo_singulier_pluriel_cb": self.transfo_checkboxes[0] if len(self.transfo_checkboxes) > 0 else None,
+            "transfo_masculin_feminin_cb": self.transfo_checkboxes[1] if len(self.transfo_checkboxes) > 1 else None,
+            "transfo_present_passe_compose_cb": self.transfo_checkboxes[2] if len(self.transfo_checkboxes) > 2 else None,
+            "transfo_present_imparfait_cb": self.transfo_checkboxes[3] if len(self.transfo_checkboxes) > 3 else None,
+            "transfo_present_futur_simple_cb": self.transfo_checkboxes[4] if len(self.transfo_checkboxes) > 4 else None,
+            "transfo_indicatif_imperatif_cb": self.transfo_checkboxes[5] if len(self.transfo_checkboxes) > 5 else None,
+            "transfo_voix_active_passive_cb": self.transfo_checkboxes[6] if len(self.transfo_checkboxes) > 6 else None,
+            "transfo_declarative_interrogative_cb": self.transfo_checkboxes[7] if len(self.transfo_checkboxes) > 7 else None,
+            "transfo_declarative_exclamative_cb": self.transfo_checkboxes[8] if len(self.transfo_checkboxes) > 8 else None,
+            "transfo_declarative_imperative_cb": self.transfo_checkboxes[9] if len(self.transfo_checkboxes) > 9 else None,
+            "transfo_affirmative_negative_cb": self.transfo_checkboxes[10] if len(self.transfo_checkboxes) > 10 else None,
+
+            # Orthographe
+            "ortho_params_group": self.orthographe_number_group, # Renamed for clarity
+            "orthographe_ex_count_input": self.orthographe_ex_count,
+            "ortho_homophones_group": self.orthographe_homophone_group,
+            "homophone_a_cb": self.homophone_a_checkbox, "homophone_et_cb": self.homophone_et_checkbox, "homophone_on_cb": self.homophone_on_checkbox, "homophone_son_cb": self.homophone_son_checkbox,
+            "homophone_ce_cb": self.homophone_ce_checkbox, "homophone_ou_cb": self.homophone_ou_checkbox, "homophone_ces_cb": self.homophone_ces_checkbox, "homophone_mes_cb": self.homophone_mes_checkbox,
+
+            # Anglais
+            "english_complete_group": self.english_complete_group,
+            "english_complete_count_input": self.english_complete_count,
+            "english_type_simple_cb": self.english_type_simple, "english_type_complexe_cb": self.english_type_complexe,
+            "english_relier_group": self.english_relier_group,
+            "english_relier_count_input": self.english_relier_count, "relier_count_input": self.relier_count,
+        }
+        # Remove None values from map (if checkboxes lists were shorter than expected)
+        self.exercise_widgets_map = {k: v for k, v in self.exercise_widgets_map.items() if v is not None}
+        # Ajouter les row_widgets stockés
+        self.exercise_widgets_map.update(self._all_row_widgets_for_map)
+        del self._all_row_widgets_for_map # Nettoyer le dictionnaire temporaire
+
+        # --- Column Titles and Sections Mapping (for hiding titles of empty columns) ---
+        self.column_title_widgets = {
+            "calc": self.calc_title_label,
+            "geo": self.geo_title_label,
+            "conj": self.conj_title_label,
+            "grammar": self.grammar_title_label,
+            "ortho": self.orthographe_title_label,
+            "english": self.english_title_label,
+        }
+        self.column_section_keys = { # Maps column key to list of its main section group keys
+            "calc": ["enumerate_group", "addition_group", "subtraction_group", "multiplication_group", "division_group"],
+            "geo": ["geo_conv_group", "geo_sort_group", "geo_encadrement_group"],
+            "conj": ["conj_params_group", "conj_groups_group", "conj_tenses_group"],
+            "grammar": ["grammar_params_group", "grammar_types_group", "grammar_transfo_group"],
+            "ortho": ["ortho_params_group", "ortho_homophones_group"],
+            "english": ["english_complete_group", "english_relier_group"],
+        }
 
         # Séparateur avant les contrôles de fichier/génération
         sep_bottom = QFrame()
         sep_bottom.setFrameShape(QFrame.Shape.HLine)
         sep_bottom.setFrameShadow(QFrame.Shadow.Sunken)
-        sep_bottom.setStyleSheet("border-top: 1px solid #505050;") # Couleur pour le séparateur
+        sep_bottom.setStyleSheet("border-top: 3px solid #505050;") # Couleur pour le séparateur
         main_layout.addWidget(sep_bottom)
 
         # Bandeau bas : boutons générer + nom du fichier sur la même ligne
@@ -529,20 +686,24 @@ class MainWindow(QMainWindow):
 
         # Partie gauche pour chemin et nom de fichier
         left_file_controls_layout = QGridLayout()
-        self.output_path_button = QPushButton("Dossier ...")
+        self.output_path_button = QPushButton("Choisir dossier...")
         # Style sera appliqué plus bas avec les autres boutons
         self.output_path_button.clicked.connect(self.select_output_directory)
-        self.output_path_display_label = QLabel("Dossier : output/") # Affichage du chemin
+        self.output_path_display_label = QLabel() # Le texte sera défini par _update_output_path_display
         self.output_path_display_label.setWordWrap(True)
         self.output_path_display_label.setMinimumWidth(200) # Réduit un peu pour faire de la place
-        self.output_path_display_label.setStyleSheet("font-style: italic; color: #B0BEC5;")
+        # Style initial sera défini dans _update_output_path_display
 
         self.filename_label = QLabel("Nom du fichier :")
         self.filename_label.setStyleSheet("font-weight: bold; font-size: 14px;")
         self.filename_entry = QLineEdit()
         self.filename_entry.setMinimumWidth(150) # Donne une largeur minimale
-        self.filename_entry.setMaximumWidth(200)
-        self.filename_entry.setText("workbook")        
+        self.filename_entry.setMaximumWidth(200)        
+        self.all_line_edits.append(self.filename_entry) # Ajouter à la liste pour stylage
+        self.filename_entry.setText("workbook")
+
+        # Initialiser l'affichage du chemin de sortie
+        self._update_output_path_display(self.selected_output_path)       
 
         # Layout horizontal pour tous les contrôles de fichier
         file_controls_line_layout = QHBoxLayout()
@@ -595,8 +756,8 @@ class MainWindow(QMainWindow):
                 background-color: #78909C; /* Blue Grey */
                 color: white;
                 font-weight: bold;
-                font-size: 16px;
-                padding: 8px 15px; /* Taille réduite */
+                font-size: 16px; /* Uniformisé */
+                padding: 8px 20px; /* Uniformisé */
                 border-radius: 8px;
             }
             QPushButton:disabled {
@@ -607,30 +768,36 @@ class MainWindow(QMainWindow):
                 background-color: #546E7A;
             }
         """
-        self.output_path_button.setStyleSheet(preview_btn_style) # Appliquer le style ici
-        self.output_path_button.setMinimumWidth(100) # Pour que "Dossier..." soit visible
+        self.output_path_button.setStyleSheet(preview_btn_style) 
+        # self.output_path_button.setFixedWidth(150) # Suppression de la largeur fixe
+
         left_file_controls_layout.addLayout(file_controls_line_layout, 0, 0, 1, 2) # Ajout du layout de ligne
         # Partie droite pour les boutons
         action_buttons_layout = QHBoxLayout()
         self.generate_pdf_button = QPushButton("Générer PDF")
         self.generate_pdf_button.setStyleSheet(pdf_btn_style)
         self.generate_pdf_button.clicked.connect(self.generate_pdf)
+        # self.generate_pdf_button.setFixedWidth(150) # Suppression de la largeur fixe
         action_buttons_layout.addWidget(self.generate_pdf_button)
 
         self.generate_word_button = QPushButton("Générer Word")
         self.generate_word_button.setStyleSheet(word_btn_style)
         self.generate_word_button.clicked.connect(self.generate_word)
+        # self.generate_word_button.setFixedWidth(150) # Suppression de la largeur fixe
         action_buttons_layout.addWidget(self.generate_word_button)
 
         self.preview_pdf_button = QPushButton("Prévisualiser PDF")
         self.preview_pdf_button.setStyleSheet(preview_btn_style)
         self.preview_pdf_button.clicked.connect(self.preview_pdf)
+        # self.preview_pdf_button.setFixedWidth(150) # Suppression de la largeur fixe
         action_buttons_layout.addWidget(self.preview_pdf_button)
 
         self.preview_word_button = QPushButton("Prévisualiser Word")
         self.preview_word_button.setStyleSheet(preview_btn_style)
         self.preview_word_button.clicked.connect(self.preview_word)
+        # self.preview_word_button.setFixedWidth(150) # Suppression de la largeur fixe
         action_buttons_layout.addWidget(self.preview_word_button)
+
         action_buttons_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
 
         bottom_controls_layout.addLayout(action_buttons_layout)
@@ -638,22 +805,12 @@ class MainWindow(QMainWindow):
 
         # Correction du style pour les QLineEdit (texte noir sur fond sombre)
         lineedit_style = "color: black; background-color: white; font-size: 14px; border-radius: 4px; padding: 2px 6px;"
-        for le in [self.days_entry, self.enumerate_count, self.enumerate_digits, self.sort_count, self.sort_digits, self.sort_n_numbers,
-                   self.addition_count, self.addition_digits, self.addition_decimals,
-                   self.subtraction_count, self.subtraction_digits, self.subtraction_decimals,
-                   self.multiplication_count, self.multiplication_digits, self.multiplication_decimals, # self.output_path_entry est retiré
-                   self.division_count, self.division_digits, self.division_decimals, self.verbs_per_day_entry,
-                   self.grammar_sentence_count, self.geo_ex_count, self.english_complete_count, self.english_relier_count, self.orthographe_ex_count,
-                   self.filename_entry]:
-            le.setStyleSheet(lineedit_style)
+        for le in self.all_line_edits:
+            if le: # S'assurer que le widget existe
+                le.setStyleSheet(lineedit_style)
 
-        # Style pour les labels
-        label_style = "color: #e0e0e0; font-size: 14px; font-weight: normal;"
-        for layout in [addition_layout, subtraction_layout, multiplication_layout, division_layout]:
-            for i in range(layout.count()):
-                item = layout.itemAt(i).widget()
-                if isinstance(item, QLabel):
-                    item.setStyleSheet(label_style)
+        # Le style des labels est maintenant appliqué dans _create_input_row
+        # La boucle de style pour les labels est donc supprimée.
 
         # Chargement de la configuration si elle existe
         def get_config_path():
@@ -730,23 +887,145 @@ class MainWindow(QMainWindow):
             ('encadrement_dizaine', self.encadrement_dizaine, 'checked'),
             ('encadrement_centaine', self.encadrement_centaine, 'checked'),
             ('encadrement_millier', self.encadrement_millier, 'checked'),
+            ('current_level', self, 'level_variable'), # Ajout pour sauvegarder le niveau
         ]
         self.load_config()
+        self.update_exercise_visibility() # Set initial visibility based on loaded config (or default)
+
+        # Charger la configuration des conversions
+        self.conversion_config_data = {}
+        try:
+            from conversion_generator import CONVERSION_DATA as cg_conversion_data # Importer les données déjà chargées
+            self.conversion_config_data = cg_conversion_data
+        except ImportError:
+            print("Avertissement: Impossible de charger CONVERSION_DATA depuis conversion_generator.")
+        except Exception as e:
+            print(f"Erreur lors du chargement initial des données de conversion: {e}")
 
         self.days_entry.textChanged.connect(self.validate_days_entry)
 
+    @staticmethod
+    def darken_color(hex_color, factor=0.8):
+        color = QColor(hex_color)
+        r = max(0, min(255, int(color.red() * factor)))
+        g = max(0, min(255, int(color.green() * factor)))
+        b = max(0, min(255, int(color.blue() * factor)))
+        return QColor(r, g, b).name()
+
+
         # --- Début des méthodes ---
+
+    def _create_input_row(self, label_text, max_width=60):
+        """Crée une ligne QHBoxLayout avec un QLabel et un QLineEdit."""
+        # Le widget conteneur pour la ligne entière
+        row_widget = QWidget()
+        row_layout = QHBoxLayout(row_widget) # Appliquer le layout au widget
+        row_layout.setContentsMargins(0,0,0,0) # Pas de marges internes pour le layout de la ligne
+        row_layout.setSpacing(5) # Espacement entre label et line_edit
+
+        label = QLabel(label_text)
+        label.setStyleSheet("color: #e0e0e0; font-size: 14px; font-weight: normal;") # Style des labels
+        row_layout.addWidget(label)
+
+        line_edit = QLineEdit()
+        line_edit.setMaximumWidth(max_width)
+        # Le style des QLineEdit sera appliqué globalement via self.all_line_edits
+        row_layout.addWidget(line_edit)
+        return row_widget, line_edit # Retourner le widget conteneur et le line_edit
+
+    def _create_generic_groupbox(self, title, fields_config, extra_items=None):
+        """
+        Crée un QGroupBox avec des champs de saisie et des éléments supplémentaires optionnels.
+        fields_config: liste de tuples (label_text, line_edit_attr_name, max_width)
+        extra_items: liste de QWidget ou QLayout à ajouter à la fin.
+        Retourne le QGroupBox, une liste des QLineEdit créés, et un dict des row_widgets créés.
+        """
+        group_box = QGroupBox(title)
+        group_layout = QVBoxLayout()
+        line_edits_created = []
+        row_widgets_for_map_part = {} # Spécifique à cet appel
+
+        for label_text, line_edit_attr_name, max_width_val in fields_config:
+            row_widget, line_edit = self._create_input_row(label_text, max_width_val) # row_widget est le QWidget de la ligne
+            group_layout.addWidget(row_widget)
+            setattr(self, line_edit_attr_name, line_edit)
+            line_edits_created.append(line_edit)
+            # Stocker le row_widget pour l'ajouter plus tard à exercise_widgets_map
+            # Clé pour le QLineEdit dans exercise_widgets_map: "{line_edit_attr_name}_input"
+            # Clé pour le row_widget dans exercise_widgets_map: "{line_edit_attr_name}_row"
+            row_widgets_for_map_part[f"{line_edit_attr_name}_row"] = row_widget
+
+        if extra_items:
+            for item in extra_items:
+                if isinstance(item, QLayout): group_layout.addLayout(item)
+                elif isinstance(item, QWidget): group_layout.addWidget(item)
+        group_box.setLayout(group_layout)
+        return group_box, line_edits_created, row_widgets_for_map_part
 
     def select_output_directory(self):
         directory = QFileDialog.getExistingDirectory(self, "Choisir le dossier de sortie", self.selected_output_path or os.getcwd())
         if directory:
             self.selected_output_path = os.path.normpath(directory) # Normaliser le chemin
-            self.output_path_display_label.setText(f"Dossier de sortie : {directory}")
-            self.output_path_display_label.setStyleSheet("font-style: normal; color: #E0E0E0;") # Style normal si chemin choisi
-        elif not self.selected_output_path: # Si l'utilisateur annule et qu'aucun chemin n'était défini
-            self.output_path_display_label.setText("Dossier de sortie : output/")
-            self.output_path_display_label.setStyleSheet("font-style: italic; color: #B0BEC5;")
+        self._update_output_path_display(self.selected_output_path)
 
+    def select_level(self, level_name, clicked_button):
+        # 1. Gérer la sélection/désélection de self.current_level et self.current_selected_level_button
+        if self.current_level == level_name: # Clicked on already selected level
+            self.current_level = None # Deselect
+            self.current_selected_level_button = None
+        else:
+            self.current_level = level_name
+            self.current_selected_level_button = clicked_button
+
+        # 2. Mettre à jour les styles et l'opacité de TOUS les boutons de niveau
+        for ln_iter, btn_iter in self.level_buttons.items():
+            original_color_hex = self.LEVEL_COLORS[ln_iter]
+            hover_color = self.darken_color(original_color_hex, 0.95)
+            pressed_color = self.darken_color(original_color_hex, 0.85)
+            border_c = self.darken_color(original_color_hex, 0.7)
+
+            is_currently_iter_selected_button = (btn_iter == self.current_selected_level_button)
+            btn_iter.setProperty("selected", is_currently_iter_selected_button)
+
+            # Appliquer le style de base (qui réagit à la propriété "selected")
+            style_str = self.BASE_LEVEL_BUTTON_STYLE.format(
+                bg_color=original_color_hex,
+                hover_bg_color=hover_color,
+                pressed_bg_color=pressed_color,
+                border_color=border_c
+            )
+            btn_iter.setStyleSheet(style_str)
+            # Forcer la réévaluation du style pour que la propriété "selected" soit prise en compte
+            btn_iter.style().unpolish(btn_iter)
+            btn_iter.style().polish(btn_iter)
+            btn_iter.update() # Forcer un rafraîchissement visuel immédiat
+
+            # Gérer l'opacité
+            opacity_effect = btn_iter.graphicsEffect()
+            if not isinstance(opacity_effect, QGraphicsOpacityEffect): # S'il n'y a pas d'effet ou si ce n'est pas le bon type
+                if opacity_effect: # Supprimer un ancien effet d'un autre type si existant
+                    opacity_effect.deleteLater()
+                opacity_effect = QGraphicsOpacityEffect(btn_iter) 
+                btn_iter.setGraphicsEffect(opacity_effect)
+            
+            if is_currently_iter_selected_button or not self.current_selected_level_button:
+                # Si c'est le bouton sélectionné OU si aucun bouton n'est sélectionné (tout est actif)
+                opacity_effect.setOpacity(1.0) # Pleinement opaque
+            else:
+                # Ce n'est pas le bouton sélectionné, ET un autre bouton EST sélectionné -> griser celui-ci
+                opacity_effect.setOpacity(0.55) # Valeur pour griser
+
+        # QTimer pour s'assurer que les mises à jour de style sont appliquées après le traitement des événements
+        QTimer.singleShot(0, self._refresh_level_button_styles)
+
+        print(f"Niveau sélectionné : {self.current_level}")
+        self.update_exercise_visibility()
+
+    def _refresh_level_button_styles(self):
+        for btn_iter in self.level_buttons.values():
+            btn_iter.style().unpolish(btn_iter)
+            btn_iter.style().polish(btn_iter)
+            btn_iter.update()
 
     def get_int(self, lineedit, default=0, field_name=None):
         value = lineedit.text().strip()
@@ -777,6 +1056,11 @@ class MainWindow(QMainWindow):
             from conversion_generator import generate_conversion_exercises
             from anglais_generator import PHRASES_SIMPLES, PHRASES_COMPLEXES, MOTS_A_RELIER
 
+            print(f"EduForge.build_exercise_data: self.current_level is {self.current_level} at start.") # Debug print
+
+            # Get allowed keys for the current level
+            allowed_keys = self.get_exercises_for_level(self.current_level)
+
             # Génération des exercices d'encadrement
             encadrement_count = self.get_int(self.encadrement_count, field_name="Encadrement - nombre d'exercices")
             encadrement_digits = self.get_int(self.encadrement_digits, field_name="Encadrement - chiffres par nombre")
@@ -789,6 +1073,10 @@ class MainWindow(QMainWindow):
                 encadrement_types.append("centaine")
             if self.encadrement_millier.isChecked():
                 encadrement_types.append("millier")
+            
+            # Filter encadrement based on level visibility
+            if "geo_encadrement_group" not in allowed_keys:
+                encadrement_count = 0
             encadrement_exercises = {
                 'count': encadrement_count,
                 'digits': encadrement_digits,
@@ -798,9 +1086,9 @@ class MainWindow(QMainWindow):
             # Génération des exercices anglais (phrases à compléter + jeux à relier)
             from anglais_generator import generate_english_full_exercises
             english_types = self.get_selected_english_types()
-            n_complete = self.get_int(self.english_complete_count)
-            n_relier = self.get_int(self.english_relier_count)
-            n_mots_reliés = self.get_int(self.relier_count)
+            n_complete = self.get_int(self.english_complete_count) if "english_complete_group" in allowed_keys else 0
+            n_relier = self.get_int(self.english_relier_count) if "english_relier_group" in allowed_keys else 0
+            n_mots_reliés = self.get_int(self.relier_count) if "english_relier_group" in allowed_keys else 0
             english_exercises = []
             n_days = self.get_int(self.days_entry)
             for _ in range(n_days):
@@ -808,61 +1096,117 @@ class MainWindow(QMainWindow):
                     generate_english_full_exercises(english_types, n_complete, n_relier, n_mots_reliés)
                 )
 
+            # Ranger les nombres - Logique améliorée
+            sort_count_val = self.get_int(self.sort_count, field_name="Ranger - nombre d'exercices") if "geo_sort_group" in allowed_keys else 0
+            is_croissant_selected = self.sort_type_croissant.isChecked() if "sort_type_croissant_cb" in allowed_keys else False
+            is_decroissant_selected = self.sort_type_decroissant.isChecked() if "sort_type_decroissant_cb" in allowed_keys else False
+
+            if not is_croissant_selected and not is_decroissant_selected: # Si aucun type de tri n'est sélectionné
+                sort_count_val = 0
+
             params = {
                 # Enumérer un nombre
-                'enumerate_count': self.get_int(self.enumerate_count, field_name="Enumérer - nombre d'exercices"),
-                'enumerate_digits': self.get_int(self.enumerate_digits, field_name="Enumérer - chiffres par nombre"),
+                'enumerate_count': self.get_int(self.enumerate_count, field_name="Enumérer - nombre d'exercices") if "enumerate_group" in allowed_keys else 0,
+                'enumerate_digits': self.get_int(self.enumerate_digits, field_name="Enumérer - chiffres par nombre") if "enumerate_group" in allowed_keys else 0,
                 # Ranger les nombres
-                'sort_count': self.get_int(self.sort_count, field_name="Ranger - nombre d'exercices"),
-                'sort_digits': self.get_int(self.sort_digits, field_name="Ranger - chiffres par nombre"),
-                'sort_n_numbers': self.get_int(self.sort_n_numbers, field_name="Ranger - nombres à ranger"),
-                'sort_type_croissant': self.sort_type_croissant.isChecked(),
-                'sort_type_decroissant': self.sort_type_decroissant.isChecked(),
+                'sort_count': sort_count_val,
+                'sort_digits': self.get_int(self.sort_digits, field_name="Ranger - chiffres par nombre") if "geo_sort_group" in allowed_keys and sort_count_val > 0 else 0,
+                'sort_n_numbers': self.get_int(self.sort_n_numbers, field_name="Ranger - nombres à ranger") if "geo_sort_group" in allowed_keys and sort_count_val > 0 else 0,
+                'sort_type_croissant': is_croissant_selected,
+                'sort_type_decroissant': is_decroissant_selected,
                 'days': self.get_int(self.days_entry, field_name="Nombre de jours"),
-                'relier_count': self.get_int(self.relier_count, field_name="Anglais - nombre de mots à relier"),
-                'addition_count': self.get_int(self.addition_count, field_name="Addition - nombre de calculs"),
-                'addition_digits': self.get_int(self.addition_digits, field_name="Addition - chiffres"),
-                'addition_decimals': self.get_int(self.addition_decimals, field_name="Addition - décimales"),
-                'subtraction_count': self.get_int(self.subtraction_count, field_name="Soustraction - nombre de calculs"),
-                'subtraction_digits': self.get_int(self.subtraction_digits, field_name="Soustraction - chiffres"),
-                'subtraction_decimals': self.get_int(self.subtraction_decimals, field_name="Soustraction - décimales"),
-                'subtraction_negative': self.subtraction_negative_checkbox.isChecked(),
-                'multiplication_count': self.get_int(self.multiplication_count, field_name="Multiplication - nombre de calculs"),
-                'multiplication_digits': self.get_int(self.multiplication_digits, field_name="Multiplication - chiffres"),
-                'multiplication_decimals': self.get_int(self.multiplication_decimals, field_name="Multiplication - décimales"),
-                'division_count': self.get_int(self.division_count, field_name="Division - nombre de calculs"),
-                'division_digits': self.get_int(self.division_digits, field_name="Division - chiffres"),
-                'division_decimals': self.get_int(self.division_decimals, field_name="Division - décimales"),
-                'division_reste': self.division_reste_checkbox.isChecked(),
-                'conjugation_groups': [g for g, cb in zip([1,2,3], [self.group_1_checkbox, self.group_2_checkbox, self.group_3_checkbox]) if cb.isChecked()],
-                'conjugation_usual': self.usual_verbs_checkbox.isChecked(),
+                'relier_count': n_mots_reliés, # Already filtered based on english_relier_group
+                'addition_count': self.get_int(self.addition_count, field_name="Addition - nombre de calculs") if "addition_group" in allowed_keys else 0,
+                'addition_digits': self.get_int(self.addition_digits, field_name="Addition - chiffres") if "addition_group" in allowed_keys else 0,
+                'addition_decimals': self.get_int(self.addition_decimals, field_name="Addition - décimales") if "addition_decimals_input" in allowed_keys else 0,
+                'subtraction_count': self.get_int(self.subtraction_count, field_name="Soustraction - nombre de calculs") if "subtraction_group" in allowed_keys else 0,
+                'subtraction_digits': self.get_int(self.subtraction_digits, field_name="Soustraction - chiffres") if "subtraction_group" in allowed_keys else 0,
+                'subtraction_decimals': self.get_int(self.subtraction_decimals, field_name="Soustraction - décimales") if "subtraction_decimals_input" in allowed_keys else 0,
+                'subtraction_negative': self.subtraction_negative_checkbox.isChecked() if "subtraction_negative_cb" in allowed_keys else False,
+                'multiplication_count': self.get_int(self.multiplication_count, field_name="Multiplication - nombre de calculs") if "multiplication_group" in allowed_keys else 0,
+                'multiplication_digits': self.get_int(self.multiplication_digits, field_name="Multiplication - chiffres") if "multiplication_group" in allowed_keys else 0,
+                'multiplication_decimals': self.get_int(self.multiplication_decimals, field_name="Multiplication - décimales") if "multiplication_decimals_input" in allowed_keys else 0,
+                'division_count': self.get_int(self.division_count, field_name="Division - nombre de calculs") if "division_group" in allowed_keys else 0,
+                'division_digits': self.get_int(self.division_digits, field_name="Division - chiffres") if "division_group" in allowed_keys else 0,
+                'division_decimals': self.get_int(self.division_decimals, field_name="Division - décimales") if "division_decimals_input" in allowed_keys else 0,
+                'division_reste': self.division_reste_checkbox.isChecked() if "division_reste_cb" in allowed_keys else False,
                 'TENSES': TENSES,
-                'conjugation_tenses': [tense for tense, cb in zip(TENSES, self.tense_checkboxes) if cb.isChecked()],
-                'verbs_per_day': self.get_int(self.verbs_per_day_entry, field_name="Verbes par jour"),
                 'VERBS': VERBS,
-                'grammar_sentence_count': self.get_int(self.grammar_sentence_count, field_name="Grammaire - nombre de phrases"),
-                'grammar_types': [t for t, cb in zip(['intransitive', 'transitive_direct', 'transitive_indirect', 'ditransitive'], [self.intransitive_checkbox, self.transitive_direct_checkbox, self.transitive_indirect_checkbox, self.ditransitive_checkbox]) if cb.isChecked()],
-                'grammar_transformations': [t.text() for t in self.transfo_checkboxes if t.isChecked()],
+                'grammar_sentence_count': self.get_int(self.grammar_sentence_count, field_name="Grammaire - nombre de phrases") if "grammar_params_group" in allowed_keys else 0,
+                'grammar_types': [t_name for t_name, cb_key, cb_widget in zip(['intransitive', 'transitive_direct', 'transitive_indirect', 'ditransitive'], ["intransitive_cb", "transitive_direct_cb", "transitive_indirect_cb", "ditransitive_cb"], [self.intransitive_checkbox, self.transitive_direct_checkbox, self.transitive_indirect_checkbox, self.ditransitive_checkbox]) if cb_key in allowed_keys and cb_widget.isChecked()],
                 'get_random_phrases': get_random_phrases,
                 'get_random_transformation': get_random_transformation,
                 'generate_conversion_exercises': generate_conversion_exercises,
-                'geo_ex_count': self.get_int(self.geo_ex_count, field_name="Géométrie/mesures - nombre d'exercices"),
-                'geo_types': self.get_selected_conversion_types(),
-                'geo_senses': self.get_selected_conversion_senses(),
-                'english_types': self.get_selected_english_types(),
+                'geo_ex_count': self.get_int(self.geo_ex_count, field_name="Géométrie/mesures - nombre d'exercices") if "geo_conv_group" in allowed_keys else 0,
+                'geo_types': [label for cb, label, cb_key in zip(self.geo_conv_type_checkboxes, ['longueur', 'masse', 'volume', 'temps', 'monnaie'], ["conv_type_longueur_cb", "conv_type_masse_cb", "conv_type_volume_cb", "conv_type_temps_cb", "conv_type_monnaie_cb"]) if cb_key in allowed_keys and cb.isChecked()],
+                'geo_senses': [sense for sense, cb_key, cb_widget in zip(['direct', 'inverse'], ["conv_sens_direct_cb", "conv_sens_inverse_cb"], [self.conv_sens_direct, self.conv_sens_inverse]) if cb_key in allowed_keys and cb_widget.isChecked()],
+                'english_types': [etype for etype, cb_key, cb_widget in zip(['simple', 'complexe'], ["english_type_simple_cb", "english_type_complexe_cb"], [self.english_type_simple, self.english_type_complexe]) if cb_key in allowed_keys and cb_widget.isChecked()],
                 'PHRASES_SIMPLES': PHRASES_SIMPLES,
                 'PHRASES_COMPLEXES': PHRASES_COMPLEXES,
                 'MOTS_A_RELIER': MOTS_A_RELIER,
                 # Anglais
-                'english_complete_count': self.get_int(self.english_complete_count, field_name="Anglais - phrases à compléter - nombre d'exercices"),
-                'english_relier_count': self.get_int(self.english_relier_count, field_name="Anglais - jeux à relier - nombre de jeux"),
+                'english_complete_count': n_complete, # Already filtered
+                'english_relier_count': n_relier,     # Already filtered
                 # Orthographe
-                'orthographe_ex_count': self.get_int(self.orthographe_ex_count, field_name="Orthographe - nombre d'exercices"),
-                'orthographe_homophones': [cb.text() for cb in self.orthographe_homophone_checkboxes if cb.isChecked()],
+                'orthographe_ex_count': self.get_int(self.orthographe_ex_count, field_name="Orthographe - nombre d'exercices") if "ortho_params_group" in allowed_keys else 0,
                 # Encadrement
                 'encadrement_exercises': encadrement_exercises,
+                'current_level_for_conversions': self.current_level # Ajout DU NIVEAU ICI
             }
+
+            verbs_per_day_val = self.get_int(self.verbs_per_day_entry, field_name="Verbes par jour") if "conj_params_group" in allowed_keys else 0
+
+            # Construction corrigée pour conjugation_tenses
+            conjugation_tenses_list = []
+            for i, tense_cb_widget in enumerate(self.tense_checkboxes):
+                tense_cb_key = None
+                for map_key, map_widget in self.exercise_widgets_map.items():
+                    if map_widget == tense_cb_widget:
+                        tense_cb_key = map_key
+                        break
+                if tense_cb_key and tense_cb_key in allowed_keys and tense_cb_widget.isChecked():
+                    conjugation_tenses_list.append(TENSES[i])
+            params['conjugation_tenses'] = conjugation_tenses_list
+            
+            # Groupes de conjugaison et verbes usuels
+            conjugation_groups_selected = [g for g, cb_key, cb_widget in zip([1,2,3], ["group_1_cb", "group_2_cb", "group_3_cb"], [self.group_1_checkbox, self.group_2_checkbox, self.group_3_checkbox]) if cb_key in allowed_keys and cb_widget.isChecked()]
+            is_usual_verbs_selected = self.usual_verbs_checkbox.isChecked() if "usual_verbs_cb" in allowed_keys else False
+            params['conjugation_groups'] = conjugation_groups_selected
+            params['conjugation_usual'] = is_usual_verbs_selected
+
+            if not conjugation_tenses_list or (not conjugation_groups_selected and not is_usual_verbs_selected):
+                verbs_per_day_val = 0 # Ne pas générer si pas de temps OU (pas de groupe ET pas d'usuels)
+            params['verbs_per_day'] = verbs_per_day_val
+            # Construction corrigée pour grammar_transformations
+            grammar_transformations_list = []
+            for transfo_cb_widget in self.transfo_checkboxes:
+                transfo_cb_key = None
+                for map_key, map_widget in self.exercise_widgets_map.items():
+                    if map_widget == transfo_cb_widget:
+                        transfo_cb_key = map_key
+                        break
+                if transfo_cb_key and transfo_cb_key in allowed_keys and transfo_cb_widget.isChecked():
+                    grammar_transformations_list.append(transfo_cb_widget.text())
+            params['grammar_transformations'] = grammar_transformations_list
+
+            # Construction corrigée pour orthographe_homophones
+            orthographe_homophones_list = []
+            for ortho_cb_widget in self.orthographe_homophone_checkboxes:
+                ortho_cb_key = None
+                for map_key, map_widget in self.exercise_widgets_map.items():
+                    if map_widget == ortho_cb_widget:
+                        ortho_cb_key = map_key
+                        break
+                if ortho_cb_key and ortho_cb_key in allowed_keys and ortho_cb_widget.isChecked():
+                    orthographe_homophones_list.append(ortho_cb_widget.text())
+            params['orthographe_homophones'] = orthographe_homophones_list
+
+            print(f"EduForge.build_exercise_data: Calling ExerciseDataBuilder.build with params['current_level_for_conversions'] = {params.get('current_level_for_conversions')}") # Debug print
             result = ExerciseDataBuilder.build(params)
+            if result is None:
+                # Si ExerciseDataBuilder.build retourne None, on ne peut pas continuer.
+                print("Erreur critique : ExerciseDataBuilder.build n'a pas pu construire les données d'exercices.")
+                return None
             result['encadrement_exercises'] = encadrement_exercises
             result['english_exercises'] = english_exercises
             return result
@@ -1020,6 +1364,8 @@ class MainWindow(QMainWindow):
                 config[name] = widget.isChecked()
             elif mode == 'checked_list':
                 config[name] = [cb.isChecked() for cb in widget]
+            elif mode == 'level_variable': # 'widget' est self (MainWindow) ici
+                config[name] = widget.current_level # Sauvegarde le nom du niveau actuel
             elif mode == 'path_variable':
                 config[name] = self.selected_output_path # Sauvegarde la variable directement
         try:
@@ -1040,30 +1386,74 @@ class MainWindow(QMainWindow):
         try:
             with open(self.config_path, 'r', encoding='utf-8') as f:
                 config = json.load(f)
-            for name, widget, mode in self.config_fields:
+            for name, widget_ref, mode in self.config_fields: # widget_ref est le widget/objet stocké dans config_fields
                 if name not in config:
                     continue
                 if mode == 'text':
-                    widget.setText(config.get(name, ''))
+                    widget_ref.setText(config.get(name, ''))
                 elif mode == 'checked':
-                    widget.setChecked(config.get(name, False))
+                    widget_ref.setChecked(config.get(name, False))
                 elif mode == 'checked_list':
-                    states = config.get(name, [False]*len(widget))
-                    for cb, state in zip(widget, states):
+                    states = config.get(name, [False]*len(widget_ref))
+                    for cb, state in zip(widget_ref, states):
                         cb.setChecked(state)
                 elif mode == 'path_variable':
+                    # Pour 'path_variable', widget_ref est 'self' (MainWindow)
                     self.selected_output_path = config.get(name, None)
-                    if self.selected_output_path:
-                        self.output_path_display_label.setText(f"Dossier de sortie : {self.selected_output_path}")
-                        self.output_path_display_label.setStyleSheet("font-style: normal; color: #E0E0E0;")
-                    else:
-                        self.output_path_display_label.setText("Dossier de sortie : output/")
+                    self._update_output_path_display(self.selected_output_path) # Mettre à jour l'affichage
+                elif mode == 'level_variable':
+                    # Pour 'level_variable', widget_ref est 'self' (MainWindow)
+                    loaded_level_name = config.get(name, None) # 'name' est 'current_level'
+                    if loaded_level_name and loaded_level_name in self.level_buttons: # Accéder à self.level_buttons
+                        button_to_select = self.level_buttons[loaded_level_name]
+                        # Appeler select_level pour restaurer l'état du niveau
+                        # Cela mettra à jour self.current_level et l'UI
+                        self.select_level(loaded_level_name, button_to_select)
+        except FileNotFoundError:
+            print(f"Fichier de configuration non trouvé : {self.config_path}. Un nouveau sera créé à la fermeture si nécessaire.")
+        except json.JSONDecodeError:
+            print(f"Erreur de décodage JSON dans {self.config_path}. Le fichier est peut-être corrompu.")
         except Exception as e:
-            print(f"Erreur lors du chargement de la configuration : {e}")
+            print(f"Erreur inattendue lors du chargement de la configuration : {type(e).__name__} - {e}")
+            # import traceback; traceback.print_exc() # Décommenter pour un débogage plus détaillé
 
     def closeEvent(self, event):
         self.save_config()
         super().closeEvent(event)
+
+    def get_exercises_for_level(self, target_level):
+        if not target_level: # If None or empty string, show all exercises
+            return list(self.exercise_widgets_map.keys())
+
+        allowed_exercises = set()
+        # Iterate through LEVEL_ORDER up to and including target_level
+        for level_in_order in self.LEVEL_ORDER:
+            allowed_exercises.update(self.EXERCISES_BY_LEVEL_INCREMENTAL.get(level_in_order, []))
+            if level_in_order == target_level:
+                break
+        return list(allowed_exercises)
+
+    def update_exercise_visibility(self):
+        allowed_exercise_keys = self.get_exercises_for_level(self.current_level)
+
+        for key, widget in self.exercise_widgets_map.items():
+            if widget: # Ensure widget exists
+                if key in allowed_exercise_keys:
+                    widget.show()
+                else:
+                    widget.hide()
+
+        # Update visibility of column titles
+        for col_key, title_label_widget in self.column_title_widgets.items():
+            section_group_keys_in_col = self.column_section_keys.get(col_key, [])
+            is_any_section_configured_to_be_visible_in_col = False # Renommé pour plus de clarté
+            for section_key in section_group_keys_in_col:
+                # Vérifie si la section (QGroupBox) est configurée pour être active
+                # pour le niveau actuel (contenu dans allowed_exercise_keys).
+                if section_key in allowed_exercise_keys:
+                    is_any_section_configured_to_be_visible_in_col = True
+                    break
+            title_label_widget.setVisible(is_any_section_configured_to_be_visible_in_col)
 
     def get_selected_conversion_types(self):
         types = []
@@ -1097,6 +1487,26 @@ class MainWindow(QMainWindow):
             self.relier_count_label.hide()
             self.relier_count.hide()
 # Note : Pour PyInstaller, les fichiers JSON (phrases_grammaire.json, verbes.json, config.json) doivent être à côté de l'exe pour être modifiables après compilation.
+
+    def _update_output_path_display(self, full_path):
+        """Met à jour le label affichant le chemin de sortie, en le raccourcissant si nécessaire."""
+        prefix = "Dossier : "
+        default_relative_path = "output/" # Ce qui est affiché si aucun chemin absolu n'est défini
+        max_display_len = 40 # Longueur maximale approximative du chemin affiché (sans le préfixe)
+
+        if not full_path:
+            self.output_path_display_label.setText(prefix + default_relative_path)
+            self.output_path_display_label.setStyleSheet("font-style: italic; color: #B0BEC5;")
+        else:
+            display_path = full_path
+            if len(full_path) > max_display_len:
+                parts = full_path.split(os.sep)
+                if len(parts) > 4: # Assez de parties pour raccourcir (lecteur + ... + 3 dossiers)
+                    # Montre la première partie (lecteur), "...", et les trois dernières parties
+                    display_path = parts[0] + os.sep + "..." + os.sep + os.path.join(parts[-3], parts[-2], parts[-1])
+            
+            self.output_path_display_label.setText(prefix + display_path)
+            self.output_path_display_label.setStyleSheet("font-style: normal; color: #E0E0E0;")
 
 if __name__ == "__main__":
     import os

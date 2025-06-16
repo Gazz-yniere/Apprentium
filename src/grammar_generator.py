@@ -46,6 +46,8 @@ def get_random_phrase(phrase_type, complexity="simple"):
     return random.choice(PHRASES[phrase_type])
 
 def get_random_transformation(selected_transformations):
+    if not selected_transformations:
+        return None
     return random.choice(selected_transformations)
 
 def get_random_phrases(phrase_types, n):

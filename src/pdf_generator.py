@@ -4,17 +4,71 @@ import random
 import sys
 import os
 
-def draw_rounded_box(pdf, x, y, w, h, radius=10, stroke_color=0.7):
+# Configuration des assets pour chaque section
+SECTION_ASSETS = {
+    "Calculs": {"image_path": "img/calculs.png", "color": (0.2, 0.4, 0.8)}, # Bleu
+    "Mesures": {"image_path": "img/mesures.png", "color": (0.2, 0.6, 0.3)}, # Vert
+    "Conjugaison": {"image_path": "img/conjugaison.png", "color": (0.7, 0.3, 0.2)}, # Rouge-brique
+    "Grammaire": {"image_path": "img/grammaire.png", "color": (0.5, 0.2, 0.7)}, # Violet
+    "Orthographe": {"image_path": "img/orthographe.png", "color": (1.0, 0.7, 0.0)}, # Orange
+    "Anglais": {"image_path": "img/anglais.png", "color": (0.2, 0.6, 0.7)} # Bleu-vert
+}
+IMG_WIDTH, IMG_HEIGHT = 40, 40 # Taille standard pour les images de section
+BOX_PADDING = 10 # Espacement interne des cadres de section
+SECTION_CONTENT_BOTTOM_PADDING = 0 # Espacement interne en bas du contenu de la section (réduit de 5 à 2)
+HEADER_HEIGHT_ESTIMATE = 2 * BOX_PADDING + max(2 * 10, 12) # Estimation de la hauteur de l'en-tête de section (numéro+titre)
+
+def get_resource_path_pdf(relative_path):
+    """ Obtient le chemin absolu d'une ressource, que ce soit en mode script ou compilé. """
+    try:
+        base_path = os.path.dirname(__file__)
+        if hasattr(sys, '_MEIPASS'):
+            return os.path.join(sys._MEIPASS, relative_path)
+        return os.path.join(base_path, relative_path)
+    except Exception as e:
+        print(f"Erreur dans get_resource_path_pdf pour {relative_path}: {e}")
+        return None
+
+def draw_rounded_box_with_color(pdf, x, y, w, h, radius=10, stroke_rgb_color=(0.7, 0.7, 0.7), fill_rgb_color=(1,1,1), stroke_width=1):
+    pdf.setStrokeColorRGB(*stroke_rgb_color)
+    pdf.setLineWidth(stroke_width)
+    pdf.roundRect(x, y, w, h, radius, fill=0, stroke=1)
+
+def draw_section_header(pdf, y_header_top, section_key, section_num, margin, page_width, title_font_size=12, number_in_circle_font_size=10):
     """
-    Dessine un cadre à bords arrondis (compatible N&B, fond blanc).
-    x, y = coin inférieur gauche
-    w, h = largeur, hauteur
-    radius = rayon des coins
-    stroke_color = gris du contour
+    Dessine l'en-tête de la section (numéro, titre, image).
+    y_header_top: Coordonnée Y du bord supérieur où l'en-tête (et le cadre) doit commencer.
+    Retourne:
+        y_after_header: Nouvelle position Y sous l'en-tête, prête pour le contenu.
+        exercise_content_x_start: Position X de début du contenu.
     """
-    pdf.setFillGray(1.0)  # fond blanc
-    pdf.setStrokeGray(stroke_color)
-    pdf.roundRect(x, y, w, h, radius, fill=1, stroke=1)
+    section_data = SECTION_ASSETS.get(section_key, {})
+    section_color_rgb = section_data.get("color", (0, 0, 0)) # Couleur par défaut si non trouvée
+    
+    y_title_baseline = y_header_top - BOX_PADDING - title_font_size
+    CIRCLE_RADIUS_PDF = 10
+    circle_center_x = margin + BOX_PADDING + CIRCLE_RADIUS_PDF
+    circle_center_y = y_title_baseline + title_font_size * 0.3 
+
+
+    pdf.setFillColorRGB(1, 1, 1) 
+    pdf.setStrokeColorRGB(*section_color_rgb) 
+    pdf.circle(circle_center_x, circle_center_y, CIRCLE_RADIUS_PDF, fill=1, stroke=1)
+
+    NUMBER_IN_CIRCLE_FONT_SIZE = 10
+    pdf.setFont("Helvetica-Bold", NUMBER_IN_CIRCLE_FONT_SIZE)
+    pdf.setFillColorRGB(*section_color_rgb)
+    pdf.drawCentredString(circle_center_x, circle_center_y - (number_in_circle_font_size / 3.0), str(section_num))
+    exercise_content_x_start = circle_center_x + CIRCLE_RADIUS_PDF + 7 
+
+    pdf.setFont("Helvetica-Bold", title_font_size)
+    pdf.setFillColorRGB(*section_color_rgb) 
+    pdf.drawString(exercise_content_x_start, y_title_baseline, section_key)
+    
+    pdf.setFillColorRGB(0,0,0) # Reset fill color for subsequent content
+    #y_after_header = y_title_baseline - (max(2 * CIRCLE_RADIUS_PDF, title_font_size) - title_font_size) - BOX_PADDING
+    y_after_header = y_title_baseline - (2*CIRCLE_RADIUS_PDF)- BOX_PADDING
+    return y_after_header, exercise_content_x_start
 
 def generate_math_problems(operation, params):
     problems = []
@@ -75,35 +129,6 @@ def generate_math_problems(operation, params):
                 problems.append(f"{dividend} ÷ {divisor} = ")
     return problems
         
-def draw_section_title(pdf, width, y, title, number, color=(0.2, 0.4, 0.8)):
-    """
-    Affiche un titre de section avec numéro entouré à gauche et titre en gras/couleur.
-    - number : numéro de la section (int)
-    - color : tuple RGB (0-1)
-    """
-    margin = 50
-    box_height = 20
-    box_y = y - box_height
-    circle_radius = 12
-    circle_x = margin + circle_radius
-    circle_y = box_y + box_height/2
-    # Cercle pour le numéro
-    pdf.setFillColorRGB(1, 1, 1)
-    pdf.setStrokeColorRGB(*color)
-    pdf.circle(circle_x, circle_y, circle_radius, fill=1, stroke=1)
-    pdf.setFont("Helvetica-Bold", 13)
-    pdf.setFillColorRGB(*color)
-    pdf.drawCentredString(circle_x, circle_y-4, str(number))
-    # Titre à droite du cercle
-    pdf.setFont("Helvetica-Bold", 14)
-    pdf.setFillColorRGB(*color)
-    pdf.drawString(circle_x + circle_radius + 10, circle_y-7, title)
-    # Restaure la couleur noire pour le reste du contenu
-    pdf.setFillColorRGB(0, 0, 0)
-    # Espace après le bandeau (retour à l'origine)
-    y = box_y - 12
-    return y
-
 def get_output_path(filename, custom_output_dir=None):
     import sys, os
     base_dir_for_output = None
@@ -118,17 +143,27 @@ def get_output_path(filename, custom_output_dir=None):
                 base_dir_for_output = custom_output_dir
             except OSError:
                 print(f"Avertissement : Impossible de créer le dossier personnalisé '{custom_output_dir}'. Utilisation du dossier par défaut.")
-                # Fallback ci-dessous
 
-    if base_dir_for_output is None: # Si custom_output_dir n'est pas fourni ou a échoué
-        if getattr(sys, 'frozen', False): # Exécutable PyInstaller
+    if base_dir_for_output is None: 
+        if getattr(sys, 'frozen', False): 
             app_base_path = os.path.dirname(sys.executable)
-        else: # Mode script
-            app_base_path = os.path.dirname(os.path.dirname(__file__)) # Remonte au dossier parent de src/
+        else: 
+            app_base_path = os.path.dirname(os.path.dirname(__file__)) 
         base_dir_for_output = os.path.join(app_base_path, 'output')
 
-    os.makedirs(base_dir_for_output, exist_ok=True) # S'assure que le dossier final existe
+    os.makedirs(base_dir_for_output, exist_ok=True) 
     return os.path.join(base_dir_for_output, filename)
+
+def draw_section_image_in_frame(pdf, section_data, current_frame_top_y, page_width, page_margin):
+    """Dessine l'image de la section en haut à droite à l'intérieur du cadre."""
+    image_file_path = get_resource_path_pdf(section_data.get("image_path", ""))
+    if image_file_path and os.path.exists(image_file_path):
+        img_draw_x = page_width - page_margin - BOX_PADDING - IMG_WIDTH
+        img_draw_y = current_frame_top_y - BOX_PADDING - IMG_HEIGHT # Y for bottom-left corner of image
+        try:
+            pdf.drawImage(image_file_path, img_draw_x, img_draw_y, width=IMG_WIDTH, height=IMG_HEIGHT, mask='auto')
+        except Exception as e:
+            print(f"Erreur drawImage (in-frame) pour {image_file_path}: {e}")
 
 def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, params_list, grammar_exercises, orthographe_exercises, enumerate_exercises, sort_exercises, geo_exercises=None, english_exercises=None, encadrement_exercises=None, header_text=None, filename="workbook.pdf", division_entier=False, show_name=False, show_note=False, output_dir_override=None):
     if geo_exercises is None:
@@ -142,349 +177,542 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
     width, height = A4
     margin = 50
 
-    offset_section = 30  # Décalage à droite pour le contenu des sections
     for day in range(1, days + 1):
         y_position = height - margin
-        # Affichage de l'en-tête (remplace le titre de la fiche)
         if header_text or show_name or show_note:
-            # Hauteur fixe pour garantir l'affichage de tous les champs
             box_height = 30
-            box_y = y_position - box_height
-            draw_rounded_box(pdf, margin-10, box_y, width-2*margin+20, box_height, radius=14, stroke_color=0.6)
-            y_header = box_y + box_height/2 + 5
-            # Affichage sur une seule ligne : Nom | Titre | Note
-            pdf.setFont("Helvetica", 10)
-            pdf.setFillColorRGB(0, 0, 0)
-            y_header = box_y + 10  # proche du bas du cadre
+            # Ajustement pour que la largeur du cadre de l'en-tête corresponde à celle des sections
+            box_x_header = margin 
+            box_width_header = width - 2 * margin
+            box_y_header = y_position - box_height
+            draw_rounded_box_with_color(pdf, 
+                                       box_x_header, 
+                                       box_y_header, 
+                                       box_width_header, 
+                                       box_height, 
+                                       radius=10, 
+                                       stroke_rgb_color=(0.6, 0.6, 0.6)) # Couleur du cadre de l'en-tête
+            y_header_text = box_y_header + 10
+            
+            # Style par défaut pour Nom et Note
+            default_font_name = "Helvetica"
+            default_font_size = 10
+            default_font_color = (0, 0, 0)
+
+            pdf.setFont(default_font_name, default_font_size)
+            pdf.setFillColorRGB(*default_font_color)
+
             if show_name:
-                pdf.drawString(margin + 10, y_header, "Nom : _________________")
+                pdf.drawString(margin + 10, y_header_text, "Nom : _________________")
             if header_text:
                 pdf.setFont("Helvetica-Bold", 14)
-                pdf.setFillColorRGB(0, 0, 0)
-                pdf.drawCentredString(width // 2, y_header + 1, header_text)
-                pdf.setFont("Helvetica", 10)
+                pdf.drawCentredString(width // 2, y_header_text + 1, header_text)
+                pdf.setFont(default_font_name, default_font_size) # Réinitialiser à la police par défaut après le titre
+                pdf.setFillColorRGB(*default_font_color) # Réinitialiser la couleur
             if show_note:
                 note_text = "Note : ____________"
-                note_x = width - margin - 10 - pdf.stringWidth(note_text, "Helvetica", 10)
-                pdf.drawString(note_x, y_header, note_text)
-            y_position = box_y - 18
+                note_x = width - margin - 10 - pdf.stringWidth(note_text, "Helvetica", 10) # Default font for note
+                pdf.drawString(note_x, y_header_text, note_text)
+            y_position = box_y_header - 18
         else:
             y_position -= 3
-        pdf.setFont("Helvetica", 10)
+        
+        pdf.setFont("Helvetica", 10) # Default font before sections
         pdf.setFillColorRGB(0, 0, 0)
 
-        # Section calculs (affichée seulement si des calculs sont générés)
         section_num = 1
-        # Section Calculs (tout sous un seul titre)
+        
+        # Section Calculs
         if (
-            (enumerate_exercises and len(enumerate_exercises) > 0)
+            (enumerate_exercises and len(enumerate_exercises) >= day and enumerate_exercises[day-1])
             or any(counts)
         ):
-            y_position = draw_section_title(pdf, width, y_position, "Calculs", section_num, color=(0.2,0.4,0.8))
-            y_position -= 3
+            section_key = "Calculs"
+            section_data = SECTION_ASSETS.get(section_key, {})
+            section_color_rgb = section_data.get("color", (0.2, 0.4, 0.8))
+            
+            # Calculate required height for header + first block of content
+            first_block_content_height = 0
+            if enumerate_exercises and len(enumerate_exercises) >= day and enumerate_exercises[day-1]:
+                 first_block_content_height = 16 + 22 + 8 # Enumerate title + first item + spacing
+            elif any(counts):
+                 first_block_content_height = 13 + 22 + 8 # Operation title + first item + spacing
+
+            required_height_for_first_block = HEADER_HEIGHT_ESTIMATE + first_block_content_height
+
+            # Check if the first block fits on the current page
+            if y_position - required_height_for_first_block < margin:
+                pdf.showPage()
+                y_position = height - margin
+
+            current_frame_segment_top_y = y_position # Le haut du cadre est la y_position actuelle
+            
+            # draw_section_header dessine le titre/numéro À L'INTÉRIEUR du cadre,
+            # en utilisant current_frame_segment_top_y comme référence supérieure.
+            # Elle retourne la y_position pour le contenu (exercices), sous le titre/numéro.
+            y_position_for_content, exercise_content_x_start = draw_section_header(
+                pdf, current_frame_segment_top_y, section_key, section_num, margin, width
+            )
+            y_position = y_position_for_content # Mettre à jour y_position pour le début des exercices
+            draw_section_image_in_frame(pdf, section_data, current_frame_segment_top_y, width, margin)
             section_num += 1
-            # Enumérer un nombre
-            # enumerate_exercises est maintenant une liste de listes: enumerate_exercises[day-1]
+            
             if enumerate_exercises and len(enumerate_exercises) >= day and enumerate_exercises[day-1]:
                 pdf.setFont("Helvetica-Bold", 10)
-                pdf.drawString(margin + offset_section, y_position, "Écris chaque nombre en toutes lettres :")
+                pdf.drawString(exercise_content_x_start, y_position, "Écris chaque nombre en toutes lettres :")
                 y_position -= 16
                 pdf.setFont("Helvetica", 9)
-                for n in enumerate_exercises[day-1]: # Utilise la liste pour le jour actuel
-                    pdf.drawString(margin + offset_section, y_position, f"{n} = _____________________________________________")
+                for n in enumerate_exercises[day-1]: 
+                    pdf.drawString(exercise_content_x_start, y_position, f"{n} = _____________________________________________")
                     y_position -= 22
                     if y_position < margin:
+                        draw_rounded_box_with_color(pdf, margin, margin, width - 2 * margin, current_frame_segment_top_y - margin, radius=10, stroke_rgb_color=section_color_rgb)
                         pdf.showPage()
                         y_position = height - margin
-                        pdf.setFont("Helvetica", 9) # Réinitialiser la police
+                        current_frame_segment_top_y = y_position
+                        draw_section_image_in_frame(pdf, section_data, current_frame_segment_top_y, width, margin)
+                        pdf.setFont("Helvetica", 9) 
                 y_position -= 8
-            # Opérations classiques
+            
             if any(counts):
                 pdf.setFont("Helvetica-Bold", 10)
                 for i, operation in enumerate(operations):
                     params = params_list[i]
                     problems = generate_math_problems(operation, params)
-                    pdf.drawString(margin + offset_section, y_position, f"{operation.capitalize()} :")
+                    pdf.drawString(exercise_content_x_start, y_position, f"{operation.capitalize()} :")
                     y_position -= 13
                     pdf.setFont("Helvetica", 9)
                     for problem in problems:
-                        # On veut le calcul à gauche, puis =, puis le trait
                         calc_str = problem.strip().replace(' =', '')
-                        pdf.drawString(margin + offset_section, y_position, f"{calc_str} = _____________________________________________")
+                        pdf.drawString(exercise_content_x_start, y_position, f"{calc_str} = _____________________________________________")
                         y_position -= 22
                         if y_position < margin:
+                            draw_rounded_box_with_color(pdf, margin, margin, width - 2 * margin, current_frame_segment_top_y - margin, radius=10, stroke_rgb_color=section_color_rgb)
                             pdf.showPage()
                             y_position = height - margin
-                            pdf.setFont("Helvetica", 9) # Réinitialiser la police pour les problèmes
-                    pdf.setFont("Helvetica-Bold", 10)
+                            current_frame_segment_top_y = y_position
+                            draw_section_image_in_frame(pdf, section_data, current_frame_segment_top_y, width, margin)
+                            pdf.setFont("Helvetica", 9) 
+                    pdf.setFont("Helvetica-Bold", 10) # Reset for next operation title
                 y_position -= 8
+            
+            box_actual_bottom_y = y_position - SECTION_CONTENT_BOTTOM_PADDING
+            draw_rounded_box_with_color(pdf, 
+                                       margin, box_actual_bottom_y, 
+                                       width - 2 * margin, current_frame_segment_top_y - box_actual_bottom_y, 
+                                       radius=10, stroke_rgb_color=section_color_rgb)
+            y_position = box_actual_bottom_y - 15
 
-        # Section géométrie/mesures (exercices de conversion, rangement, encadrement)
-        # Génération des exercices d'encadrement à partir des paramètres
+        # Section Mesures
         encadrement_lines = []
-        # (Suppression du debug encadrement_exercises)
         if encadrement_exercises and encadrement_exercises['count'] > 0 and encadrement_exercises['digits'] > 0 and encadrement_exercises['types']:
             digits = encadrement_exercises['digits']
-            min_n = 10**(digits-1) if digits > 0 else 0 # S'assurer que digits > 0
+            min_n = 10**(digits-1) if digits > 0 else 0 
             max_n = (10**digits - 1) if digits > 0 else 0
-            types = encadrement_exercises['types']
+            types_enc = encadrement_exercises['types']
             for _ in range(encadrement_exercises['count']):
-                t = random.choice(types)
+                t = random.choice(types_enc)
                 n = random.randint(min_n, max_n)
                 encadrement_lines.append({'number': n, 'type': t})
         
-        # Vérifier s'il y a du contenu pour la section Mesures pour le jour actuel
         has_mesures_content_for_day = False
-        if encadrement_lines: # Encadrement est généré par jour dans cette fonction
-            has_mesures_content_for_day = True
-        if geo_exercises and len(geo_exercises) >= day and geo_exercises[day-1]:
-            has_mesures_content_for_day = True
-        if sort_exercises and len(sort_exercises) >= day and sort_exercises[day-1]:
-            has_mesures_content_for_day = True
+        if encadrement_lines: has_mesures_content_for_day = True
+        if geo_exercises and len(geo_exercises) >= day and geo_exercises[day-1]: has_mesures_content_for_day = True
+        if sort_exercises and len(sort_exercises) >= day and sort_exercises[day-1]: has_mesures_content_for_day = True
 
         if has_mesures_content_for_day:
-            y_position = draw_section_title(pdf, width, y_position, "Mesures", section_num, color=(0.2,0.6,0.3))
-            y_position -= 3
+            section_key = "Mesures"
+            section_data = SECTION_ASSETS.get(section_key, {})
+            section_color_rgb = section_data.get("color", (0.2, 0.6, 0.3))
+
+            # Calculate required height for header + first block
+            first_block_content_height = 0
+            if geo_exercises and len(geo_exercises) >= day and geo_exercises[day-1]:
+                 first_block_content_height = 16 + 22 + 5 # Geo title + first item + spacing
+            elif sort_exercises and len(sort_exercises) >= day and sort_exercises[day-1]:
+                 first_block_content_height = 16 + 22 + 8 # Sort title + first item + spacing
+            elif encadrement_lines:
+                 first_block_content_height = 16 + 22 + 8 # Encadrement title + first item + spacing
+
+            required_height_for_first_block = HEADER_HEIGHT_ESTIMATE + first_block_content_height
+
+            if y_position - required_height_for_first_block < margin:
+                pdf.showPage()
+                y_position = height - margin
+            current_frame_segment_top_y = y_position
+            y_position_for_content, exercise_content_x_start = draw_section_header(
+                pdf, current_frame_segment_top_y, section_key, section_num, margin, width
+            )
+            y_position = y_position_for_content
+            draw_section_image_in_frame(pdf, section_data, current_frame_segment_top_y, width, margin)
             section_num += 1
-            pdf.setFont("Helvetica", 9)
-            # Exercices de conversion
+            
+            pdf.setFont("Helvetica", 9) # Default content font for this section
             if geo_exercises and len(geo_exercises) >= day and geo_exercises[day-1]:
                 current_day_geo_exercises = geo_exercises[day-1]
-                if current_day_geo_exercises: # S'il y a des exos pour ce jour
+                if current_day_geo_exercises: 
                     pdf.setFont("Helvetica-Bold", 10)
-                    pdf.drawString(margin + offset_section, y_position, "Conversions :")
+                    pdf.drawString(exercise_content_x_start, y_position, "Conversions :")
                     y_position -= 16
                     pdf.setFont("Helvetica", 9)
                     for ex_geo in current_day_geo_exercises:
-                        pdf.drawString(margin + offset_section, y_position, ex_geo)
+                        pdf.drawString(exercise_content_x_start, y_position, ex_geo)
                         y_position -= 22
                         if y_position < margin:
+                            draw_rounded_box_with_color(pdf, margin, margin, width - 2 * margin, current_frame_segment_top_y - margin, radius=10, stroke_rgb_color=section_color_rgb)
                             pdf.showPage()
                             y_position = height - margin
-                            pdf.setFont("Helvetica", 9) # Réinitialiser la police
+                            current_frame_segment_top_y = y_position
+                            draw_section_image_in_frame(pdf, section_data, current_frame_segment_top_y, width, margin)
+                            pdf.setFont("Helvetica", 9)
                     y_position -= 5
-            # Exercices de rangement
+
             if sort_exercises and len(sort_exercises) >= day and sort_exercises[day-1]:
                 current_day_sort_exercises = sort_exercises[day-1]
-                if current_day_sort_exercises: # S'il y a des exos pour ce jour
+                if current_day_sort_exercises: 
                     pdf.setFont("Helvetica-Bold", 10)
                     ordre = "ordre croissant" if current_day_sort_exercises[0]['type'] == 'croissant' else "ordre décroissant"
-                    pdf.drawString(margin + offset_section, y_position, f"Range les nombres suivants dans l'{ordre} :")
+                    pdf.drawString(exercise_content_x_start, y_position, f"Range les nombres suivants dans l'{ordre} :")
                     y_position -= 16
                     pdf.setFont("Helvetica", 9)
                     for ex_sort in current_day_sort_exercises:
                         numbers_str = ", ".join(str(n) for n in ex_sort['numbers'])
-                        pdf.drawString(margin + offset_section, y_position, f"{numbers_str} = _____________________________________________")
+                        pdf.drawString(exercise_content_x_start, y_position, f"{numbers_str} = _____________________________________________")
                         y_position -= 22
                         if y_position < margin:
+                            draw_rounded_box_with_color(pdf, margin, margin, width - 2 * margin, current_frame_segment_top_y - margin, radius=10, stroke_rgb_color=section_color_rgb)
                             pdf.showPage()
                             y_position = height - margin
-                            pdf.setFont("Helvetica", 9) # Réinitialiser la police
+                            current_frame_segment_top_y = y_position
+                            draw_section_image_in_frame(pdf, section_data, current_frame_segment_top_y, width, margin)
+                            pdf.setFont("Helvetica", 9)
                     y_position -= 8
-            # Exercices d'encadrement
+
             if encadrement_lines:
                 pdf.setFont("Helvetica-Bold", 10)
-                pdf.drawString(margin + offset_section, y_position, "Encadre les nombres :")
+                pdf.drawString(exercise_content_x_start, y_position, "Encadre les nombres :")
                 y_position -= 16
                 pdf.setFont("Helvetica", 9)
                 for ex in encadrement_lines:
                     n = ex['number']
                     t = ex['type']
-                    if t == 'unité':
-                        base = n # L'encadrement à l'unité inférieure est le nombre lui-même si on cherche l'unité précédente et suivante.
-                                 # Si on cherche l'unité qui contient n, alors c'est n et n.
-                                 # Pour "encadrer à l'unité près", on cherche souvent l'entier juste avant et juste après.
-                                 # Pour simplifier, on va considérer l'encadrement comme:  ... < n < ...
-                                 # Donc, pour l'unité, on pourrait prendre n-1 et n+1, mais la consigne "______ n ______" suggère
-                                 # d'encadrer n par les bornes de l'unité, dizaine, etc.
-                                 # Pour "à l'unité", on peut considérer l'entier précédent et suivant.
-                                 # Cependant, la structure "______ n ______" est plus typique pour dizaine/centaine.
-                                 # Pour l'unité, on va dire que c'est le nombre lui-même.
-                                 # La logique actuelle pour dizaine/centaine/millier est "borne_inf <= n < borne_sup"
-                                 # Pour l'unité, on va afficher n et laisser des blancs.
-                        label = "à l'unité"
-                    elif t == 'dizaine':
-                        label = "à la dizaine"
-                    elif t == 'centaine':
-                        label = "à la centaine"
-                    elif t == 'millier':
-                        label = "au millier"
-                    else:
-                        label = t # Au cas où
-                    pdf.drawString(margin + offset_section, y_position, f"{n} {label} : ______  {n}  ______")
+                    label = f"à l'{t}" if t == "unité" else f"à la {t}" if t in ["dizaine", "centaine"] else f"au {t}"
+                    pdf.drawString(exercise_content_x_start, y_position, f"{n} {label} : ______  {n}  ______")
                     y_position -= 22
                     if y_position < margin:
+                        draw_rounded_box_with_color(pdf, margin, margin, width - 2 * margin, current_frame_segment_top_y - margin, radius=10, stroke_rgb_color=section_color_rgb)
                         pdf.showPage()
                         y_position = height - margin
-                        pdf.setFont("Helvetica", 9) # Réinitialiser la police
+                        current_frame_segment_top_y = y_position
+                        draw_section_image_in_frame(pdf, section_data, current_frame_segment_top_y, width, margin)
+                        pdf.setFont("Helvetica", 9)
                 y_position -= 8
+            
+            box_actual_bottom_y = y_position - SECTION_CONTENT_BOTTOM_PADDING
+            draw_rounded_box_with_color(pdf,
+                                       margin, box_actual_bottom_y,
+                                       width - 2 * margin, current_frame_segment_top_y - box_actual_bottom_y,
+                                       radius=10, stroke_rgb_color=section_color_rgb)
+            y_position = box_actual_bottom_y - 15
 
-        # Section conjugaison (affichée seulement si des conjugaisons sont générées)
+        # Section Conjugaison
         if conjugations and len(conjugations) >= day and conjugations[day-1]:
-            y_position = draw_section_title(pdf, width, y_position, "Conjugaison", section_num, color=(0.7,0.3,0.2))
-            y_position -= 3
+            section_key = "Conjugaison"
+            section_data = SECTION_ASSETS.get(section_key, {})
+            section_color_rgb = section_data.get("color", (0.7, 0.3, 0.2))
+
+            # Calculate required height for header + first block
+            first_block_content_height = 0
+            # Verb/Tense title + spacing + first pronoun line + spacing
+            first_block_content_height = 13 + 10 + 16 + 7
+            required_height_for_first_block = HEADER_HEIGHT_ESTIMATE + first_block_content_height
+
+            if y_position - required_height_for_first_block < margin:
+                pdf.showPage()
+                y_position = height - margin
+
+            current_frame_segment_top_y = y_position
+            y_position_for_content, exercise_content_x_start = draw_section_header(
+                pdf, current_frame_segment_top_y, section_key, section_num, margin, width
+            )
+            y_position = y_position_for_content
+            draw_section_image_in_frame(pdf, section_data, current_frame_segment_top_y, width, margin)
             section_num += 1
-            pdf.setFont("Helvetica-Bold", 10)
-            from conjugation_generator import PRONOUNS
-            from conjugation_generator import VERBS
-            for conjugation in conjugations[day-1]:
-                verb = conjugation["verb"]
-                tense = conjugation["tense"]
-                # Recherche du vrai groupe
+            
+            from conjugation_generator import PRONOUNS, VERBS # Keep import local if specific
+            for conjugation_item in conjugations[day-1]:
+                verb = conjugation_item["verb"]
+                tense = conjugation_item["tense"]
                 groupe = None
-                for g_num_key in VERBS: # Itérer sur les clés de VERBS (qui peuvent être int ou str)
-                    if isinstance(g_num_key, int) or g_num_key.isdigit(): # Groupes numériques
+                for g_num_key in VERBS: 
+                    if isinstance(g_num_key, int) or str(g_num_key).isdigit(): 
                         if verb in VERBS[g_num_key]:
                             groupe = f"{g_num_key}er groupe"
                             break
-                if not groupe and "usuels" in VERBS and verb in VERBS["usuels"]: # Vérifier les usuels
-                     groupe = "usuel"
-                if not groupe: # Fallback si non trouvé (ne devrait pas arriver si VERBS est bien structuré)
-                    groupe = "inconnu"
+                if not groupe and "usuels" in VERBS and verb in VERBS["usuels"]: groupe = "usuel"
+                if not groupe: groupe = "inconnu"
 
                 pdf.setFont("Helvetica-Bold", 10)
-                pdf.drawString(margin + offset_section, y_position, f"Verbe : {verb}  |  Groupe : {groupe}  |  Temps : {tense}")
+                pdf.drawString(exercise_content_x_start, y_position, f"Verbe : {verb}  |  Groupe : {groupe}  |  Temps : {tense}")
                 y_position -= 13
                 pdf.setFont("Helvetica", 9)
-                y_position -= 10  # espace avant la première ligne de réponse
+                y_position -= 10  
                 for pronoun in PRONOUNS:
-                    pdf.drawString(margin + offset_section, y_position, pronoun)
-                    pdf.drawString(margin + offset_section + 100, y_position, "____________________")
-                    y_position -= 16  # espace réduit mais suffisant pour écrire à la main
+                    pdf.drawString(exercise_content_x_start, y_position, pronoun)
+                    pdf.drawString(exercise_content_x_start + 100, y_position, "____________________")
+                    y_position -= 16  
                     if y_position < margin:
+                        draw_rounded_box_with_color(pdf, margin, margin, width - 2 * margin, current_frame_segment_top_y - margin, radius=10, stroke_rgb_color=section_color_rgb)
                         pdf.showPage()
                         y_position = height - margin
-                        pdf.setFont("Helvetica", 9) # Réinitialiser la police pour les pronoms
+                        current_frame_segment_top_y = y_position
+                        draw_section_image_in_frame(pdf, section_data, current_frame_segment_top_y, width, margin)
+                        pdf.setFont("Helvetica", 9)
                 y_position -= 7
-                y_position -= 10  # espace supplémentaire entre chaque conjugaison
+                y_position -= 10  
+            
+            box_actual_bottom_y = y_position - SECTION_CONTENT_BOTTOM_PADDING
+            draw_rounded_box_with_color(pdf,
+                                       margin, box_actual_bottom_y,
+                                       width - 2 * margin, current_frame_segment_top_y - box_actual_bottom_y,
+                                       radius=10, stroke_rgb_color=section_color_rgb)
+            y_position = box_actual_bottom_y - 15
 
-        # Section grammaire (affichée seulement si des exercices sont générés)
+        # Section Grammaire
         if grammar_exercises and len(grammar_exercises) >= day and grammar_exercises[day-1]:
-            y_position = draw_section_title(pdf, width, y_position, "Grammaire", section_num, color=(0.5,0.2,0.7))
-            y_position -= 3
+            section_key = "Grammaire"
+            section_data = SECTION_ASSETS.get(section_key, {})
+            section_color_rgb = section_data.get("color", (0.5, 0.2, 0.7))
+
+            # Calculate required height for header + first block
+            first_block_content_height = 0
+            # Phrase + Transformation + spacing + Reponse + spacing
+            first_block_content_height = 13 + 13 + 10 + 22 + 10
+            required_height_for_first_block = HEADER_HEIGHT_ESTIMATE + first_block_content_height
+
+            if y_position - required_height_for_first_block < margin:
+                pdf.showPage()
+                y_position = height - margin
+
+            current_frame_segment_top_y = y_position
+            y_position_for_content, exercise_content_x_start = draw_section_header(
+                pdf, current_frame_segment_top_y, section_key, section_num, margin, width
+            )
+            y_position = y_position_for_content
+            draw_section_image_in_frame(pdf, section_data, current_frame_segment_top_y, width, margin)
             section_num += 1
-            pdf.setFont("Helvetica", 9) # Police par défaut pour le contenu de cette section
+            
+            pdf.setFont("Helvetica", 9) 
             for ex in grammar_exercises[day-1]:
                 phrase = ex['phrase']
                 transformation = ex['transformation']
                 pdf.setFont("Helvetica-Bold", 9)
-                pdf.drawString(margin + offset_section, y_position, f"Phrase :")
+                pdf.drawString(exercise_content_x_start, y_position, f"Phrase :")
                 pdf.setFont("Helvetica", 9)
-                pdf.drawString(margin + offset_section + 55, y_position, phrase)
+                pdf.drawString(exercise_content_x_start + 55, y_position, phrase)
                 y_position -= 13
                 if y_position < margin:
-                    pdf.showPage(); y_position = height - margin
-                    pdf.setFont("Helvetica", 9) # Réinitialiser après saut de page
+                    draw_rounded_box_with_color(pdf, margin, margin, width - 2 * margin, current_frame_segment_top_y - margin, radius=10, stroke_rgb_color=section_color_rgb)
+                    pdf.showPage()
+                    y_position = height - margin
+                    current_frame_segment_top_y = y_position
+                    draw_section_image_in_frame(pdf, section_data, current_frame_segment_top_y, width, margin)
+                    pdf.setFont("Helvetica", 9)
 
                 pdf.setFont("Helvetica-Bold", 9)
-                pdf.drawString(margin + offset_section, y_position, f"Transformation demandée :")
+                pdf.drawString(exercise_content_x_start, y_position, f"Transformation demandée :")
                 pdf.setFont("Helvetica", 9)
-                pdf.drawString(margin + offset_section + 130, y_position, transformation)
+                pdf.drawString(exercise_content_x_start + 130, y_position, transformation)
                 y_position -= 13
                 if y_position < margin:
-                    pdf.showPage(); y_position = height - margin
-                    pdf.setFont("Helvetica", 9) # Réinitialiser après saut de page
-
-                y_position -= 10  # espace avant la ligne de réponse
-                pdf.drawString(margin + offset_section, y_position, "Réponse : __________________________________________________________")
-                y_position -= 22  # espace réduit mais suffisant pour écrire à la main
-                y_position -= 10  # espace supplémentaire entre chaque exercice
-                if y_position < margin:
+                    draw_rounded_box_with_color(pdf, margin, margin, width - 2 * margin, current_frame_segment_top_y - margin, radius=10, stroke_rgb_color=section_color_rgb)
                     pdf.showPage()
                     y_position = height - margin
-                    pdf.setFont("Helvetica", 9) # Réinitialiser pour le prochain exercice de grammaire
+                    current_frame_segment_top_y = y_position
+                    draw_section_image_in_frame(pdf, section_data, current_frame_segment_top_y, width, margin)
+                    pdf.setFont("Helvetica", 9)
 
-        # Section orthographe (affichée seulement si des exercices sont générés)
+                y_position -= 10  
+                pdf.drawString(exercise_content_x_start, y_position, "Réponse : __________________________________________________________")
+                y_position -= 22  
+                y_position -= 10  
+                if y_position < margin: # Check after full exercise block
+                    draw_rounded_box_with_color(pdf, margin, margin, width - 2 * margin, current_frame_segment_top_y - margin, radius=10, stroke_rgb_color=section_color_rgb)
+                    pdf.showPage()
+                    y_position = height - margin
+                    current_frame_segment_top_y = y_position
+                    draw_section_image_in_frame(pdf, section_data, current_frame_segment_top_y, width, margin)
+                    pdf.setFont("Helvetica", 9)
+            
+            box_actual_bottom_y = y_position - SECTION_CONTENT_BOTTOM_PADDING
+            draw_rounded_box_with_color(pdf,
+                                       margin, box_actual_bottom_y,
+                                       width - 2 * margin, current_frame_segment_top_y - box_actual_bottom_y,
+                                       radius=10, stroke_rgb_color=section_color_rgb)
+            y_position = box_actual_bottom_y - 15
+
+        # Section Orthographe
         if orthographe_exercises and len(orthographe_exercises) >= day and orthographe_exercises[day-1]:
-            y_position = draw_section_title(pdf, width, y_position, "Orthographe", section_num, color=(1.0,0.7,0.0))
-            y_position -= 3
+            section_key = "Orthographe"
+            section_data = SECTION_ASSETS.get(section_key, {})
+            section_color_rgb = section_data.get("color", (1.0, 0.7, 0.0))
+
+            # Calculate required height for header + first block
+            first_block_content_height = 0
+            # Homophone line + spacing
+            first_block_content_height = 16 + 6
+            required_height_for_first_block = HEADER_HEIGHT_ESTIMATE + first_block_content_height
+
+            if y_position - required_height_for_first_block < margin:
+                pdf.showPage()
+                y_position = height - margin
+            current_frame_segment_top_y = y_position
+            y_position_for_content, exercise_content_x_start = draw_section_header(
+                pdf, current_frame_segment_top_y, section_key, section_num, margin, width
+            )
+            y_position = y_position_for_content
+            draw_section_image_in_frame(pdf, section_data, current_frame_segment_top_y, width, margin)
             section_num += 1
-            pdf.setFont("Helvetica", 9) # Police par défaut pour le contenu de cette section
+            
+            pdf.setFont("Helvetica", 9) 
             for ex in orthographe_exercises[day-1]:
                 if ex['type'] == 'homophone':
-                    # La police est déjà Helvetica 9, on la change pour le label puis on la remet
                     pdf.setFont("Helvetica-Bold", 9)
-                    pdf.drawString(margin + offset_section, y_position, f"{ex['homophone']} :")
+                    pdf.drawString(exercise_content_x_start, y_position, f"{ex['homophone']} :")
                     pdf.setFont("Helvetica", 9)
-                    pdf.drawString(margin + offset_section + 60, y_position, ex['content']) # Ajuster le décalage si nécessaire
+                    pdf.drawString(exercise_content_x_start + 60, y_position, ex['content']) 
                     y_position -= 16
-                    y_position -= 6  # espace supplémentaire entre chaque phrase
-                if y_position < margin:
+                    y_position -= 6  
+                if y_position < margin: # Check after each exercise item
+                    draw_rounded_box_with_color(pdf, margin, margin, width - 2 * margin, current_frame_segment_top_y - margin, radius=10, stroke_rgb_color=section_color_rgb)
                     pdf.showPage()
                     y_position = height - margin
-                    pdf.setFont("Helvetica", 9) # Réinitialiser pour le prochain exercice d'orthographe
+                    current_frame_segment_top_y = y_position
+                    draw_section_image_in_frame(pdf, section_data, current_frame_segment_top_y, width, margin)
+                    pdf.setFont("Helvetica", 9)
 
-        # Section anglais (exercices)
+            box_actual_bottom_y = y_position - SECTION_CONTENT_BOTTOM_PADDING
+            draw_rounded_box_with_color(pdf,
+                                       margin, box_actual_bottom_y,
+                                       width - 2 * margin, current_frame_segment_top_y - box_actual_bottom_y,
+                                       radius=10, stroke_rgb_color=section_color_rgb)
+            y_position = box_actual_bottom_y - 15
+
+        # Section Anglais
         if english_exercises and len(english_exercises) >= day and english_exercises[day-1]:
-            y_position = draw_section_title(pdf, width, y_position, "Anglais", section_num, color=(0.2,0.6,0.7))
-            y_position -= 3
+            section_key = "Anglais"
+            section_data = SECTION_ASSETS.get(section_key, {})
+            section_color_rgb = section_data.get("color", (0.2, 0.6, 0.7))
+
+            # Calculate required height for header + first block
+            first_block_content_height = 0
+            if english_exercises[day-1]: # Check if there's at least one exercise
+                first_ex = english_exercises[day-1][0]
+                if first_ex['type'] in ('simple', 'complexe'):
+                    first_block_content_height = 13 + 10 + 16 + 10 # Compléter title + spacing + first item + spacing
+                elif first_ex['type'] == 'relier':
+                    first_block_content_height = 13 + 10 + 13 + 10 # Relier title + spacing + first line + spacing
+            required_height_for_first_block = HEADER_HEIGHT_ESTIMATE + first_block_content_height
+
+            if y_position - required_height_for_first_block < margin:
+                pdf.showPage()
+                y_position = height - margin
+            current_frame_segment_top_y = y_position
+            y_position_for_content, exercise_content_x_start = draw_section_header(
+                pdf, current_frame_segment_top_y, section_key, section_num, margin, width
+            )
+            y_position = y_position_for_content
+            draw_section_image_in_frame(pdf, section_data, current_frame_segment_top_y, width, margin)
             section_num += 1
-            pdf.setFont("Helvetica", 9) # Police par défaut pour le contenu de cette section
+            
+            pdf.setFont("Helvetica", 9) 
             completer_shown = False
-            for ex in english_exercises[day-1]:
+            for ex_idx, ex in enumerate(english_exercises[day-1]):
                 if ex['type'] in ('simple', 'complexe'):
                     if not completer_shown:
                         pdf.setFont("Helvetica-Bold", 9)
-                        pdf.drawString(margin + offset_section, y_position, "Compléter :")
-                        pdf.setFont("Helvetica", 9) # Retour à la police normale pour le contenu
+                        pdf.drawString(exercise_content_x_start, y_position, "Compléter :")
+                        pdf.setFont("Helvetica", 9) 
                         y_position -= 13
                         completer_shown = True
-                        y_position -= 10  # espace avant la première phrase à compléter
-                        if y_position < margin: # Si saut de page juste après le titre "Compléter :"
-                            pdf.showPage(); y_position = height - margin
-                            pdf.setFont("Helvetica", 9)
+                        y_position -= 10  
+                        if y_position < margin:
+                            draw_rounded_box_with_color(pdf, margin, margin, width - 2 * margin, current_frame_segment_top_y - margin, radius=10, stroke_rgb_color=section_color_rgb)
+                            pdf.showPage()
+                            y_position = height - margin
+                            current_frame_segment_top_y = y_position
+                            draw_section_image_in_frame(pdf, section_data, current_frame_segment_top_y, width, margin)
+                            pdf.setFont("Helvetica", 9) # Reset font, completer_shown state might need re-evaluation or header re-draw
 
-                    pdf.drawString(margin + offset_section, y_position, ex['content'])
-                    y_position -= 16  # espace réduit mais suffisant pour écrire à la main
-                    y_position -= 10  # espace supplémentaire entre chaque phrase à compléter
+                    pdf.drawString(exercise_content_x_start, y_position, ex['content'])
+                    y_position -= 16  
+                    y_position -= 10  
                 elif ex['type'] == 'relier':
-                    completer_shown = False # Réinitialiser pour ce type d'exercice
+                    completer_shown = False 
                     pdf.setFont("Helvetica-Bold", 9)
-                    pdf.drawString(margin + offset_section, y_position, "Jeu de mots à relier :")
-                    pdf.setFont("Helvetica", 9) # Retour à la police normale pour le contenu
+                    pdf.drawString(exercise_content_x_start, y_position, "Jeu de mots à relier :")
+                    pdf.setFont("Helvetica", 9) 
                     y_position -= 13
-                    y_position -= 10  # espace avant le début du jeu à relier
-                    if y_position < margin: # Si saut de page juste après le titre "Jeu de mots à relier :"
-                        pdf.showPage(); y_position = height - margin
+                    y_position -= 10  
+                    if y_position < margin:
+                        draw_rounded_box_with_color(pdf, margin, margin, width - 2 * margin, current_frame_segment_top_y - margin, radius=10, stroke_rgb_color=section_color_rgb)
+                        pdf.showPage()
+                        y_position = height - margin
+                        current_frame_segment_top_y = y_position
+                        draw_section_image_in_frame(pdf, section_data, current_frame_segment_top_y, width, margin)
                         pdf.setFont("Helvetica", 9)
 
                     mots = ex['content']
-                    anglais = [m['english'] for m in mots]
-                    francais = [m['french'] for m in mots]
-                    random.shuffle(anglais)
-                    random.shuffle(francais)
-                    max_len = max(len(anglais), len(francais))
-                    # Positions X pour l'alignement
-                    x_anglais = margin + offset_section
-                    x_bullet1 = margin + offset_section + 70 # Ajustez cette valeur pour l'espacement
-                    x_bullet2 = margin + offset_section + 120 # Ajustez cette valeur pour l'espacement
-                    x_francais = margin + offset_section + 140 # Ajustez cette valeur pour l'espacement
+                    anglais_words = [m['english'] for m in mots]
+                    francais_words = [m['french'] for m in mots]
+                    random.shuffle(anglais_words)
+                    # random.shuffle(francais_words) # Shuffling both might make it too hard to match if lists are long
+                    
+                    max_len = max(len(anglais_words), len(francais_words))
+                    x_anglais = exercise_content_x_start
+                    x_bullet1 = exercise_content_x_start + 75 # Réduction de l'espacement
+                    x_bullet2 = x_bullet1 + 50 
+                    x_francais = x_bullet2 + 20
 
                     for i in range(max_len):
-                        a = anglais[i] if i < len(anglais) else ''
-                        f = francais[i] if i < len(francais) else ''
+                        a = anglais_words[i] if i < len(anglais_words) else ''
+                        f = francais_words[i] if i < len(francais_words) else ''
                         pdf.drawString(x_anglais, y_position, a)
-                        pdf.drawString(x_bullet1, y_position, '\u2022')
-                        pdf.drawString(x_bullet2, y_position, '\u2022')
+                        pdf.drawString(x_bullet1, y_position, '\u2022') # Bullet point
+                        pdf.drawString(x_bullet2, y_position, '\u2022') # Bullet point
                         pdf.drawString(x_francais, y_position, f)
-                        y_position -= 13
+                        y_position -= 13 # Space for each line
                         if y_position < margin:
-                            pdf.showPage(); y_position = height - margin
-                            pdf.setFont("Helvetica", 9) # Réinitialiser pour la suite des mots à relier
-                    y_position -= 10  # espace supplémentaire entre chaque bloc à relier
+                            draw_rounded_box_with_color(pdf, margin, margin, width - 2 * margin, current_frame_segment_top_y - margin, radius=10, stroke_rgb_color=section_color_rgb)
+                            pdf.showPage()
+                            y_position = height - margin
+                            current_frame_segment_top_y = y_position
+                            draw_section_image_in_frame(pdf, section_data, current_frame_segment_top_y, width, margin)
+                            pdf.setFont("Helvetica", 9) 
+                    y_position -= 10  
 
-                if y_position < margin:
+                # General check after each exercise item in the loop
+                if y_position < margin and ex_idx < len(english_exercises[day-1]) -1 : # Avoid if it's the last item and box will be drawn after loop
+                    # This check might be redundant if sub-types already handled it, but acts as a fallback.
+                    # Ensure not to draw box if it's already handled by inner logic or if it's the end of section
+                    if not (y_position == height - margin and current_frame_segment_top_y == y_position): # Avoid double draw if already page breaked
+                        draw_rounded_box_with_color(pdf, margin, margin, width - 2 * margin, current_frame_segment_top_y - margin, radius=10, stroke_rgb_color=section_color_rgb)
                     pdf.showPage()
                     y_position = height - margin
-                    pdf.setFont("Helvetica", 9) # Réinitialiser pour le prochain exercice d'anglais
-            # Saut de page forcé entre chaque jour (sauf le dernier)
+                    current_frame_segment_top_y = y_position
+                    draw_section_image_in_frame(pdf, section_data, current_frame_segment_top_y, width, margin)
+                    pdf.setFont("Helvetica", 9)
+            
+            box_actual_bottom_y = y_position - SECTION_CONTENT_BOTTOM_PADDING
+            draw_rounded_box_with_color(pdf,
+                                       margin, box_actual_bottom_y,
+                                       width - 2 * margin, current_frame_segment_top_y - box_actual_bottom_y,
+                                       radius=10, stroke_rgb_color=section_color_rgb)
+            y_position = box_actual_bottom_y - 15
+
         if day < days:
             pdf.showPage()
 
     pdf.save()
     print(f"PDF généré : {out_path}")
     return out_path
-def get_resource_path(filename):
-    if hasattr(sys, '_MEIPASS'):
-        return os.path.join(sys._MEIPASS, filename)
-    return os.path.join(os.path.dirname(__file__), filename)

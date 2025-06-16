@@ -1,12 +1,15 @@
 from docx import Document
-from docx.shared import Pt, Inches, Cm
+from docx.shared import Pt, Inches, Cm, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT, WD_TABLE_DIRECTION
 from docx.oxml.ns import qn
-from docx.oxml.shared import OxmlElement
-from docx.shared import RGBColor
+from docx.text.paragraph import Paragraph # Import pour pouvoir wrapper lxml element
+from docx.oxml import OxmlElement
 from pdf_generator import generate_math_problems
+from pdf_generator import SECTION_ASSETS, get_resource_path_pdf # Pour les images et couleurs
 import random
 import warnings
+import os
 
 # Ignorer l'avertissement spécifique de python-docx concernant la recherche de style
 warnings.filterwarnings("ignore", message="style lookup by style_id is deprecated")
@@ -40,18 +43,174 @@ def get_output_path(filename, custom_output_dir=None):
 def set_table_borders_invisible(table):
     """Rend toutes les bordures d'un tableau invisibles."""
     tbl = table._tbl
-    tblPr = tbl.tblPr
+    tblPr = tbl.tblPr # Get table properties element
+    if tblPr is None: # Should not happen with add_table, but good practice
+        tblPr = OxmlElement('w:tblPr')
+        tbl.append(tblPr)
+
     # Vérifie si tblBorders existe déjà, sinon le crée
     tblBorders = tblPr.first_child_found_in("w:tblBorders")
     if tblBorders is None:
         tblBorders = OxmlElement('w:tblBorders')
         tblPr.append(tblBorders)
+    else: # Clear existing border elements to ensure a clean slate
+        for child in list(tblBorders):
+            tblBorders.remove(child)
 
     # Définit tous les types de bordures à 'nil'
     for border_name in ['top', 'left', 'bottom', 'right', 'insideH', 'insideV']:
         border_el = OxmlElement(f'w:{border_name}')
         border_el.set(qn('w:val'), 'nil')
+        # Optionnel: pour s'assurer qu'elles sont vraiment invisibles, on peut aussi mettre size, space, color à 0/auto
+        border_el.set(qn('w:sz'), '0')
+        border_el.set(qn('w:space'), '0')
+        border_el.set(qn('w:color'), 'auto')
         tblBorders.append(border_el)
+
+def set_table_borders_visible_colored(table, rgb_float_color, size_pt=6):
+    """Applique des bordures visibles colorées à un tableau (pour l'encadrement de section)."""
+    tbl = table._tbl
+    tblPr = tbl.tblPr
+    if tblPr is None:
+        tblPr = OxmlElement('w:tblPr')
+        tbl.append(tblPr)
+
+    tblBorders = tblPr.first_child_found_in("w:tblBorders")
+    if tblBorders is None:
+        tblBorders = OxmlElement('w:tblBorders')
+        tblPr.append(tblBorders)
+    else:
+        for child in list(tblBorders): # Nettoyer les bordures existantes
+            tblBorders.remove(child)
+    
+    hex_color_str = "{:02x}{:02x}{:02x}".format(
+        int(rgb_float_color[0]*255), 
+        int(rgb_float_color[1]*255), 
+        int(rgb_float_color[2]*255)
+    )
+
+    for border_name in ['top', 'left', 'bottom', 'right']: # Bordures extérieures uniquement
+        border_el = OxmlElement(f'w:{border_name}')
+        border_el.set(qn('w:val'), 'single') 
+        border_el.set(qn('w:sz'), str(size_pt))  # Taille en 1/8 de point (ex: 6 pour 0.75pt)
+        border_el.set(qn('w:space'), '0')
+        border_el.set(qn('w:color'), hex_color_str)
+        tblBorders.append(border_el)
+
+def add_section_header_word(parent_cell, section_key_name, section_num_val):
+    """Ajoute un en-tête de section stylisé avec titre et image au document Word."""
+    section_data = SECTION_ASSETS.get(section_key_name, {})
+    color_tuple_float = section_data.get("color", (0,0,0))
+    docx_section_color = RGBColor(
+        int(color_tuple_float[0] * 255),
+        int(color_tuple_float[1] * 255),
+        int(color_tuple_float[2] * 255)
+    )
+    image_path_relative = section_data.get("image_path")
+
+    # Le header_table est maintenant ajouté à la cellule parente
+    header_table = parent_cell.add_table(rows=1, cols=2)
+    # Ses propres bordures doivent être invisibles car il est dans un cadre plus grand
+    set_table_borders_invisible(header_table)
+    header_table.autofit = False
+    header_table.allow_autofit = False
+
+    # Largeur cible pour le tableau d'en-tête de section, environ la moitié de la largeur disponible.
+    # Contenu disponible approx. 6.87 pouces. Moitié = approx 3.4 pouces.
+    target_table_width = Inches(3.4)
+
+    # Ajuster les largeurs pour l'image et le titre
+    image_column_width = Inches(0.5)
+    # La colonne du titre prend le reste de la largeur CIBLE du tableau
+    header_table.columns[0].width = target_table_width - image_column_width
+    header_table.columns[1].width = image_column_width
+
+    # Cellule du titre
+    title_cell = header_table.cell(0, 0)
+    title_cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
+    p_title = title_cell.paragraphs[0]
+    p_title.clear() # Nettoyer le paragraphe par défaut
+    p_title.paragraph_format.space_before = Pt(0)
+    p_title.paragraph_format.space_after = Pt(0)
+
+    run_num = p_title.add_run(f"{section_num_val}. ")
+    run_num.bold = True
+    run_num.font.size = Pt(14)
+    run_num.font.color.rgb = docx_section_color
+
+    run_title_text = p_title.add_run(section_key_name)
+    run_title_text.bold = True
+    run_title_text.font.size = Pt(14)
+    run_title_text.font.color.rgb = docx_section_color
+
+    # Cellule de l'image
+    image_cell = header_table.cell(0, 1)
+    image_cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.TOP # Aligner l'image en haut
+    img_para = image_cell.paragraphs[0]
+    img_para.clear()
+    img_para.paragraph_format.space_before = Pt(0)
+    img_para.paragraph_format.space_after = Pt(0)
+    img_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    if image_path_relative:
+        image_path_abs = get_resource_path_pdf(image_path_relative) # Utilise la fonction de pdf_generator
+        if image_path_abs and os.path.exists(image_path_abs):
+            try:
+                img_para.add_run().add_picture(image_path_abs, width=Inches(0.4)) # Taille de l'image réduite
+            except Exception as e:
+                print(f"Erreur add_picture (Word) pour {image_path_abs}: {e}")
+
+def delete_paragraph(paragraph):
+    """Supprime un paragraphe du document."""
+    # Cette fonction n'est plus utilisée directement pour supprimer les paragraphes auto-générés
+    # mais est conservée au cas où elle serait utilisée ailleurs.
+    # La logique de suppression des paragraphes vides auto-générés est maintenant dans delete_paragraph_by_element.
+    if paragraph is None or paragraph._element is None or paragraph._element.getparent() is None:
+        return
+    p_element = paragraph._element
+    p_element.getparent().remove(p_element)
+
+def delete_paragraph_by_element(p_element, parent_docx_object):
+    """Supprime un paragraphe en utilisant son élément lxml et l'objet parent python-docx,
+       uniquement s'il semble être un paragraphe vide auto-généré."""
+    if p_element is None or p_element.getparent() is None: return False
+    try:
+        p = Paragraph(p_element, parent_docx_object)
+        if not p.text.strip() and not p.runs:
+            p_element.getparent().remove(p_element)
+            return True 
+    except Exception as e:
+        print(f"Erreur lors de la vérification/suppression du paragraphe par élément : {e}")
+        pass
+    return False
+
+def set_cell_margins(cell, top=None, bottom=None, left=None, right=None):
+    """Définit les marges internes d'une cellule en points (Pt)."""
+    tc = cell._tc
+    tcPr = tc.get_or_add_tcPr()
+
+    # Chercher l'élément <w:tcMar> existant.
+    # tcPr est un objet OxmlElement (CT_TcPr).
+    tcMar_element = tcPr.find(qn('w:tcMar'))
+    if tcMar_element is None:
+        # S'il n'existe pas, le créer et l'ajouter à tcPr.
+        tcMar_element = OxmlElement('w:tcMar')
+        tcPr.append(tcMar_element)
+    # tcMar_element est maintenant l'élément lxml <w:tcMar>.
+
+    # Définir les marges individuelles
+    margins_to_set = {
+        "top": top, "bottom": bottom, "left": left, "right": right
+    }
+
+    for margin_name, value_pt in margins_to_set.items():
+        if value_pt is not None:
+            # Chercher l'élément de marge spécifique (ex: <w:top>) dans <w:tcMar>
+            margin_sub_element = tcMar_element.find(qn(f'w:{margin_name}'))
+            if margin_sub_element is None:
+                margin_sub_element = OxmlElement(f'w:{margin_name}')
+                tcMar_element.append(margin_sub_element)
+            margin_sub_element.set(qn("w:w"), str(int(value_pt.pt * 20))) # Convertir points en DXA (twips)
+            margin_sub_element.set(qn("w:type"), "dxa")
 
 
 def generate_workbook_docx(days, operations, counts, max_digits, conjugations, params_list, grammar_exercises,
@@ -84,12 +243,17 @@ def generate_workbook_docx(days, operations, counts, max_digits, conjugations, p
     CONTENT_INDENT = Cm(0.8) # Décalage pour le contenu des sections
 
     # Applique l'espacement après à tous les paragraphes créés
-    def add_paragraph(text="", style=None, indent=False):
-        para = doc.add_paragraph(text, style=style) if style else doc.add_paragraph(text)
+    def add_paragraph(parent_container, text="", style=None, indent=False):
+        para = parent_container.add_paragraph(text, style=style) if style else parent_container.add_paragraph(text)
+        para.paragraph_format.space_before = Pt(0) # Assurer aucun espace avant
         para.paragraph_format.space_after = Cm(0.05)
         if indent:
             para.paragraph_format.left_indent = CONTENT_INDENT
         return para
+
+    # En-tête général du document (Nom/Titre/Note)
+    # Ce tableau n'est PAS dans un cadre de section coloré.
+    # Sa largeur est gérée par python-docx pour s'adapter aux marges.
     for day in range(1, days + 1):
         # En-tête
         if header_text or show_name or show_note:
@@ -115,7 +279,7 @@ def generate_workbook_docx(days, operations, counts, max_digits, conjugations, p
                 p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
             else:
                 row.cells[2].text = ""
-            add_paragraph("")
+            add_paragraph(doc, "") # Espace après l'en-tête général, ajouté au document principal
 
         section_num = 1 # Compteur pour la numérotation des sections
 
@@ -123,275 +287,364 @@ def generate_workbook_docx(days, operations, counts, max_digits, conjugations, p
         has_calculs_content = any(counts) or \
                               (enumerate_exercises and len(enumerate_exercises) >= day and enumerate_exercises[day-1])
         if has_calculs_content:
-            p = add_paragraph()
-            run = p.add_run(f"{section_num}. Calculs")
-            run.bold = True
-            run.font.size = Pt(14)
-            run.font.color.rgb = RGBColor(51, 102, 204) # Bleu
-            p.alignment = WD_ALIGN_PARAGRAPH.LEFT # Aligné à gauche
+            section_key = "Calculs"
+            section_frame_table = doc.add_table(rows=1, cols=1)
+            section_color_data = SECTION_ASSETS.get(section_key, {}).get("color", (0.1,0.1,0.1))
+            set_table_borders_visible_colored(section_frame_table, section_color_data, size_pt=8) # Cadre visible
+            
+            section_cell = section_frame_table.cell(0,0)
+            set_cell_margins(section_cell, top=Pt(0), bottom=Pt(10), left=Cm(0.15), right=Cm(0.15))
+            if section_cell.paragraphs: # Nettoyer le paragraphe par défaut
+                p_default = section_cell.paragraphs[0]
+                if not p_default.text and not p_default.runs: delete_paragraph(p_default)
+            
+            add_section_header_word(section_cell, section_key, section_num)
             section_num += 1
+            
+            # Tenter de supprimer le paragraphe vide par défaut ajouté après le tableau d'en-tête
+            if section_cell.tables:
+                header_table_element = section_cell.tables[0]._tbl 
+                tc_element = section_cell._tc
+                children = list(tc_element) # Accéder directement aux enfants de l'élément CT_Tc
+                try:
+                    table_index = children.index(header_table_element) # header_table_element est déjà l'élément XML
+                    if table_index + 1 < len(children) and children[table_index + 1].tag == qn('w:p'):
+                         delete_paragraph_by_element(children[table_index + 1], section_cell)
+                except ValueError:
+                    pass 
 
             # Enumérer un nombre (si présent pour le jour)
             if enumerate_exercises and len(enumerate_exercises) >= day and enumerate_exercises[day-1]:
-                para_enum = add_paragraph(indent=True)
+                para_enum = add_paragraph(section_cell, indent=True)
                 run_enum = para_enum.add_run("Écris chaque nombre en toutes lettres :")
                 run_enum.bold = True
                 for n_enum in enumerate_exercises[day-1]:
-                    add_paragraph(f"{n_enum} = _____________________________________________", style='ListContinue', indent=True)
-                add_paragraph(indent=True) # Espace
+                    add_paragraph(section_cell, f"{n_enum} = _____________________________________________", style='ListContinue', indent=True)
 
             # Opérations classiques
             if any(counts):
                 for i, operation in enumerate(operations):
                     # Vérifier si cette opération spécifique a des exercices
                     if params_list[i].get('count', 0) > 0:
-                        p_op = add_paragraph(indent=True)
+                        p_op = add_paragraph(section_cell, indent=True) 
                         run_op = p_op.add_run(f"{operation.capitalize()} :")
                         run_op.bold = True
                         problems = generate_math_problems(operation, params_list[i])
                         for problem in problems:
                             calc_str = problem.strip().replace(' =', '')
-                            add_paragraph(f"{calc_str} = ________________________________", style='ListContinue', indent=True)
-                add_paragraph(indent=True) # Espace après la section calculs
+                            add_paragraph(section_cell, f"{calc_str} = ________________________________", style='ListContinue', indent=True)
+            add_paragraph(doc, "") # Espace entre les cadres de section
 
-        # Section Conjugaison
         if conjugations and len(conjugations) >= day and conjugations[day-1]:
-            p = add_paragraph()
-            run = p.add_run(f"{section_num}. Conjugaison")
-            run.bold = True
-            run.font.size = Pt(14)
-            run.font.color.rgb = RGBColor(178, 76, 51) # Rouge-brique
-            p.alignment = WD_ALIGN_PARAGRAPH.LEFT # Aligné à gauche
+            section_key = "Conjugaison"
+            section_frame_table = doc.add_table(rows=1, cols=1)
+            section_color_data = SECTION_ASSETS.get(section_key, {}).get("color", (0.1,0.1,0.1))
+            set_table_borders_visible_colored(section_frame_table, section_color_data, size_pt=8)
+            section_cell = section_frame_table.cell(0,0)
+            set_cell_margins(section_cell, top=Pt(0), bottom=Pt(10), left=Cm(0.15), right=Cm(0.15))
+            if section_cell.paragraphs: 
+                p_default = section_cell.paragraphs[0]
+                if not p_default.text and not p_default.runs: delete_paragraph(p_default)
+
+            add_section_header_word(section_cell, section_key, section_num)
             section_num += 1
+
+            # Tenter de supprimer le paragraphe vide par défaut ajouté après le tableau d'en-tête
+            if section_cell.tables:
+                header_table_element = section_cell.tables[0]._tbl
+                tc_element = section_cell._tc
+                children = list(tc_element)
+                try:
+                    table_index = children.index(header_table_element)
+                    if table_index + 1 < len(children) and children[table_index + 1].tag == qn('w:p'):
+                         delete_paragraph_by_element(children[table_index + 1], section_cell)
+                except ValueError:
+                    pass
+
             from conjugation_generator import PRONOUNS, VERBS
-            for conjugation in conjugations[day-1]:
-                verb = conjugation["verb"]
-                tense = conjugation["tense"]
+            for conjugation_item in conjugations[day-1]:
+                verb = conjugation_item["verb"]
+                tense = conjugation_item["tense"]
                 groupe = None
                 for g in (1, 2, 3):
-                    if verb in VERBS.get(g, []): # Utiliser .get pour éviter KeyError si groupe absent
+                    if verb in VERBS.get(g, []): 
                         groupe = f"{g}er groupe"
                         break
-                if not groupe:
+                if not groupe and "usuels" in VERBS and verb in VERBS["usuels"]:
                     groupe = "usuel"
-                p_conj_details = add_paragraph(indent=True)
-                run = p_conj_details.add_run(f"Verbe : {verb}  |  Groupe : {groupe}  |  Temps : {tense}") # Correction: run sur p_conj_details
+                if not groupe: groupe = "inconnu" # Fallback
+
+                p_conj_details = add_paragraph(section_cell, indent=True)
+                run = p_conj_details.add_run(f"Verbe : {verb}  |  Groupe : {groupe}  |  Temps : {tense}")
                 run.bold = True
                 for pronoun in PRONOUNS:
-                    add_paragraph(f"{pronoun} ____________________", indent=True)
-            add_paragraph(indent=True) # Espace
+                    add_paragraph(section_cell, f"{pronoun} ____________________", indent=True)
+            add_paragraph(doc, "") # Espace entre les cadres de section
 
-        # Section Grammaire
         if grammar_exercises and len(grammar_exercises) >= day and grammar_exercises[day-1]:
-            # Paragraphe pour le titre principal de la section
-            title_paragraph_gram = add_paragraph()
-            title_run_gram = title_paragraph_gram.add_run(f"{section_num}. Grammaire")
-            title_run_gram.bold = True
-            title_run_gram.font.size = Pt(14)
-            title_run_gram.font.color.rgb = RGBColor(127, 51, 178) # Violet
-            title_paragraph_gram.alignment = WD_ALIGN_PARAGRAPH.LEFT # Aligné à gauche
+            section_key = "Grammaire"
+            section_frame_table = doc.add_table(rows=1, cols=1)
+            section_color_data = SECTION_ASSETS.get(section_key, {}).get("color", (0.1,0.1,0.1))
+            set_table_borders_visible_colored(section_frame_table, section_color_data, size_pt=8)
+            section_cell = section_frame_table.cell(0,0)
+            set_cell_margins(section_cell, top=Pt(0), bottom=Pt(10), left=Cm(0.15), right=Cm(0.15))
+            if section_cell.paragraphs:
+                p_default = section_cell.paragraphs[0]
+                if not p_default.text and not p_default.runs: delete_paragraph(p_default)
+            
+            add_section_header_word(section_cell, section_key, section_num)
             section_num += 1
+
+            # Tenter de supprimer le paragraphe vide par défaut ajouté après le tableau d'en-tête
+            if section_cell.tables:
+                header_table_element = section_cell.tables[0]._tbl
+                tc_element = section_cell._tc
+                children = list(tc_element)
+                try:
+                    table_index = children.index(header_table_element)
+                    if table_index + 1 < len(children) and children[table_index + 1].tag == qn('w:p'):
+                         delete_paragraph_by_element(children[table_index + 1], section_cell)
+                except ValueError:
+                    pass
 
             for ex in grammar_exercises[day-1]:
                 phrase_content = ex['phrase']
                 transformation_content = ex['transformation']
 
-                # Nouveau paragraphe pour la ligne "Phrase : ..."
-                phrase_line_para = add_paragraph(indent=True)
+                phrase_line_para = add_paragraph(section_cell, indent=True)
                 phrase_label_run = phrase_line_para.add_run("Phrase : ")
                 phrase_label_run.bold = True
                 phrase_line_para.add_run(phrase_content)
 
-                # Nouveau paragraphe pour la ligne "Transformation demandée : ..."
-                transfo_line_para = add_paragraph(indent=True)
+                transfo_line_para = add_paragraph(section_cell, indent=True)
                 transfo_label_run = transfo_line_para.add_run("Transformation demandée : ")
                 transfo_label_run.bold = True
                 transfo_line_para.add_run(transformation_content)
 
-                add_paragraph("Réponse : __________________________________________________________", indent=True)
-            add_paragraph(indent=True) # Espace
+                add_paragraph(section_cell, "Réponse : __________________________________________________________", indent=True)
+            add_paragraph(doc, "") # Espace entre les cadres de section
 
-        # Section Mesures (Conversions, Rangement, Encadrement)
         has_mesures_content_for_day = False
         if geo_exercises and len(geo_exercises) >= day and geo_exercises[day-1]:
             has_mesures_content_for_day = True
         if sort_exercises and len(sort_exercises) >= day and sort_exercises[day-1]:
             has_mesures_content_for_day = True
 
-        encadrement_lines_word = [] # Généré par jour pour Word
+        encadrement_lines_word = [] 
         if encadrement_exercises and encadrement_exercises.get('count', 0) > 0 and \
            encadrement_exercises.get('digits', 0) > 0 and encadrement_exercises.get('types'):
-            has_mesures_content_for_day = True # Si encadrement est activé
+            has_mesures_content_for_day = True 
             digits = encadrement_exercises['digits']
-            types = encadrement_exercises['types']
-            if digits > 0: # S'assurer que digits est positif
+            types_enc = encadrement_exercises['types']
+            if digits > 0: 
                 min_val = 0
                 if digits == 1: max_val = 9
                 elif digits > 1:
                     min_val = 10**(digits-1)
                     max_val = 10**digits - 1
-                else: max_val = 0 # Ne devrait pas arriver si digits > 0
+                else: max_val = 0 
 
                 for _ in range(encadrement_exercises['count']):
-                    t = random.choice(types)
+                    t = random.choice(types_enc)
                     n = random.randint(min_val, max_val)
                     encadrement_lines_word.append({'number': n, 'type': t})
 
         if has_mesures_content_for_day:
-            p_mesures = add_paragraph()
-            run_mesures = p_mesures.add_run(f"{section_num}. Mesures")
-            run_mesures.bold = True; run_mesures.font.size = Pt(14); p_mesures.alignment = WD_ALIGN_PARAGRAPH.LEFT # Aligné à gauche
-            run_mesures.font.color.rgb = RGBColor(51, 153, 76) # Vert
+            section_key = "Mesures"
+            section_frame_table = doc.add_table(rows=1, cols=1)
+            section_color_data = SECTION_ASSETS.get(section_key, {}).get("color", (0.1,0.1,0.1))
+            set_table_borders_visible_colored(section_frame_table, section_color_data, size_pt=8)
+            section_cell = section_frame_table.cell(0,0)
+            set_cell_margins(section_cell, top=Pt(0), bottom=Pt(10), left=Cm(0.15), right=Cm(0.15))
+            if section_cell.paragraphs:
+                p_default = section_cell.paragraphs[0]
+                if not p_default.text and not p_default.runs: delete_paragraph(p_default)
+
+            add_section_header_word(section_cell, section_key, section_num)
             section_num += 1
 
-            # Exercices de conversion (si présents pour le jour)
+            # Tenter de supprimer le paragraphe vide par défaut ajouté après le tableau d'en-tête
+            if section_cell.tables:
+                header_table_element = section_cell.tables[0]._tbl
+                tc_element = section_cell._tc
+                children = list(tc_element)
+                try:
+                    table_index = children.index(header_table_element)
+                    if table_index + 1 < len(children) and children[table_index + 1].tag == qn('w:p'):
+                         delete_paragraph_by_element(children[table_index + 1], section_cell)
+                except ValueError:
+                    pass
+
             if geo_exercises and len(geo_exercises) >= day and geo_exercises[day-1]:
                 current_day_geo_ex = geo_exercises[day-1]
                 if current_day_geo_ex:
-                    para_conv_title = add_paragraph(indent=True)
+                    para_conv_title = add_paragraph(section_cell, indent=True)
                     run_conv_title = para_conv_title.add_run("Conversions :")
                     run_conv_title.bold = True
                     for ex_conv in current_day_geo_ex:
-                        add_paragraph(ex_conv, indent=True)
-                    add_paragraph(indent=True) # Espace
-
-            # Exercices de rangement (si présents pour le jour)
+                        add_paragraph(section_cell, ex_conv, indent=True)
             if sort_exercises and len(sort_exercises) >= day and sort_exercises[day-1]:
                 current_day_sort_ex = sort_exercises[day-1]
                 if current_day_sort_ex:
-                    para_sort_title = add_paragraph(indent=True)
+                    para_sort_title = add_paragraph(section_cell, indent=True)
                     ordre = "croissant" if current_day_sort_ex[0]['type'] == 'croissant' else "décroissant"
                     run_sort_title = para_sort_title.add_run(f"Range les nombres suivants dans l'ordre {ordre} :")
                     run_sort_title.bold = True
                     for ex_sort in current_day_sort_ex:
                         numbers_str = ", ".join(str(n) for n in ex_sort['numbers'])
-                        add_paragraph(f"{numbers_str} = _________________________________", indent=True)
-                    add_paragraph(indent=True) # Espace
-
-            # Exercices d'encadrement
+                        add_paragraph(section_cell, f"{numbers_str} = _________________________________", indent=True)
             if encadrement_lines_word:
-                para_enc_title = add_paragraph(indent=True)
+                para_enc_title = add_paragraph(section_cell, indent=True)
                 run_enc_title = para_enc_title.add_run("Encadre les nombres :")
                 run_enc_title.bold = True
                 for ex_enc in encadrement_lines_word:
                     n_enc, t_enc = ex_enc['number'], ex_enc['type']
                     label = f"à l'{t_enc}" if t_enc == "unité" else f"à la {t_enc}" if t_enc in ["dizaine", "centaine"] else f"au {t_enc}"
-                    add_paragraph(f"{n_enc} {label} : ______  {n_enc}  ______", indent=True)
-                add_paragraph(indent=True) # Espace
-            add_paragraph(indent=True) # Espace après la section mesures
+                    add_paragraph(section_cell, f"{n_enc} {label} : ______  {n_enc}  ______", indent=True)
+            add_paragraph(doc, "") # Espace entre les cadres de section
 
-        # Section Géométrie/Mesures (exercices de conversion)
-        # (Maintenant intégré dans la section "Mesures" ci-dessus pour une meilleure structure)
-
-        # Section Anglais (exercices)
-        if english_exercises and len(english_exercises) >= day and english_exercises[day-1]: # Vérifie si la liste du jour n'est pas vide
-            p = add_paragraph()
-            run = p.add_run(f"{section_num}. Anglais")
-            run.bold = True
-            run.font.size = Pt(14)
-            run.font.color.rgb = RGBColor(51, 153, 178) # Bleu-vert
-            p.alignment = WD_ALIGN_PARAGRAPH.LEFT # Aligné à gauche
+        if english_exercises and len(english_exercises) >= day and english_exercises[day-1]: 
+            section_key = "Anglais"
+            section_frame_table = doc.add_table(rows=1, cols=1)
+            section_color_data = SECTION_ASSETS.get(section_key, {}).get("color", (0.1,0.1,0.1))
+            set_table_borders_visible_colored(section_frame_table, section_color_data, size_pt=8)
+            section_cell = section_frame_table.cell(0,0)
+            set_cell_margins(section_cell, top=Pt(0), bottom=Pt(10), left=Cm(0.15), right=Cm(0.15))
+            if section_cell.paragraphs:
+                p_default = section_cell.paragraphs[0]
+                if not p_default.text and not p_default.runs: delete_paragraph(p_default)
+            
+            add_section_header_word(section_cell, section_key, section_num)
             section_num += 1
 
-            # Indicateurs pour savoir si les sous-titres ont été affichés
+            # Tenter de supprimer le paragraphe vide par défaut ajouté après le tableau d'en-tête
+            if section_cell.tables:
+                header_table_element = section_cell.tables[0]._tbl
+                tc_element = section_cell._tc
+                children = list(tc_element)
+                try:
+                    table_index = children.index(header_table_element)
+                    if table_index + 1 < len(children) and children[table_index + 1].tag == qn('w:p'):
+                         delete_paragraph_by_element(children[table_index + 1], section_cell)
+                except ValueError:
+                    pass
+
             completer_subtitle_shown = False
-            relier_subtitle_shown = False
+            relier_subtitle_shown = False # Non utilisé, mais conservé pour la logique
 
             for ex in english_exercises[day-1]:
                 if ex['type'] in ('simple', 'complexe'):
                     if not completer_subtitle_shown:
-                        para_complete_title = add_paragraph(indent=True)
+                        para_complete_title = add_paragraph(section_cell, indent=True)
                         run_complete_title = para_complete_title.add_run("Compléter :")
                         run_complete_title.bold = True
                         completer_subtitle_shown = True
-                    add_paragraph(ex['content'], indent=True)
+                    add_paragraph(section_cell, ex['content'], indent=True)
                 elif ex['type'] == 'relier':
-                    # Ajoute le titre "Jeu de mots à relier :" pour chaque jeu de ce type
-                    para_relier_title = add_paragraph(indent=True)
+                    para_relier_title = add_paragraph(section_cell, indent=True)
                     run_relier_title = para_relier_title.add_run("Jeu de mots à relier :")
                     run_relier_title.bold = True
                     
                     mots_a_relier_pour_jeu = ex['content']
-                    
-                    # Préparer les listes de mots anglais et français
                     liste_anglais = [item['english'] for item in mots_a_relier_pour_jeu]
                     liste_francais = [item['french'] for item in mots_a_relier_pour_jeu]
-                    random.shuffle(liste_francais) # Mélanger une des listes pour le jeu
-
-                    max_items = len(liste_anglais) # Ou len(mots_a_relier_pour_jeu)
-
-                    for i in range(max_items):
-                        mot_anglais = liste_anglais[i]
-                        mot_francais = liste_francais[i] # Prend le mot français mélangé correspondant
-
-                        # Créer un tableau à 5 colonnes pour chaque paire
-                        table = doc.add_table(rows=1, cols=5)
+                    random.shuffle(liste_francais) 
+                    max_items = len(liste_anglais)
+                    
+                    if max_items > 0:
+                        # Créer un seul tableau pour tout le jeu à relier
+                        table = section_cell.add_table(rows=max_items, cols=6) # Pré-allouer les lignes
                         table.autofit = False 
                         table.allow_autofit = False 
-
-                        # Définir la largeur préférée du tableau
-                        # Accéder à table._tbl.tblPr crée l'élément tblPr s'il n'existe pas.
                         tblPr = table._tbl.tblPr
 
-                        # Largeur cible pour le tableau (somme des largeurs de colonnes ci-dessous)
-                        target_table_width_inches = 1.3 + 0.2 + 0.6 + 0.2 + 1.3 # = 3.6 inches
-                        target_table_width_dxa = int(target_table_width_inches * 1440) # Conversion en DXA (twips)
+                        # Explicitly set table layout to fixed to enforce column widths
+                        tblLayout_obj = tblPr.get_or_add_tblLayout() # Gets or adds <w:tblLayout>
+                        tblLayout_obj.type = 'fixed' # Sets <w:tblLayout w:type="fixed"/>
+
+                        col_indent_width = CONTENT_INDENT # Largeur de la nouvelle colonne d'indentation
+                        col_word_width = Inches(1.1) 
+                        col_bullet_width = Inches(0.15) 
+                        col_space_width = Inches(0.5)  
+                        
+                        target_table_width_inches = col_indent_width.inches + (col_word_width.inches * 2) + (col_bullet_width.inches * 2) + col_space_width.inches
+                        target_table_width_dxa = int(target_table_width_inches * 1440) 
                         tblW = OxmlElement('w:tblW')
                         tblW.set(qn('w:w'), str(target_table_width_dxa))
                         tblW.set(qn('w:type'), 'dxa') 
                         tblPr.append(tblW)
-
-                        # Définir les largeurs des colonnes
-                        # Colonnes centrales fixes et étroites :
-                        col_bullet_width = Inches(0.2)
-                        col_space_width = Inches(0.6)
-                        # Colonnes des mots (ajustez pour la longueur typique des mots sans retour à la ligne)
-                        col_word_width = Inches(1.3) # Un peu moins pour que le total soit plus petit
-
-                        table.columns[0].width = col_word_width  # Mot anglais
-                        table.columns[1].width = col_bullet_width # Premier point
-                        table.columns[2].width = col_space_width  # Espace pour tracer la ligne
-                        table.columns[3].width = col_bullet_width # Deuxième point
-                        table.columns[4].width = col_word_width  # Mot français
-                        # Largeur totale indicative : 1.3 + 0.2 + 0.6 + 0.2 + 1.3 = 3.6 inches
-
-                        row_cells = table.rows[0].cells
                         
-                        # Remplir les cellules
-                        # Appliquer un style de paragraphe compact aux cellules du tableau
-                        contents = [mot_anglais, "\u2022", "", "\u2022", mot_francais]
-                        alignments = [WD_ALIGN_PARAGRAPH.LEFT, WD_ALIGN_PARAGRAPH.CENTER, 
-                                      WD_ALIGN_PARAGRAPH.CENTER, WD_ALIGN_PARAGRAPH.CENTER, 
-                                      WD_ALIGN_PARAGRAPH.LEFT]
+                        # Définir les largeurs de colonne une seule fois pour le tableau
+                        table.columns[0].width = col_indent_width   # Colonne d'indentation
+                        table.columns[1].width = col_word_width     # Mot anglais
+                        table.columns[2].width = col_bullet_width   # Puce 1
+                        table.columns[3].width = col_space_width    # Espace central
+                        table.columns[4].width = col_bullet_width   # Puce 2
+                        table.columns[5].width = col_word_width     # Mot français
 
-                        for idx, content_text in enumerate(contents):
-                            cell = row_cells[idx]
-                            cell.text = content_text # Remplace le contenu du premier paragraphe de la cellule
+                        for i in range(max_items):
+                            mot_anglais = liste_anglais[i]
+                            mot_francais = liste_francais[i] 
                             
-                            paragraph = cell.paragraphs[0]
-                            # Optionnel: réduire la taille de la police dans le tableau si besoin
-                            # paragraph.runs[0].font.size = Pt(10) 
-                            paragraph.paragraph_format.space_before = Pt(0)
-                            paragraph.paragraph_format.space_after = Pt(1) # Très petit espace après
-                            paragraph.alignment = alignments[idx]
+                            row_cells = table.rows[i].cells # Obtenir les cellules de la ligne courante
+                            
+                            contents = ["", mot_anglais, "\u2022", "", "\u2022", mot_francais] 
+                            alignments = [WD_ALIGN_PARAGRAPH.LEFT, WD_ALIGN_PARAGRAPH.LEFT, WD_ALIGN_PARAGRAPH.CENTER, 
+                                          WD_ALIGN_PARAGRAPH.CENTER, WD_ALIGN_PARAGRAPH.CENTER, WD_ALIGN_PARAGRAPH.LEFT] 
+                            for idx, content_text in enumerate(contents):
+                                cell = row_cells[idx]
+                                cell.text = content_text 
+                                paragraph = cell.paragraphs[0]
+                                paragraph.paragraph_format.space_before = Pt(0)
+                                paragraph.paragraph_format.space_after = Pt(1) 
+                                paragraph.alignment = alignments[idx]
                         
-                        set_table_borders_invisible(table) # Rendre les bordures invisibles
-            add_paragraph(indent=True) # Espace
+                        set_table_borders_invisible(table) # Appliquer une fois à la fin
+                        # Tenter de supprimer le paragraphe vide par défaut ajouté après ce petit tableau
+                        tc_element = section_cell._tc
+                        current_table_element = table._tbl 
+                        children = list(tc_element)
+                        try:
+                            table_index = children.index(current_table_element)
+                            if table_index + 1 < len(children) and children[table_index + 1].tag == qn('w:p'):
+                                 delete_paragraph_by_element(children[table_index + 1], section_cell)
+                        except ValueError:
+                            pass 
+            add_paragraph(doc, "") # Espace entre les cadres de section
 
-        # Section Orthographe (si présente pour le jour)
         if orthographe_exercises and len(orthographe_exercises) >= day and orthographe_exercises[day-1]:
-            p_ortho = add_paragraph()
-            run_ortho = p_ortho.add_run(f"{section_num}. Orthographe")
-            run_ortho.bold = True; run_ortho.font.size = Pt(14); p_ortho.alignment = WD_ALIGN_PARAGRAPH.LEFT # Aligné à gauche
-            run_ortho.font.color.rgb = RGBColor(255, 178, 0) # Orange
+            section_key = "Orthographe"
+            section_frame_table = doc.add_table(rows=1, cols=1)
+            section_color_data = SECTION_ASSETS.get(section_key, {}).get("color", (0.1,0.1,0.1))
+            set_table_borders_visible_colored(section_frame_table, section_color_data, size_pt=8)
+            section_cell = section_frame_table.cell(0,0)
+            set_cell_margins(section_cell, top=Pt(0), bottom=Pt(10), left=Cm(0.15), right=Cm(0.15))
+            if section_cell.paragraphs:
+                p_default = section_cell.paragraphs[0]
+                if not p_default.text and not p_default.runs: delete_paragraph(p_default)
+
+            add_section_header_word(section_cell, section_key, section_num)
             section_num += 1
+
+            # Tenter de supprimer le paragraphe vide par défaut ajouté après le tableau d'en-tête
+            if section_cell.tables:
+                header_table_element = section_cell.tables[0]._tbl
+                tc_element = section_cell._tc
+                children = list(tc_element)
+                try:
+                    table_index = children.index(header_table_element)
+                    if table_index + 1 < len(children) and children[table_index + 1].tag == qn('w:p'):
+                         delete_paragraph_by_element(children[table_index + 1], section_cell)
+                except ValueError:
+                    pass
+
             for ex_ortho in orthographe_exercises[day-1]:
                 if ex_ortho['type'] == 'homophone':
-                    para_homo = add_paragraph(indent=True)
+                    para_homo = add_paragraph(section_cell, indent=True)
                     run_homo_type = para_homo.add_run(f"{ex_ortho['homophone']} : ")
                     run_homo_type.bold = True
                     para_homo.add_run(ex_ortho['content'])
-            add_paragraph(indent=True) # Espace
+            add_paragraph(doc, "") # Espace entre les cadres de section
 
         if day < days: # N'ajoute pas de saut de page après le dernier jour
             doc.add_page_break()
