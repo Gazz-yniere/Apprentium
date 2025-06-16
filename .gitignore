@@ -2,6 +2,7 @@
 /src/dist/
 /src/build/
 /src/output/
+/output/
 /src/old/
 /src/config.json
 /dist/

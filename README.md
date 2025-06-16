@@ -7,28 +7,35 @@ Les utilisateurs peuvent finement ajuster les paramètres de chaque type d'exerc
 
 ## Structure du projet
 ```
-HolidayScriptGUI
-├── src
-│   ├── EduForge.py              # Point d'entrée de l'application (GUI)
-│   ├── pdf_generator.py     # Logique de génération du PDF
-│   ├── word_generator.py    # Logique de génération du Word
-│   ├── grammar_generator.py # Gestion des phrases de grammaire (JSON)
-│   ├── conjugation_generator.py # Gestion des verbes (JSON)
-│   ├── conversion_generator.py # Gestion des conversions (JSON)
-│   ├── anglais_generator.py # Gestion des phrases en anglais (JSON)
-│   ├── exercise_data_builder.py # Gestion des données d'exercice (JSON)
-│   ├── json                 # Données JSON éditables
+EduForge/
+├── src/
+│   ├── EduForge.py              # Point d'entrée de l'application (interface graphique)
+│   ├── pdf_generator.py         # Logique de génération des fichiers PDF
+│   ├── word_generator.py        # Logique de génération des fichiers Word
+│   ├── grammar_generator.py     # Module pour générer les exercices de grammaire (utilise json/phrases_grammaire.json)
+│   ├── conjugation_generator.py # Module pour générer les exercices de conjugaison (utilise json/verbes.json)
+│   ├── conversion_generator.py  # Module pour générer les exercices de conversion
+│   ├── anglais_generator.py     # Module pour générer les exercices d'anglais (utilise json/phrases_anglais_*.json, json/mots_a_relier.json)
+│   ├── exercise_data_builder.py # Assemble les données d'exercices pour les générateurs de documents
+│   ├── json/                    # Dossier contenant les données JSON personnalisables
 │   │   ├── phrases_grammaire.json
 │   │   ├── homophones.json
 │   │   ├── mots_a_relier.json
 │   │   ├── phrases_anglais_complexe.json
 │   │   ├── phrases_anglais_simple.json
-│   │   └── verbes.json
-│   ├── config.json              # Configuration utilisateur sauvegardée
-│   ├── EduForge.png         # Logo de l'application (fenêtre et .exe)
-│   └── EduForge.ico            # Icône de l'application
-├── requirements.txt         # Dépendances nécessaires
-└── README.md                # Documentation du projet
+│   │   ├── verbes.json
+│   │   └── levels_config.json   # Configuration des exercices disponibles par niveau
+│   ├── img/                     # Dossier contenant les images utilisées pour les en-têtes de section dans les PDF
+│   │   ├── calculs.png
+│   │   ├── mesures.png
+│   │   ├── conjugaison.png
+│   │   ├── grammaire.png
+│   │   ├── orthographe.png
+│   │   └── anglais.png
+│   ├── config.json              # Fichier de configuration utilisateur sauvegardé (généré au premier lancement si absent)
+│   └── EduForge.ico             # Icône de l'application
+├── requirements.txt             # Liste des dépendances Python nécessaires
+└── README.md                    # Ce fichier.
 ```
 
 ## Installation
@@ -53,8 +60,10 @@ pip install -r requirements.txt
    pyinstaller --onefile --noconsole --icon=src/EduForge.ico --add-data "src/json;json" --add-data "src/img;img" --add-data "src/EduForge.ico;." --add-data "src/config.json;." src/EduForge.py
    ```
 2. Dans le dossier `dist/`, copiez `EduForge.exe`, `config.json`, `EduForge.ico`, et le dossier `json`.
-3. Lancez `EduForge.exe` sur n'importe quel PC Windows (aucune installation Python requise).
-4. Les fichiers JSON sont modifiables à côté de l'exe pour personnaliser verbes et phrases.
+3. Copiez également le dossier `img` dans `dist/` si vous souhaitez que les images des sections PDF soient incluses.
+4. Lancez `EduForge.exe` sur n'importe quel PC Windows (aucune installation Python requise).
+5. Les fichiers JSON sont modifiables à côté de l'exe pour personnaliser verbes, phrases, et la configuration des niveaux.
+ 
 
 ## Personnalisation
 - **Verbes** : éditez `verbes.json` pour ajouter/supprimer des verbes par groupe.
@@ -62,7 +71,8 @@ pip install -r requirements.txt
 - **Phrases en anglais** : éditez `phrases_anglais_complexe.json` et `phrases_anglais_simple.json`
 - **mots à relier** : éditez `mots_a_relier.json`
 - **homophones** : éditez `homophones.json`
-- **Logo** : remplacez `EduForge.png` pour changer l'icône de la fenêtre et de l'exécutable.
+- **Configuration des Niveaux** : Éditez levels_config.json pour définir quels types d'exercices sont disponibles pour chaque niveau scolaire (CP, CE1, etc.). 
+- **Apparence des PDF**: Modifiez ou remplacez les images dans le dossier src/img/ (ex: calculs.png, mesures.png) pour changer les illustrations des sections dans les documents PDF générés. 
 
 ## Contribuer
 Les contributions sont les bienvenues ! N'hésitez pas à proposer des améliorations ou signaler des bugs.
