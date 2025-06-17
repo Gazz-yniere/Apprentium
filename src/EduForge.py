@@ -87,6 +87,15 @@ class MainWindow(QMainWindow):
         
         self.LEVEL_ORDER = self.level_configuration_data.get("level_order", default_level_order)
         self.EXERCISES_BY_LEVEL_INCREMENTAL = self.level_configuration_data.get("exercises_by_level", default_exercises_by_level)
+
+        # --- Chargement des thèmes pour l'anglais ---
+        self.english_relier_themes = {}
+        try:
+            mots_relier_path = get_resource_path('mots_a_relier.json')
+            with open(mots_relier_path, 'r', encoding='utf-8') as f:
+                self.english_relier_themes = json.load(f) # Charge le dict des thèmes
+        except Exception as e:
+            print(f"ERREUR: Impossible de charger les thèmes depuis '{mots_relier_path}': {e}")
         # Fenêtre redimensionnable
 
         # Mode dark
@@ -536,31 +545,70 @@ class MainWindow(QMainWindow):
         self._all_row_widgets_for_map.update(eng_rel_rows)
         english_layout.addWidget(self.english_relier_group)
 
+        # Ajout des checkboxes de thèmes directement dans le layout de english_relier_group
+        # Pas de QGroupBox séparé pour les thèmes.
+        self.english_relier_theme_checkboxes = {} # Dictionnaire pour stocker les checkboxes de thèmes
+        english_relier_group_layout = self.english_relier_group.layout() # Récupérer le layout existant
+
+        if self.english_relier_themes: # Si des thèmes ont été chargés
+            for theme_name in self.english_relier_themes.keys():
+                cb = QCheckBox(theme_name.replace("_", " ").capitalize())
+                english_relier_group_layout.addWidget(cb) # Ajouter directement au layout du groupe "Jeux à relier"
+                self.english_relier_theme_checkboxes[theme_name] = cb
+        else:
+            no_themes_label = QLabel("Aucun thème défini dans mots_a_relier.json")
+            english_relier_group_layout.addWidget(no_themes_label)
+
+
         # Anglais : bleu moyen (#64B5F6)
-        english_groups = [self.english_complete_group, self.english_relier_group]
+        english_groups = [self.english_complete_group, self.english_relier_group] # themes_group est maintenant stylé différemment et imbriqué
         set_groupbox_style(english_groups, "#64B5F6")
         english_layout.addStretch()
-
+        
         # --- Splitter pour 6 colonnes ---
-        calc_widget = QWidget(); calc_widget.setLayout(calc_layout); calc_widget.setMinimumWidth(270)
-        geo_widget = QWidget(); geo_widget.setLayout(geo_layout); geo_widget.setMinimumWidth(270)
-        conj_widget = QWidget(); conj_widget.setLayout(conj_layout); conj_widget.setMinimumWidth(270)
-        grammar_widget = QWidget(); grammar_widget.setLayout(grammar_layout); grammar_widget.setMinimumWidth(270)
-        orthographe_widget = QWidget(); orthographe_widget.setLayout(orthographe_layout); orthographe_widget.setMinimumWidth(270)
-        english_widget = QWidget(); english_widget.setLayout(english_layout); english_widget.setMinimumWidth(270)
+        self.calc_column_widget = QWidget()
+        self.calc_column_widget.setLayout(calc_layout)
+        self.calc_column_widget.setMinimumWidth(270)
+
+        self.geo_column_widget = QWidget()
+        self.geo_column_widget.setLayout(geo_layout)
+        self.geo_column_widget.setMinimumWidth(270)
+
+        self.conj_column_widget = QWidget()
+        self.conj_column_widget.setLayout(conj_layout)
+        self.conj_column_widget.setMinimumWidth(270)
+
+        self.grammar_column_widget = QWidget()
+        self.grammar_column_widget.setLayout(grammar_layout)
+        self.grammar_column_widget.setMinimumWidth(270)
+
+        # Widgets pour les sections Orthographe et Anglais (contenus dans ortho_anglais_column_widget)
+        self.orthographe_section_widget = QWidget()
+        self.orthographe_section_widget.setLayout(orthographe_layout)
+        self.orthographe_section_widget.setMinimumWidth(270)
+
+        self.english_section_widget = QWidget()
+        self.english_section_widget.setLayout(english_layout)
+        self.english_section_widget.setMinimumWidth(270)
+
         # Bloc vertical pour orthographe + anglais
         ortho_anglais_layout = QVBoxLayout()
         ortho_anglais_layout.setContentsMargins(0, 0, 0, 0)
         ortho_anglais_layout.setSpacing(0)
-        ortho_anglais_layout.addWidget(orthographe_widget, alignment=Qt.AlignmentFlag.AlignTop)
-        ortho_anglais_layout.addWidget(english_widget, alignment=Qt.AlignmentFlag.AlignTop)
-        self.ortho_anglais_widget = QWidget(); self.ortho_anglais_widget.setLayout(ortho_anglais_layout); self.ortho_anglais_widget.setMinimumWidth(270) # Fait un attribut
+        ortho_anglais_layout.addWidget(self.orthographe_section_widget) # L'alignement n'est plus nécessaire ici
+        ortho_anglais_layout.addWidget(self.english_section_widget)   # L'alignement n'est plus nécessaire ici
+        ortho_anglais_layout.addStretch(1) # Ajoute un ressort pour pousser les sections vers le haut
+        
+        self.ortho_anglais_column_widget = QWidget()
+        self.ortho_anglais_column_widget.setLayout(ortho_anglais_layout)
+        self.ortho_anglais_column_widget.setMinimumWidth(270)
+        
         splitter = QSplitter(Qt.Orientation.Horizontal)
-        splitter.addWidget(calc_widget)
-        splitter.addWidget(geo_widget)
-        splitter.addWidget(conj_widget)
-        splitter.addWidget(self.ortho_anglais_widget) # Ortho/Anglais en 4ème
-        splitter.addWidget(grammar_widget)           # Grammaire en 5ème
+        splitter.addWidget(self.calc_column_widget)
+        splitter.addWidget(self.geo_column_widget)
+        splitter.addWidget(self.conj_column_widget)
+        splitter.addWidget(self.ortho_anglais_column_widget) # Ortho/Anglais en 4ème
+        splitter.addWidget(self.grammar_column_widget)       # Grammaire en 5ème
         splitter.setSizes([100, 100, 100, 200, 100]) # Ajustement des tailles
         splitter.setStretchFactor(0, 1)
         splitter.setStretchFactor(1, 1)
@@ -649,12 +697,18 @@ class MainWindow(QMainWindow):
             "english_type_simple_cb": self.english_type_simple, "english_type_complexe_cb": self.english_type_complexe,
             "english_relier_group": self.english_relier_group,
             "english_relier_count_input": self.english_relier_count, "relier_count_input": self.relier_count,
+            # "english_relier_themes_group": self.english_relier_themes_group, # Supprimé car plus de groupe dédié
         }
         # Remove None values from map (if checkboxes lists were shorter than expected)
         self.exercise_widgets_map = {k: v for k, v in self.exercise_widgets_map.items() if v is not None}
         # Ajouter les row_widgets stockés
         self.exercise_widgets_map.update(self._all_row_widgets_for_map)
         del self._all_row_widgets_for_map # Nettoyer le dictionnaire temporaire
+
+        # Ajouter dynamiquement les checkboxes de thèmes anglais à exercise_widgets_map
+        if hasattr(self, 'english_relier_theme_checkboxes'):
+            for theme_name, cb_widget in self.english_relier_theme_checkboxes.items():
+                self.exercise_widgets_map[f"english_theme_{theme_name}_cb"] = cb_widget
 
         # --- Column Titles and Sections Mapping (for hiding titles of empty columns) ---
         self.column_title_widgets = {
@@ -670,8 +724,8 @@ class MainWindow(QMainWindow):
             "geo": ["geo_conv_group", "geo_sort_group", "geo_encadrement_group"],
             "conj": ["conj_params_group", "conj_groups_group", "conj_tenses_group"],
             "grammar": ["grammar_params_group", "grammar_types_group", "grammar_transfo_group"],
-            "ortho": ["ortho_params_group", "ortho_homophones_group"],
-            "english": ["english_complete_group", "english_relier_group"],
+            "ortho": ["ortho_params_group", "ortho_homophones_group"], 
+            "english": ["english_complete_group", "english_relier_group"], # Les checkboxes de thèmes sont gérées individuellement
         }
 
         # Séparateur avant les contrôles de fichier/génération
@@ -889,6 +943,11 @@ class MainWindow(QMainWindow):
             ('encadrement_millier', self.encadrement_millier, 'checked'),
             ('current_level', self, 'level_variable'), # Ajout pour sauvegarder le niveau
         ]
+        # Ajouter dynamiquement les checkboxes de thèmes anglais à config_fields
+        if hasattr(self, 'english_relier_theme_checkboxes'):
+            for theme_name, cb_widget in self.english_relier_theme_checkboxes.items():
+                # La clé de config doit correspondre à celle dans exercise_widgets_map
+                self.config_fields.append((f"english_theme_{theme_name}_cb", cb_widget, 'checked'))
         self.load_config()
         self.update_exercise_visibility() # Set initial visibility based on loaded config (or default)
 
@@ -1088,15 +1147,21 @@ class MainWindow(QMainWindow):
             english_types = self.get_selected_english_types()
             n_complete = self.get_int(self.english_complete_count) if "english_complete_group" in allowed_keys else 0
             n_relier = self.get_int(self.english_relier_count) if "english_relier_group" in allowed_keys else 0
-            n_mots_reliés = self.get_int(self.relier_count) if "english_relier_group" in allowed_keys else 0
-            english_exercises = []
-            n_days = self.get_int(self.days_entry)
-            for _ in range(n_days):
-                english_exercises.append(
-                    generate_english_full_exercises(english_types, n_complete, n_relier, n_mots_reliés)
-                )
+            n_mots_reliés = self.get_int(self.relier_count) if "english_relier_group" in allowed_keys else 0 # Garder pour params
+            # La génération effective des english_exercises se fera dans ExerciseDataBuilder
 
             # Ranger les nombres - Logique améliorée
+            # Thèmes anglais sélectionnés
+            print(f"DEBUG EduForge: allowed_keys pour le niveau '{self.current_level}': {allowed_keys}")
+            selected_english_themes = []
+            if hasattr(self, 'english_relier_theme_checkboxes') and "english_relier_group" in allowed_keys: # Vérifier si la section "jeux à relier" est active
+                for theme_name, cb in self.english_relier_theme_checkboxes.items():
+                    theme_cb_key = f"english_theme_{theme_name}_cb"
+                    # Vérifier si la checkbox de thème elle-même est autorisée par le niveau actuel ET cochée
+                    if theme_cb_key in allowed_keys and cb.isChecked():
+                        selected_english_themes.append(theme_name)
+            print(f"DEBUG EduForge: Thèmes anglais sélectionnés: {selected_english_themes}")
+
             sort_count_val = self.get_int(self.sort_count, field_name="Ranger - nombre d'exercices") if "geo_sort_group" in allowed_keys else 0
             is_croissant_selected = self.sort_type_croissant.isChecked() if "sort_type_croissant_cb" in allowed_keys else False
             is_decroissant_selected = self.sort_type_decroissant.isChecked() if "sort_type_decroissant_cb" in allowed_keys else False
@@ -1148,9 +1213,11 @@ class MainWindow(QMainWindow):
                 'english_complete_count': n_complete, # Already filtered
                 'english_relier_count': n_relier,     # Already filtered
                 # Orthographe
+                'generate_english_full_exercises_func': generate_english_full_exercises, # AJOUT DE CETTE LIGNE
                 'orthographe_ex_count': self.get_int(self.orthographe_ex_count, field_name="Orthographe - nombre d'exercices") if "ortho_params_group" in allowed_keys else 0,
                 # Encadrement
-                'encadrement_exercises': encadrement_exercises,
+                'encadrement_exercises': encadrement_exercises, # Déjà filtré par allowed_keys pour son propre groupe
+                'selected_english_themes': selected_english_themes, # Déjà filtré par allowed_keys pour chaque checkbox
                 'current_level_for_conversions': self.current_level # Ajout DU NIVEAU ICI
             }
 
@@ -1208,7 +1275,7 @@ class MainWindow(QMainWindow):
                 print("Erreur critique : ExerciseDataBuilder.build n'a pas pu construire les données d'exercices.")
                 return None
             result['encadrement_exercises'] = encadrement_exercises
-            result['english_exercises'] = english_exercises
+            # result['english_exercises'] est maintenant rempli par ExerciseDataBuilder
             return result
         except InvalidFieldError as e:
             print(f"Veuillez entrer une valeur numérique valide pour : {e.field_name} (valeur saisie : '{e.value}')")
@@ -1436,24 +1503,69 @@ class MainWindow(QMainWindow):
     def update_exercise_visibility(self):
         allowed_exercise_keys = self.get_exercises_for_level(self.current_level)
 
+        # 1. Mettre à jour la visibilité des composants d'exercice individuels (QGroupBox, QLineEdit, etc.)
         for key, widget in self.exercise_widgets_map.items():
             if widget: # Ensure widget exists
                 if key in allowed_exercise_keys:
                     widget.show()
                 else:
                     widget.hide()
+        
+        # 2. Déterminer l'activité de chaque colonne/section et mettre à jour la visibilité
+        #    des titres de colonne et des widgets de colonne principaux dans le QSplitter.
 
-        # Update visibility of column titles
-        for col_key, title_label_widget in self.column_title_widgets.items():
-            section_group_keys_in_col = self.column_section_keys.get(col_key, [])
-            is_any_section_configured_to_be_visible_in_col = False # Renommé pour plus de clarté
-            for section_key in section_group_keys_in_col:
-                # Vérifie si la section (QGroupBox) est configurée pour être active
-                # pour le niveau actuel (contenu dans allowed_exercise_keys).
-                if section_key in allowed_exercise_keys:
-                    is_any_section_configured_to_be_visible_in_col = True
-                    break
-            title_label_widget.setVisible(is_any_section_configured_to_be_visible_in_col)
+        is_calc_column_active = False
+        for section_key in self.column_section_keys.get("calc", []):
+            if section_key in allowed_exercise_keys:
+                is_calc_column_active = True
+                break
+        self.calc_title_label.setVisible(is_calc_column_active)
+        self.calc_column_widget.setVisible(is_calc_column_active)
+
+        is_geo_column_active = False
+        for section_key in self.column_section_keys.get("geo", []):
+            if section_key in allowed_exercise_keys:
+                is_geo_column_active = True
+                break
+        self.geo_title_label.setVisible(is_geo_column_active)
+        self.geo_column_widget.setVisible(is_geo_column_active)
+
+        is_conj_column_active = False
+        for section_key in self.column_section_keys.get("conj", []):
+            if section_key in allowed_exercise_keys:
+                is_conj_column_active = True
+                break
+        self.conj_title_label.setVisible(is_conj_column_active)
+        self.conj_column_widget.setVisible(is_conj_column_active)
+
+        is_grammar_column_active = False
+        for section_key in self.column_section_keys.get("grammar", []):
+            if section_key in allowed_exercise_keys:
+                is_grammar_column_active = True
+                break
+        self.grammar_title_label.setVisible(is_grammar_column_active)
+        self.grammar_column_widget.setVisible(is_grammar_column_active)
+
+        # Pour la colonne combinée Orthographe/Anglais
+        is_ortho_section_active = False
+        for section_key in self.column_section_keys.get("ortho", []):
+            if section_key in allowed_exercise_keys:
+                is_ortho_section_active = True
+                break
+        self.orthographe_title_label.setVisible(is_ortho_section_active)
+        self.orthographe_section_widget.setVisible(is_ortho_section_active)
+
+        is_english_section_active = False
+        for section_key in self.column_section_keys.get("english", []):
+            if section_key in allowed_exercise_keys:
+                is_english_section_active = True
+                break
+        self.english_title_label.setVisible(is_english_section_active)
+        self.english_section_widget.setVisible(is_english_section_active)
+
+        # La colonne combinée elle-même est visible si l'une de ses sections l'est
+        is_ortho_anglais_column_active = is_ortho_section_active or is_english_section_active
+        self.ortho_anglais_column_widget.setVisible(is_ortho_anglais_column_active)
 
     def get_selected_conversion_types(self):
         types = []

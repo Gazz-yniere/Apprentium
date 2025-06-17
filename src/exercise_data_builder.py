@@ -185,6 +185,8 @@ class ExerciseDataBuilder:
             n_complete_param = params.get('english_complete_count', 0)
             n_relier_param = params.get('english_relier_count', 0) # Nombre de jeux
             n_mots_relies_param = params.get('relier_count', 0) # Nombre de mots par jeu
+            print(f"DEBUG Builder: Thèmes reçus: {params.get('selected_english_themes')}") # DEBUG
+            selected_english_themes = params.get('selected_english_themes', [])
             
             if generate_english_full_exercises_func:
                 for _ in range(jours):
@@ -192,7 +194,8 @@ class ExerciseDataBuilder:
                         types=english_types, # ['simple', 'complexe']
                         n_complete=n_complete_param,
                         n_relier=n_relier_param,
-                        n_mots_reliés=n_mots_relies_param
+                        n_mots_reliés=n_mots_relies_param,
+                        selected_themes=selected_english_themes
                     )
                     english_exercises_data.append(daily_english_ex)
             else:
