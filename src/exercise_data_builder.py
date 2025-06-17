@@ -280,6 +280,24 @@ class ExerciseDataBuilder:
             # Encadrement de nombre (déjà préparé dans EduForge.py et passé dans params)
             encadrement_exercises_from_params = params.get('encadrement_exercises', {'count': 0, 'digits': 0, 'types': []})
 
+            # Petits Problèmes Mathématiques
+            generate_math_problems_func = params.get('generate_math_problems_func')
+            math_problems_count = params.get('math_problems_count', 0)
+            selected_math_problem_types = params.get('selected_math_problem_types', [])
+            current_level_for_problems = params.get('current_level_for_problems')
+            all_math_problems = [] # Sera une liste de listes (une par jour)
+
+            if generate_math_problems_func and math_problems_count > 0 and selected_math_problem_types:
+                for _ in range(jours):
+                    daily_math_problems = generate_math_problems_func(
+                        selected_problem_types=selected_math_problem_types,
+                        num_problems=math_problems_count,
+                        target_level=current_level_for_problems
+                    )
+                    all_math_problems.append(daily_math_problems)
+            else:
+                for _ in range(jours):
+                    all_math_problems.append([])
 
             return {
                 'days': days,
@@ -294,7 +312,8 @@ class ExerciseDataBuilder:
                 'orthographe_exercises': orthographe_exercises,
                 'enumerate_exercises': all_enumerate_exercises,
                 'sort_exercises': all_sort_exercises, 
-                'encadrement_exercises': encadrement_exercises_from_params # Utiliser celui des params
+                'encadrement_exercises': encadrement_exercises_from_params, # Utiliser celui des params
+                'math_problems': all_math_problems
             }
         except InvalidFieldError as e:
             print(f"Veuillez entrer une valeur numérique valide pour : {e.field_name} (valeur saisie : '{e.value}')")

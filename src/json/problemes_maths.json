@@ -1,0 +1,430 @@
+{
+  "addition": [
+    {
+      "levels": ["CP", "CE1"],
+      "enonce": "Léo a {X} billes. Il en gagne {Y}. Combien de billes a-t-il maintenant ?",
+      "variables": { "X": [1, 10], "Y": [1, 5] }
+    },
+    {
+      "levels": ["CP"],
+      "enonce": "Dans son panier, maman a {X} pommes et {Y} bananes. Combien de fruits a-t-elle en tout ?",
+      "variables": { "X": [2, 6], "Y": [1, 4] }
+    },
+    {
+      "levels": ["CP"],
+      "enonce": "J'ai {X} crayons rouges et {Y} crayons bleus. Combien ai-je de crayons en tout ?",
+      "variables": { "X": [3, 7], "Y": [2, 5] }
+    },
+    {
+      "levels": ["CP", "CE1"],
+      "enonce": "Un bus a {X} passagers. Au prochain arrêt, {Y} personnes montent. Combien y a-t-il de passagers dans le bus ?",
+      "variables": { "X": [8, 15], "Y": [3, 7] }
+    },
+    {
+      "levels": ["CE1"],
+      "enonce": "Sophie lit {X} pages le matin et {Y} pages l'après-midi. Combien de pages a-t-elle lues dans la journée ?",
+      "variables": { "X": [10, 20], "Y": [5, 10] }
+    },
+    {
+      "levels": ["CE1", "CE2"],
+      "enonce": "Dans une boulangerie, il y a {X} baguettes le matin et le boulanger en fabrique {Y} de plus l'après-midi. Combien de baguettes y a-t-il en tout ?",
+      "variables": { "X": [25, 40], "Y": [15, 25] }
+    },
+    {
+      "levels": ["CE2"],
+      "enonce": "Mon jardin a {X} fleurs rouges et {Y} fleurs jaunes. Combien y a-t-il de fleurs au total ?",
+      "variables": { "X": [30, 50], "Y": [20, 40] }
+    },
+    {
+      "levels": ["CE2"],
+      "enonce": "Une école a {X} élèves en CP et {Y} élèves en CE1. Combien d'élèves y a-t-il dans ces deux niveaux ?",
+      "variables": { "X": [45, 60], "Y": [40, 55] }
+    },
+    {
+      "levels": ["CM1"],
+      "enonce": "Un avion parcourt {X} km le premier jour et {Y} km le deuxième jour. Quelle distance totale a-t-il parcourue ?",
+      "variables": { "X": [120, 250], "Y": [100, 200] }
+    },
+    {
+      "levels": ["CM1"],
+      "enonce": "Un fermier récolte {X} kg de pommes et {Y} kg de poires. Quelle est la masse totale de fruits récoltés ?",
+      "variables": { "X": [150, 300], "Y": [120, 250] }
+    },
+    {
+      "levels": ["CM2"],
+      "enonce": "Un réservoir contient {X} litres d'eau. On y ajoute {Y} litres. Quelle est la nouvelle quantité d'eau dans le réservoir ?",
+      "variables": { "X": [500, 800], "Y": [200, 400] }
+    },
+    {
+      "levels": ["CM2"],
+      "enonce": "La population d'une ville est de {X} habitants. Elle augmente de {Y} habitants en un an. Quelle est la nouvelle population ?",
+      "variables": { "X": [1200, 2500], "Y": [150, 500] }
+    },
+    {
+      "levels": ["CP"],
+      "enonce": "J'ai {X} jetons et je trouve {Y} jetons. Combien de jetons ai-je maintenant ?",
+      "variables": { "X": [1, 8], "Y": [1, 5] }
+    },
+    {
+      "levels": ["CE1"],
+      "enonce": "Pour ma fête, il y a {X} filles et {Y} garçons. Combien d'enfants y a-t-il en tout ?",
+      "variables": { "X": [6, 12], "Y": [5, 10] }
+    },
+    {
+      "levels": ["CE1", "CE2"],
+      "enonce": "Un magasin a vendu {X} pulls le matin et {Y} pulls l'après-midi. Combien de pulls ont été vendus aujourd'hui ?",
+      "variables": { "X": [15, 30], "Y": [10, 20] }
+    },
+    {
+      "levels": ["CE2"],
+      "enonce": "Ma tirelire contient {X} euros. Papi me donne {Y} euros. Combien d'argent ai-je ?",
+      "variables": { "X": [20, 40], "Y": [10, 25] }
+    },
+    {
+      "levels": ["CM1"],
+      "enonce": "Un camion transporte {X} kg de sable puis charge {Y} kg de gravier. Quelle est la charge totale du camion ?",
+      "variables": { "X": [300, 600], "Y": [200, 400] }
+    },
+    {
+      "levels": ["CM1"],
+      "enonce": "Dans un livre, il y a {X} pages d'histoire et {Y} pages d'exercices. Combien de pages a le livre en tout ?",
+      "variables": { "X": [80, 150], "Y": [40, 80] }
+    },
+    {
+      "levels": ["CM2"],
+      "enonce": "Une usine produit {X} voitures en janvier et {Y} voitures en février. Combien de voitures sont produites sur ces deux mois ?",
+      "variables": { "X": [800, 1500], "Y": [600, 1200] }
+    },
+    {
+      "levels": ["CM2"],
+      "enonce": "La longueur d'un chemin est de {X} mètres. On y ajoute {Y} mètres. Quelle est la nouvelle longueur du chemin ?",
+      "variables": { "X": [2000, 5000], "Y": [1000, 3000] }
+    }
+  ],
+  "soustraction": [
+    {
+      "levels": ["CP", "CE1"],
+      "enonce": "Sarah a {X} gâteaux. Elle en mange {Y}. Combien lui en reste-t-il ?",
+      "variables": { "X": [5, 15], "Y": [1, "X-1"] }
+    },
+    {
+      "levels": ["CE1"],
+      "enonce": "Il y avait {X} oiseaux sur la branche. {Y} se sont envolés. Combien d'oiseaux reste-t-il ?",
+      "variables": { "X": [3, 12], "Y": [1, "X-1"] }
+    },
+    {
+      "levels": ["CP"],
+      "enonce": "J'avais {X} bonbons. J'en ai donné {Y} à mon ami. Combien de bonbons me reste-t-il ?",
+      "variables": { "X": [5, 10], "Y": [1, "X-1"] }
+    },
+    {
+      "levels": ["CP", "CE1"],
+      "enonce": "Dans un parc, il y a {X} arbres. {Y} arbres sont coupés. Combien d'arbres reste-t-il ?",
+      "variables": { "X": [10, 20], "Y": [2, 8] }
+    },
+    {
+      "levels": ["CE1"],
+      "enonce": "Un livre a {X} pages. J'en ai lu {Y}. Combien de pages me reste-t-il à lire ?",
+      "variables": { "X": [20, 35], "Y": [5, 15] }
+    },
+    {
+      "levels": ["CE1", "CE2"],
+      "enonce": "Une boîte contient {X} crayons. J'en utilise {Y}. Combien de crayons restent dans la boîte ?",
+      "variables": { "X": [25, 40], "Y": [10, 20] }
+    },
+    {
+      "levels": ["CE2"],
+      "enonce": "Un boulanger a fait {X} croissants. Il en vend {Y}. Combien de croissants lui reste-t-il ?",
+      "variables": { "X": [50, 75], "Y": [20, 40] }
+    },
+    {
+      "levels": ["CE2"],
+      "enonce": "Dans un bus, il y a {X} places. {Y} sont occupées. Combien de places sont libres ?",
+      "variables": { "X": [30, 50], "Y": [15, 30] }
+    },
+    {
+      "levels": ["CM1"],
+      "enonce": "Un réservoir d'eau a une capacité de {X} litres. Il contient déjà {Y} litres. Combien de litres peut-on encore ajouter ?",
+      "variables": { "X": [200, 400], "Y": [80, "X-10"] }
+    },
+    {
+      "levels": ["CM1"],
+      "enonce": "J'ai {X} euros dans mon porte-monnaie. Je dépense {Y} euros. Combien me reste-t-il d'argent ?",
+      "variables": { "X": [100, 250], "Y": [20, "X-10"] }
+    },
+    {
+      "levels": ["CM2"],
+      "enonce": "Une bibliothèque possède {X} livres. {Y} livres sont empruntés. Combien de livres sont disponibles ?",
+      "variables": { "X": [1500, 3000], "Y": [500, "X-100"] }
+    },
+    {
+      "levels": ["CM2"],
+      "enonce": "La distance entre deux villes est de {X} km. J'ai déjà parcouru {Y} km. Combien de kilomètres me reste-t-il à parcourir ?",
+      "variables": { "X": [800, 1500], "Y": [300, "X-100"] }
+    },
+    {
+      "levels": ["CP"],
+      "enonce": "Il y a {X} fleurs dans un vase. J'en retire {Y}. Combien reste-t-il de fleurs ?",
+      "variables": { "X": [6, 12], "Y": [1, 5] }
+    },
+    {
+      "levels": ["CE1"],
+      "enonce": "Maman a acheté {X} œufs. Nous en avons utilisé {Y} pour faire un gâteau. Combien d'œufs reste-t-il ?",
+      "variables": { "X": [12, 24], "Y": [4, 8] }
+    },
+    {
+      "levels": ["CE1", "CE2"],
+      "enonce": "Un jeu de cartes a {X} cartes. J'en perds {Y}. Combien de cartes me reste-t-il ?",
+      "variables": { "X": [32, 52], "Y": [5, 10] }
+    },
+    {
+      "levels": ["CE2"],
+      "enonce": "J'ai {X} minutes pour faire mes devoirs. J'en ai déjà passé {Y}. Combien de temps me reste-t-il ?",
+      "variables": { "X": [60, 90], "Y": [20, 45] }
+    },
+    {
+      "levels": ["CM1"],
+      "enonce": "Un agriculteur avait {X} poules. {Y} poules ont été vendues. Combien de poules lui reste-t-il ?",
+      "variables": { "X": [150, 300], "Y": [50, 100] }
+    },
+    {
+      "levels": ["CM1"],
+      "enonce": "La température était de {X} degrés ce matin. Elle a baissé de {Y} degrés. Quelle est la nouvelle température ?",
+      "variables": { "X": [25, 35], "Y": [5, 15] }
+    },
+    {
+      "levels": ["CM2"],
+      "enonce": "Un magasin a {X} paires de chaussures. Il en vend {Y} pendant les soldes. Combien de paires lui reste-t-il ?",
+      "variables": { "X": [700, 1200], "Y": [200, 500] }
+    },
+    {
+      "levels": ["CM2"],
+      "enonce": "Un compte bancaire contient {X} euros. Une dépense de {Y} euros est faite. Quel est le nouveau solde ?",
+      "variables": { "X": [1000, 5000], "Y": [100, "X-500"] }
+    }
+  ],
+  "multiplication": [
+    {
+      "levels": ["CE1", "CE2"],
+      "enonce": "Dans la classe, il y a {X} rangées de {Y} tables. Combien y a-t-il de tables en tout ?",
+      "variables": { "X": [2, 5], "Y": [2, 4] }
+    },
+    {
+      "levels": ["CE1", "CE2"],
+      "enonce": "Maman achète {X} paquets de {Y} yaourts. Combien de yaourts a-t-elle achetés ?",
+      "variables": { "X": [2, 4], "Y": [4, 6] }
+    },
+    {
+      "levels": ["CE1"],
+      "enonce": "J'ai {X} boîtes de {Y} billes. Combien de billes ai-je en tout ?",
+      "variables": { "X": [3, 6], "Y": [5, 10] }
+    },
+    {
+      "levels": ["CE2"],
+      "enonce": "Un bouquet de fleurs a {X} roses. Combien de roses y a-t-il dans {Y} bouquets ?",
+      "variables": { "X": [5, 8], "Y": [3, 7] }
+    },
+    {
+      "levels": ["CE2"],
+      "enonce": "Chaque enfant reçoit {X} bonbons. Il y a {Y} enfants. Combien de bonbons faut-il distribuer ?",
+      "variables": { "X": [4, 7], "Y": [6, 9] }
+    },
+    {
+      "levels": ["CM1"],
+      "enonce": "Une boîte de chocolats contient {X} chocolats. Combien de chocolats y a-t-il dans {Y} boîtes ?",
+      "variables": { "X": [10, 15], "Y": [8, 12] }
+    },
+    {
+      "levels": ["CM1"],
+      "enonce": "Un train a {X} wagons. Chaque wagon peut transporter {Y} passagers. Combien de passagers le train peut-il transporter ?",
+      "variables": { "X": [7, 10], "Y": [30, 50] }
+    },
+    {
+      "levels": ["CM1"],
+      "enonce": "Un ouvrier fabrique {X} pièces par heure. Combien de pièces fabrique-t-il en {Y} heures ?",
+      "variables": { "X": [15, 25], "Y": [6, 9] }
+    },
+    {
+      "levels": ["CM2"],
+      "enonce": "Un magasin vend des stylos à {X} euros l'unité. Combien coûtent {Y} stylos ?",
+      "variables": { "X": [2, 5], "Y": [50, 100] }
+    },
+    {
+      "levels": ["CM2"],
+      "enonce": "Une salle de cinéma a {X} rangées de {Y} sièges. Quelle est la capacité totale de la salle ?",
+      "variables": { "X": [15, 25], "Y": [20, 30] }
+    },
+    {
+      "levels": ["CE1"],
+      "enonce": "Chaque sac contient {X} pommes. J'ai {Y} sacs. Combien de pommes ai-je en tout ?",
+      "variables": { "X": [3, 7], "Y": [4, 8] }
+    },
+    {
+      "levels": ["CE2"],
+      "enonce": "Pour une recette, il faut {X} œufs par gâteau. Je veux faire {Y} gâteaux. Combien d'œufs me faut-il ?",
+      "variables": { "X": [2, 4], "Y": [5, 10] }
+    },
+    {
+      "levels": ["CE2"],
+      "enonce": "Un jardinier plante {X} fleurs par plate-bande. Il a {Y} plate-bandes. Combien de fleurs a-t-il plantées ?",
+      "variables": { "X": [8, 12], "Y": [4, 7] }
+    },
+    {
+      "levels": ["CM1"],
+      "enonce": "Un vélo coûte {X} euros. Combien coûtent {Y} vélos ?",
+      "variables": { "X": [50, 100], "Y": [3, 6] }
+    },
+    {
+      "levels": ["CM1"],
+      "enonce": "Un livreur distribue {X} colis par jour. Combien de colis distribue-t-il en {Y} jours ?",
+      "variables": { "X": [20, 40], "Y": [5, 8] }
+    },
+    {
+      "levels": ["CM1"],
+      "enonce": "Dans un parking, il y a {X} rangées de {Y} voitures. Combien de voitures sont garées ?",
+      "variables": { "X": [10, 15], "Y": [8, 12] }
+    },
+    {
+      "levels": ["CM2"],
+      "enonce": "Un agriculteur récolte {X} kg de blé par hectare. Il a {Y} hectares. Quelle est la récolte totale ?",
+      "variables": { "X": [300, 600], "Y": [5, 10] }
+    },
+    {
+      "levels": ["CM2"],
+      "enonce": "Une entreprise fabrique {X} jouets par minute. Combien de jouets sont fabriqués en {Y} minutes ?",
+      "variables": { "X": [10, 20], "Y": [60, 120] }
+    },
+    {
+      "levels": ["CM2"],
+      "enonce": "Le prix d'un billet de train est de {X} euros. Un groupe de {Y} personnes voyage. Combien coûte le voyage au total ?",
+      "variables": { "X": [25, 50], "Y": [10, 20] }
+    },
+    {
+      "levels": ["CM2"],
+      "enonce": "Un bâtiment a {X} étages. Chaque étage a {Y} fenêtres. Combien de fenêtres y a-t-il dans le bâtiment ?",
+      "variables": { "X": [8, 15], "Y": [10, 18] }
+    }
+  ],
+  "division": [
+    {
+      "levels": ["CE1", "CE2"],
+      "enonce": "J'ai {X} bonbons à partager équitablement entre {Y} amis. Combien de bonbons aura chaque ami ?",
+      "variables": { "X": [6, 20], "Y": [2, 5] },
+      "condition": "X % Y === 0"
+    },
+    {
+      "levels": ["CE2"],
+      "enonce": "Une maîtresse a {X} crayons à distribuer à ses élèves. Chaque élève doit avoir {Y} crayons. Combien d'élèves pourront recevoir des crayons ?",
+      "variables": { "X": [15, 30], "Y": [3, 5] },
+      "condition": "X % Y === 0"
+    },
+    {
+      "levels": ["CE2", "CM1"],
+      "enonce": "Dans une classe, il y a {X} élèves. On veut faire des groupes de {Y} élèves. Combien de groupes peut-on former ?",
+      "variables": { "X": [20, 30], "Y": [4, 6] },
+      "condition": "X % Y === 0"
+    },
+    {
+      "levels": ["CE2", "CM1"],
+      "enonce": "Un fermier récolte {X} pommes et les met dans des paniers de {Y} pommes. Combien de paniers peut-il remplir ?",
+      "variables": { "X": [30, 50], "Y": [5, 10] },
+      "condition": "X % Y === 0"
+    },
+    {
+      "levels": ["CM1"],
+      "enonce": "Un livre coûte {X} euros. J'ai {Y} euros. Combien de livres puis-je acheter ?",
+      "variables": { "X": [5, 10], "Y": [20, 50] },
+      "condition": "Y % X === 0"
+    },
+    {
+      "levels": ["CM1"],
+      "enonce": "J'ai une corde de {X} mètres. Je la coupe en morceaux de {Y} mètres. Combien de morceaux vais-je obtenir ?",
+      "variables": { "X": [40, 80], "Y": [4, 8] },
+      "condition": "X % Y === 0"
+    },
+    {
+      "levels": ["CM1", "CM2"],
+      "enonce": "Une voiture parcourt {X} km en {Y} heures. Quelle distance parcourt-elle en 1 heure (vitesse moyenne) ?",
+      "variables": { "X": [100, 200], "Y": [2, 4] },
+      "condition": "X % Y === 0"
+    },
+    {
+      "levels": ["CM2"],
+      "enonce": "Un boulanger a {X} pains à mettre dans des sacs. Chaque sac contient {Y} pains. Combien de sacs doit-il utiliser ?",
+      "variables": { "X": [120, 200], "Y": [5, 10] },
+      "condition": "X % Y === 0"
+    },
+    {
+      "levels": ["CM2"],
+      "enonce": "Une somme de {X} euros est partagée équitablement entre {Y} personnes. Combien reçoit chaque personne ?",
+      "variables": { "X": [300, 800], "Y": [10, 20] },
+      "condition": "X % Y === 0"
+    },
+    {
+      "levels": ["CM2"],
+      "enonce": "Une entreprise a {X} employés à répartir en équipes de {Y} personnes. Combien d'équipes peuvent être formées ?",
+      "variables": { "X": [50, 100], "Y": [5, 10] },
+      "condition": "X % Y === 0"
+    },
+    {
+      "levels": ["CE1", "CE2"],
+      "enonce": "J'ai {X} fleurs et je veux faire des bouquets de {Y} fleurs. Combien de bouquets puis-je faire ?",
+      "variables": { "X": [10, 25], "Y": [2, 5] },
+      "condition": "X % Y === 0"
+    },
+    {
+      "levels": ["CE2"],
+      "enonce": "Il y a {X} craies dans la boîte. Chaque élève en prend {Y}. Combien d'élèves peuvent prendre des craies ?",
+      "variables": { "X": [18, 36], "Y": [2, 4] },
+      "condition": "X % Y === 0"
+    },
+    {
+      "levels": ["CM1"],
+      "enonce": "Un paquet de biscuits contient {X} biscuits. Si chaque enfant mange {Y} biscuits, combien d'enfants peuvent manger ?",
+      "variables": { "X": [24, 48], "Y": [3, 6] },
+      "condition": "X % Y === 0"
+    },
+    {
+      "levels": ["CM1"],
+      "enonce": "Un coureur a parcouru {X} mètres en {Y} minutes. Combien de mètres a-t-il parcouru en 1 minute ?",
+      "variables": { "X": [300, 600], "Y": [3, 6] },
+      "condition": "X % Y === 0"
+    },
+    {
+      "levels": ["CM2"],
+      "enonce": "Une bande dessinée coûte {X} euros. J'ai {Y} euros. Combien de bandes dessinées puis-je acheter ?",
+      "variables": { "X": [8, 15], "Y": [40, 90] },
+      "condition": "Y % X === 0"
+    },
+    {
+      "levels": ["CM2"],
+      "enonce": "Un camion peut transporter {X} caisses. J'ai {Y} caisses à transporter. Combien de voyages le camion devra-t-il faire ?",
+      "variables": { "X": [10, 25], "Y": [50, 150] },
+      "condition": "Y % X === 0"
+    },
+    {
+      "levels": ["CM1"],
+      "enonce": "Un magasin reçoit {X} paires de chaussettes à ranger sur des étagères. Chaque étagère peut contenir {Y} paires. Combien d'étagères seront nécessaires ?",
+      "variables": { "X": [60, 120], "Y": [6, 12] },
+      "condition": "X % Y === 0"
+    },
+    {
+      "levels": ["CE2"],
+      "enonce": "J'ai {X} autocollants. Je les colle sur {Y} pages, avec le même nombre sur chaque page. Combien d'autocollants y a-t-il sur chaque page ?",
+      "variables": { "X": [20, 40], "Y": [4, 8] },
+      "condition": "X % Y === 0"
+    },
+    {
+      "levels": ["CM1"],
+      "enonce": "Une école a {X} élèves à répartir dans {Y} classes, avec le même nombre dans chaque classe. Combien d'élèves y aura-t-il par classe ?",
+      "variables": { "X": [100, 200], "Y": [5, 10] },
+      "condition": "X % Y === 0"
+    },
+    {
+      "levels": ["CM2"],
+      "enonce": "Un réservoir contient {X} litres d'eau. On utilise {Y} litres par jour. Combien de jours le réservoir pourra-t-il alimenter ?",
+      "variables": { "X": [400, 800], "Y": [20, 50] },
+      "condition": "X % Y === 0"
+    }
+  ]
+}

@@ -3,39 +3,42 @@
 ## Description
 EduForge est une application de bureau développée en Python avec une interface graphique conviviale (basée sur PyQt6). Elle est conçue pour aider à la création de cahiers d'exercices personnalisés pour les élèves, couvrant un large éventail de matières. L'application permet de générer ces fiches d'exercices aux formats PDF et Word.
 
-Les utilisateurs peuvent finement ajuster les paramètres de chaque type d'exercice (nombre d'items, difficulté, options spécifiques) directement depuis l'interface. Ces configurations sont automatiquement sauvegardées dans un fichier `config.json` pour une réutilisation facile. Le contenu pédagogique de base, tel que les listes de verbes, les phrases pour les exercices de grammaire, les homophones, les phrases en anglais et les mots à relier, est stocké dans des fichiers JSON dédiés. Cela permet une personnalisation et une extension aisées du matériel pédagogique par l'utilisateur. Les matières couvertes incluent les calculs (additions, soustractions, multiplications, divisions, énumération de nombres), les mesures (conversions d'unités, rangement de nombres, encadrement), la conjugaison, la grammaire (types de phrases, transformations), l'orthographe (homophones) et l'anglais (phrases à compléter, jeux de mots à relier).
+Les utilisateurs peuvent finement ajuster les paramètres de chaque type d'exercice (nombre d'items, difficulté, options spécifiques) directement depuis l'interface. Ces configurations sont automatiquement sauvegardées dans un fichier `config.json` pour une réutilisation facile. Le contenu pédagogique de base, tel que les listes de verbes, les phrases pour les exercices de grammaire, les homophones, les énoncés de petits problèmes mathématiques, les phrases en anglais et les mots à relier, est stocké dans des fichiers JSON dédiés. Cela permet une personnalisation et une extension aisées du matériel pédagogique par l'utilisateur. Les matières couvertes incluent les calculs (additions, soustractions, multiplications, divisions, énumération de nombres, petits problèmes), les mesures (conversions d'unités, rangement de nombres, encadrement), la conjugaison, la grammaire (types de phrases, transformations), l'orthographe (homophones) et l'anglais (phrases à compléter, jeux de mots à relier).
+
 
 ## Structure du projet
 ```
 EduForge/
 ├── src/
-│   ├── EduForge.py              # Point d'entrée de l'application (interface graphique)
-│   ├── pdf_generator.py         # Logique de génération des fichiers PDF
-│   ├── word_generator.py        # Logique de génération des fichiers Word
-│   ├── grammar_generator.py     # Module pour générer les exercices de grammaire (utilise json/phrases_grammaire.json)
-│   ├── conjugation_generator.py # Module pour générer les exercices de conjugaison (utilise json/verbes.json)
-│   ├── conversion_generator.py  # Module pour générer les exercices de conversion
-│   ├── anglais_generator.py     # Module pour générer les exercices d'anglais (utilise json/phrases_anglais_*.json, json/mots_a_relier.json)
-│   ├── exercise_data_builder.py # Assemble les données d'exercices pour les générateurs de documents
-│   ├── json/                    # Dossier contenant les données JSON personnalisables
+│   ├── EduForge.py                  # Point d'entrée de l'application (interface graphique)
+│   ├── pdf_generator.py             # Logique de génération des fichiers PDF
+│   ├── word_generator.py            # Logique de génération des fichiers Word
+│   ├── grammar_generator.py         # Module pour générer les exercices de grammaire (utilise json/phrases_grammaire.json)
+│   ├── conjugation_generator.py     # Module pour générer les exercices de conjugaison (utilise json/verbes.json)
+│   ├── conversion_generator.py      # Module pour générer les exercices de conversion
+│   ├── anglais_generator.py         # Module pour générer les exercices d'anglais (utilise json/phrases_anglais_*.json, json/mots_a_relier.json)
+│   ├── exercise_data_builder.py     # Assemble les données d'exercices pour les générateurs de documents
+│   ├── problemes_maths_generator.py # Module pour générer les exercices de maths (utilise json/problemes_math.json)
+│   ├── json/                        # Dossier contenant les données JSON personnalisables
 │   │   ├── phrases_grammaire.json
 │   │   ├── homophones.json
 │   │   ├── mots_a_relier.json
 │   │   ├── phrases_anglais_complexe.json
 │   │   ├── phrases_anglais_simple.json
 │   │   ├── verbes.json
-│   │   └── levels_config.json   # Configuration des exercices disponibles par niveau
-│   ├── img/                     # Dossier contenant les images utilisées pour les en-têtes de section dans les PDF
-│   │   ├── calculs.png
-│   │   ├── mesures.png
-│   │   ├── conjugaison.png
-│   │   ├── grammaire.png
-│   │   ├── orthographe.png
-│   │   └── anglais.png
-│   ├── config.json              # Fichier de configuration utilisateur sauvegardé (généré au premier lancement si absent)
-│   └── EduForge.ico             # Icône de l'application
-├── requirements.txt             # Liste des dépendances Python nécessaires
-└── README.md                    # Ce fichier.
+│   │   ├── problemes_math.json
+│   │   └── levels_config.json       # Configuration des exercices disponibles par niveau
+│   ├── img/                         # Dossier contenant les images utilisées pour les en-têtes de section dans les PDF
+│   │   ├── calculs.png    
+│   │   ├── mesures.png    
+│   │   ├── conjugaison.png    
+│   │   ├── grammaire.png    
+│   │   ├── orthographe.png    
+│   │   └── anglais.png    
+│   ├── config.json                  # Fichier de configuration utilisateur sauvegardé (généré au premier lancement si absent)
+│   └── EduForge.ico                 # Icône de l'application
+├── requirements.txt                 # Liste des dépendances Python nécessaires
+└── README.md                        # Ce fichier.
 ```
 
 ## Installation
@@ -71,7 +74,8 @@ pip install -r requirements.txt
 - **Phrases en anglais** : éditez `phrases_anglais_complexe.json` et `phrases_anglais_simple.json`
 - **mots à relier** : éditez `mots_a_relier.json`
 - **homophones** : éditez `homophones.json`
-- **Configuration des Niveaux** : Éditez levels_config.json pour définir quels types d'exercices sont disponibles pour chaque niveau scolaire (CP, CE1, etc.). 
+- **Petits Problèmes (Maths)** : éditez `problemes_math.json` pour ajouter ou modifier les énoncés des problèmes.
+- **Configuration des Niveaux** : Éditez `levels_config.json` pour définir quels types d'exercices sont disponibles pour chaque niveau scolaire (CP, CE1, etc.). 
 - **Apparence des PDF**: Modifiez ou remplacez les images dans le dossier src/img/ (ex: calculs.png, mesures.png) pour changer les illustrations des sections dans les documents PDF générés. 
 
 ## Contribuer

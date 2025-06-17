@@ -1,7 +1,8 @@
-from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QLabel, QLineEdit, QCheckBox, QPushButton, QFrame, QSizePolicy, QGroupBox, QSplitter, QSpacerItem, QFileDialog, QLayout, QGraphicsOpacityEffect)
+from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QLabel, QLineEdit, QCheckBox, QPushButton, QFrame, QSizePolicy, QGroupBox, QSplitter, QSpacerItem, QFileDialog, QLayout, QGraphicsOpacityEffect, QScrollArea)
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QIcon
 from PyQt6.QtGui import QPalette, QColor
+from problemes_maths_generator import generate_math_problems # Importer la nouvelle fonction
 from pdf_generator import generate_workbook_pdf
 from conjugation_generator import get_random_verb
 import random
@@ -24,46 +25,126 @@ def get_resource_path(filename):
     # Chemin pour l'exécution en tant que script (le dossier 'json' est dans le même dossier que ce script)
     return os.path.join(os.path.dirname(__file__), "json", filename)
 
+UI_STYLE_CONFIG = {
+    "palette": {
+        "window": (30, 30, 30),
+        "window_text": (255, 255, 255),
+        "base": (20, 20, 20),
+        "alternate_base": (30, 30, 30),
+        "tooltip_base": (255, 255, 255),
+        "tooltip_text": (255, 255, 255),
+        "text": (255, 255, 255),
+        "button": (45, 45, 45),
+        "button_text": (255, 255, 255),
+        "bright_text": (255, 0, 0),
+        "highlight": (0, 120, 215),
+        "highlighted_text": (0, 0, 0),
+    },
+    "window": {
+        "minimum_width": 1400,
+        "minimum_height": 900,
+    },
+    "labels": {
+        "header_label":       "font-weight: bold; font-size: 16px; color: #E0E0E0; margin-right: 10px;",
+        "days_label":         "font-weight: bold; font-size: 16px; color: #E0E0E0;",
+        "level_selection":    "font-weight: bold; font-size: 16px; color: #E0E0E0; margin-right: 10px;",
+        "column_title_base":  "font-weight: bold; font-size: 20px; margin-bottom: 8px; margin-top: 0px;",
+        "column_title_colors": {
+            "calc":      "#4FC3F7", "geo":       "#BA68C8", "conj":      "#81C784", # Bleu clair, Violet clair, Vert clair
+            "grammar":   "#FFD54F", "ortho":     "#FFB300", "english":   "#4DB6AC", # Jaune/Or, Orange, Sarcelle (Teal)
+        },
+        "field_label":        "color: #e0e0e0; font-size: 14px; font-weight: normal;", # Style pour la plupart des labels de champ
+        "filename_label":     "font-weight: bold; font-size: 16px; color: #E0E0E0;", # Harmonisé avec field_label
+        "output_path_display_default": "font-style: italic; color: #B0BEC5;",
+        "output_path_display_set": "font-style: normal; color: #E0E0E0;",
+    },
+    "line_edits": {
+        "default":            "color: black; background-color: white; font-size: 14px; border-radius: 4px; padding: 2px 6px;",
+        "days_invalid_border":"border: 2px solid red;",
+        "header_placeholder": "Optionnel",
+    },
+    "group_boxes": {
+        "base_style_template": "QGroupBox {{ margin-top: 2px; margin-bottom: 2px; padding: 5px 6px 5px 6px; border: 3px solid {border_color}; border-radius: 15px; }} QGroupBox:title {{ font-size: 15px; color: {border_color}; background: #232323; subcontrol-origin: margin; subcontrol-position: top left; left: 15px; top: -4px; padding: 0 12px; font-weight: bold; }}",
+        "border_colors": { # Mêmes clés que column_title_colors pour la cohérence
+            "calc":      "#4FC3F7", "geo":       "#BA68C8", "conj":      "#81C784", # Bleu clair, Violet clair, Vert clair
+            "grammar":   "#FFD54F", "ortho":     "#FFB300", "english":   "#4DB6AC", # Jaune/Or, Orange, Sarcelle (Teal)
+        }
+    },
+    "buttons": {
+        "level_button_base_style_template": """
+            QPushButton {{
+                color: {text_color}; font-weight: bold; font-size: 14px;
+                padding: 6px 15px; border-radius: 8px; border: none;
+                background-color: {bg_color};
+            }}
+            QPushButton:hover {{ background-color: {hover_bg_color}; }}
+            QPushButton:pressed {{ background-color: {pressed_bg_color}; }}
+            QPushButton[selected="true"] {{ padding: 6px 15px; }}
+        """,
+        "level_button_text_color": "black",
+        "level_colors": { # Couleurs de fond pour les boutons de niveau
+            "CP":  "#EF9A9A",  # Rouge clair (était CM2)
+            "CE1": "#FFCC80",  # Orange clair (était CE2)
+            "CE2": "#FFFACD",  # Jaune clair (LemonChiffon)
+            "CM1": "#A5D6A7",  # Vert clair (était CP)
+            "CM2": "#90CAF9"   # Bleu clair (était CE1)
+        },
+        "action_button_base_style_template": """
+            QPushButton {{
+                background-color: {bg_color}; color: white; font-weight: bold;
+                font-size: 16px; padding: 8px 20px; border-radius: 8px;
+            }}
+            QPushButton:disabled {{ background-color: {disabled_bg_color}; color: {disabled_text_color}; }}
+            QPushButton:pressed {{ background-color: {pressed_bg_color}; }}
+        """, # Garder la virgule ici si d'autres clés suivent au même niveau
+        "pdf":            {"bg_color": "#FF7043", "pressed_bg_color": "#d84315"}, # Orange/Rouge
+        "word":           {"bg_color": "#1976D2", "pressed_bg_color": "#0d47a1"}, # Bleu
+        "select_folder":  {"bg_color": "#66BB6A", "pressed_bg_color": "#388E3C"}, # Vert pour "Choisir dossier"
+        "preview_pdf":    {"bg_color": "#FFAB91", "pressed_bg_color": "#FF8A65"}, # Pastel Orange/Rouge
+        "preview_word":   {"bg_color": "#90CAF9", "pressed_bg_color": "#64B5F6"}, # Pastel Bleu
+        "preview_path":   {"bg_color": "#78909C", "pressed_bg_color": "#546E7A"}, # Conservé au cas où, mais moins utilisé
+        "disabled":     {"bg_color": "#cccccc", "text_color": "#888888"},
+    },
+    "separators": {
+        "style": "border-top: 3px solid #505050;"
+    },
+    "scroll_bar": {
+        "style_template": """
+            QScrollBar:vertical {{
+                border: none; background: {background_color}; width: {width}px; margin: 0px 0px 0px 0px;
+            }}
+            QScrollBar::handle:vertical {{
+                background: {handle_background_color}; min-height: {handle_min_height}px;
+                border-radius: {handle_border_radius}px;
+            }}
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+                border: none; background: none; height: 0px;
+                subcontrol-position: top; subcontrol-origin: margin;
+            }}
+            QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical {{ background: none; }}
+            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{ background: none; }}
+        """,
+        "values": {
+            "background_color": "#2E2E2E", "width": 12,
+            "handle_background_color": "#555555", "handle_min_height": 20, "handle_border_radius": 6,
+        }
+    }
+}
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("EduForge")
         import os
-        icon_path = os.path.join(os.path.dirname(__file__), "EduForge.ico")
+        icon_path = os.path.join(os.path.dirname(__file__), "EduForge.ico") # Assurez-vous que le chemin est correct
         self.setWindowIcon(QIcon(icon_path))
-        self.setMinimumWidth(1400)
-        self.setMinimumHeight(1000)
+        self.setMinimumWidth(UI_STYLE_CONFIG["window"]["minimum_width"])
+        self.setMinimumHeight(UI_STYLE_CONFIG["window"]["minimum_height"])
 
         # --- Constants for Level Selection ---
-        self.LEVEL_COLORS = {
-            "CP": "#A5D6A7",  # Light Green
-            "CE1": "#90CAF9", # Light Blue
-            "CE2": "#FFCC80", # Light Orange
-            "CM1": "#CE93D8", # Light Purple
-            "CM2": "#EF9A9A"  # Light Red
-        }
-        self.BASE_LEVEL_BUTTON_STYLE = """
-        QPushButton {{
-            color: black; /* Texte noir pour contraste sur fond clair */
-            font-weight: bold;
-            font-size: 14px;
-            padding: 6px 15px;
-            border-radius: 8px; /* Garde les coins arrondis */
-            border: none; /* Supprime la ligne de bordure */
-            background-color: {bg_color};
-        }}
-        QPushButton:hover {{
-            background-color: {hover_bg_color};
-        }}
-        QPushButton:pressed {{
-            background-color: {pressed_bg_color};
-        }}
-        QPushButton[selected="true"] {{
-            /* Plus de bordure spécifique pour l'état sélectionné */
-            /* Le padding reste le même que l'état non sélectionné car pas de bordure */
-            padding: 6px 15px; 
-        }}
-        """
+        self.LEVEL_COLORS = UI_STYLE_CONFIG["buttons"]["level_colors"] # Récupère depuis la config
+        self.BASE_LEVEL_BUTTON_STYLE = UI_STYLE_CONFIG["buttons"]["level_button_base_style_template"]
+
         self.current_selected_level_button = None
         self.current_level = None # To store the string name of the level
 
@@ -97,23 +178,33 @@ class MainWindow(QMainWindow):
         except Exception as e:
             print(f"ERREUR: Impossible de charger les thèmes depuis '{mots_relier_path}': {e}")
         # Fenêtre redimensionnable
+        
+        # --- Chargement des types de problèmes mathématiques ---
+        self.math_problem_types_data = {}
+        try:
+            problemes_maths_path = get_resource_path('problemes_maths.json')
+            with open(problemes_maths_path, 'r', encoding='utf-8') as f:
+                self.math_problem_types_data = json.load(f)
+        except Exception as e:
+            print(f"ERREUR: Impossible de charger les types de problèmes mathématiques: {e}")
 
         # Mode dark
         dark_palette = QPalette()
-        dark_palette.setColor(QPalette.ColorRole.Window, QColor(30, 30, 30))
-        dark_palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.white)
-        dark_palette.setColor(QPalette.ColorRole.Base, QColor(20, 20, 20))
-        dark_palette.setColor(QPalette.ColorRole.AlternateBase, QColor(30, 30, 30))
-        dark_palette.setColor(QPalette.ColorRole.ToolTipBase, Qt.GlobalColor.white)
-        dark_palette.setColor(QPalette.ColorRole.ToolTipText, Qt.GlobalColor.white)
-        dark_palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.white)
-        dark_palette.setColor(QPalette.ColorRole.Button, QColor(45, 45, 45))
-        dark_palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.white)
-        dark_palette.setColor(QPalette.ColorRole.BrightText, Qt.GlobalColor.red)
-        dark_palette.setColor(QPalette.ColorRole.Highlight, QColor(0, 120, 215))
-        dark_palette.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.black)
+        cfg_palette = UI_STYLE_CONFIG["palette"]
+        dark_palette.setColor(QPalette.ColorRole.Window, QColor(*cfg_palette["window"]))
+        dark_palette.setColor(QPalette.ColorRole.WindowText, QColor(*cfg_palette["window_text"]))
+        dark_palette.setColor(QPalette.ColorRole.Base, QColor(*cfg_palette["base"]))
+        dark_palette.setColor(QPalette.ColorRole.AlternateBase, QColor(*cfg_palette["alternate_base"]))
+        dark_palette.setColor(QPalette.ColorRole.ToolTipBase, QColor(*cfg_palette["tooltip_base"]))
+        dark_palette.setColor(QPalette.ColorRole.ToolTipText, QColor(*cfg_palette["tooltip_text"]))
+        dark_palette.setColor(QPalette.ColorRole.Text, QColor(*cfg_palette["text"]))
+        dark_palette.setColor(QPalette.ColorRole.Button, QColor(*cfg_palette["button"]))
+        dark_palette.setColor(QPalette.ColorRole.ButtonText, QColor(*cfg_palette["button_text"]))
+        dark_palette.setColor(QPalette.ColorRole.BrightText, QColor(*cfg_palette["bright_text"]))
+        dark_palette.setColor(QPalette.ColorRole.Highlight, QColor(*cfg_palette["highlight"]))
+        dark_palette.setColor(QPalette.ColorRole.HighlightedText, QColor(*cfg_palette["highlighted_text"]))
         QApplication.instance().setPalette(dark_palette)
-
+        
         # Central widget
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -127,11 +218,11 @@ class MainWindow(QMainWindow):
         # Section En-tête (à gauche)
         header_section_layout = QHBoxLayout()
         self.header_label = QLabel("Titre :")
-        self.header_label.setStyleSheet("font-weight: bold; font-size: 16px; color: #E0E0E0; margin-right: 10px;")
+        self.header_label.setStyleSheet(UI_STYLE_CONFIG["labels"]["header_label"])
         self.header_entry = QLineEdit()
         self.all_line_edits.append(self.header_entry)
-        self.header_entry.setPlaceholderText("Optionnel")
-        self.header_entry.setStyleSheet("color: black; background-color: white; font-size: 14px; border-radius: 4px; padding: 2px 6px;")
+        self.header_entry.setPlaceholderText(UI_STYLE_CONFIG["line_edits"]["header_placeholder"])
+        # Style appliqué globalement plus tard
         self.header_entry.setMinimumWidth(250) # Donner une largeur minimale pour la visibilité
         self.show_name_checkbox = QCheckBox("Afficher Nom")
         self.show_note_checkbox = QCheckBox("Afficher Note")
@@ -148,14 +239,14 @@ class MainWindow(QMainWindow):
         # Section Nombre de jours (à droite)
         days_section_layout = QHBoxLayout()
         self.days_label = QLabel("Nombre de jours :")
-        self.days_label.setStyleSheet("font-weight: bold; font-size: 16px; color: #E0E0E0;")
+        self.days_label.setStyleSheet(UI_STYLE_CONFIG["labels"]["days_label"])
         self.days_entry = QLineEdit()
         self.all_line_edits.append(self.days_entry)
         self.days_entry.setMaximumWidth(60)
 
         days_section_layout.addWidget(self.days_label)
         days_section_layout.addWidget(self.days_entry)
-        days_section_layout.addStretch(1) # Pousse le label et l'input ensemble vers la gauche de ce layout
+        days_section_layout.addStretch(1) # Ajouter un stretch *après* les widgets pour les garder compacts à gauche de ce layout
         days_section_layout.setSpacing(5)
 
         top_layout.addLayout(days_section_layout)
@@ -165,14 +256,14 @@ class MainWindow(QMainWindow):
         sep1 = QFrame()
         sep1.setFrameShape(QFrame.Shape.HLine)
         sep1.setFrameShadow(QFrame.Shadow.Sunken)
-        sep1.setStyleSheet("border-top: 3px solid #505050;")
+        sep1.setStyleSheet(UI_STYLE_CONFIG["separators"]["style"])
         main_layout.addWidget(sep1)
 
         # --- Level Selection ---
         level_selection_layout = QHBoxLayout()
         level_selection_layout.setContentsMargins(10, 5, 10, 5)
         level_selection_label = QLabel("Niveau :")
-        level_selection_label.setStyleSheet("font-weight: bold; font-size: 16px; color: #E0E0E0; margin-right: 10px;")
+        level_selection_label.setStyleSheet(UI_STYLE_CONFIG["labels"]["level_selection"])
         level_selection_layout.addWidget(level_selection_label)
 
         self.level_buttons = {}
@@ -185,10 +276,11 @@ class MainWindow(QMainWindow):
             border_c = self.darken_color(color_hex, 0.7)
 
             button.setStyleSheet(self.BASE_LEVEL_BUTTON_STYLE.format(
+                text_color=UI_STYLE_CONFIG["buttons"]["level_button_text_color"],
                 bg_color=color_hex,
                 hover_bg_color=hover_color,
                 pressed_bg_color=pressed_color,
-                border_color=border_c
+                # border_color=border_c # Plus utilisé car border: none
             ))
             button.setProperty("selected", False)
             button.clicked.connect(lambda checked, b=button, ln=level_name: self.select_level(ln, b))
@@ -203,14 +295,16 @@ class MainWindow(QMainWindow):
         sep2 = QFrame()
         sep2.setFrameShape(QFrame.Shape.HLine)
         sep2.setFrameShadow(QFrame.Shadow.Sunken)
-        sep2.setStyleSheet("border-top: 3px solid #505050;")
+        sep2.setStyleSheet(UI_STYLE_CONFIG["separators"]["style"])
         main_layout.addWidget(sep2)
 
         # self.EXERCISES_BY_LEVEL_INCREMENTAL est maintenant chargé depuis le JSON
         # --- Colonne Calculs ---
         calc_layout = QVBoxLayout()
         self.calc_title_label = QLabel("Calculs")
-        self.calc_title_label.setStyleSheet("font-weight: bold; font-size: 20px; color: #4FC3F7; margin-bottom: 8px; margin-top: 0px;")
+        calc_title_style = UI_STYLE_CONFIG["labels"]["column_title_base"] + \
+                           f"color: {UI_STYLE_CONFIG['labels']['column_title_colors']['calc']};"
+        self.calc_title_label.setStyleSheet(calc_title_style)
         calc_layout.addWidget(self.calc_title_label)
         calc_layout.setContentsMargins(5, 5, 5, 5)
         calc_layout.setSpacing(6)        
@@ -270,26 +364,61 @@ class MainWindow(QMainWindow):
         self.all_line_edits.extend(division_les)
         self._all_row_widgets_for_map.update(div_rows)
 
+        # Petits Problèmes Mathématiques
+        self.math_problems_group = QGroupBox("Petits Problèmes") # Clé: math_problems_group
+        math_problems_layout = QVBoxLayout()
+
+        row_math_pb_count, self.math_problems_count = self._create_input_row("Nombre de problèmes :", 60)
+        self.all_line_edits.append(self.math_problems_count)
+        self._all_row_widgets_for_map["math_problems_count_row"] = row_math_pb_count
+        math_problems_layout.addWidget(row_math_pb_count)
+
+        self.math_problem_type_checkboxes = {} # Pour stocker les QCheckBox par type
+        if self.math_problem_types_data:
+            types_grid_layout = QGridLayout() # Pour afficher les types 2 par 2
+            types_grid_layout.setContentsMargins(0, 5, 0, 0)
+            types_grid_layout.setVerticalSpacing(5)
+            types_grid_layout.setHorizontalSpacing(10)
+            row, col = 0, 0
+            for type_key, _ in self.math_problem_types_data.items():
+                type_name_display = type_key.replace("_", " ").capitalize()
+                cb = QCheckBox(type_name_display)
+                self.math_problem_type_checkboxes[type_key] = cb
+                types_grid_layout.addWidget(cb, row, col)
+                col = (col + 1) % 2
+                if col == 0: row += 1
+            types_grid_layout.setColumnStretch(2,1) # Pousse à gauche
+            math_problems_layout.addLayout(types_grid_layout)
+        
+        self.math_problems_group.setLayout(math_problems_layout)
+
         # Fonction utilitaire pour appliquer le style compact à une liste de QGroupBox
         def set_groupbox_style(groups, color):
+            # Utiliser le template depuis UI_STYLE_CONFIG
+            style_template = UI_STYLE_CONFIG["group_boxes"]["base_style_template"]
             for group in groups:
-                group.setStyleSheet(f"QGroupBox {{ margin-top: 2px; margin-bottom: 2px; padding: 10px 12px 10px 12px; border: 2px solid {color}; border-radius: 8px; }} QGroupBox:title {{ subcontrol-origin: margin; subcontrol-position: top left; left: 10px; top: 0px; padding: 0 12px; color: #ffffff; font-weight: bold; font-size: 15px; background: #232323; }}")
+                group.setStyleSheet(style_template.format(border_color=color))
         
         # Harmonisation des couleurs des bordures des QGroupBox selon la couleur du titre de colonne
-        calc_groups = [self.enumerate_group, self.addition_group, self.subtraction_group, self.multiplication_group, self.division_group]
-        set_groupbox_style(calc_groups, "#4FC3F7")
+        calc_groups = [self.enumerate_group, self.addition_group, self.subtraction_group, self.multiplication_group, self.division_group, self.math_problems_group]
+        calc_border_color = UI_STYLE_CONFIG["group_boxes"]["border_colors"]["calc"]
+        set_groupbox_style(calc_groups, calc_border_color)
         
         calc_layout.addWidget(self.enumerate_group)
         calc_layout.addWidget(self.addition_group)
+        # ... (les autres addWidget pour calc_layout)
         calc_layout.addWidget(self.subtraction_group)
         calc_layout.addWidget(self.multiplication_group)
         calc_layout.addWidget(self.division_group)
+        calc_layout.addWidget(self.math_problems_group)
         calc_layout.addStretch()
 
         # --- Colonne Géométrie/Mesures ---
         geo_layout = QVBoxLayout()
         self.geo_title_label = QLabel("Mesures")
-        self.geo_title_label.setStyleSheet("font-weight: bold; font-size: 20px; color: #BA68C8; margin-bottom: 8px; margin-top: 0px;")
+        geo_title_style = UI_STYLE_CONFIG["labels"]["column_title_base"] + \
+                          f"color: {UI_STYLE_CONFIG['labels']['column_title_colors']['geo']};"
+        self.geo_title_label.setStyleSheet(geo_title_style)
         geo_layout.addWidget(self.geo_title_label)
         geo_layout.setContentsMargins(5, 5, 5, 5)
         geo_layout.setSpacing(6)
@@ -378,13 +507,16 @@ class MainWindow(QMainWindow):
 
         # Mesures : violet (#BA68C8)
         geo_groups = [self.geo_conv_group, self.sort_group, self.encadrement_group]
-        set_groupbox_style(geo_groups, "#BA68C8")
+        geo_border_color = UI_STYLE_CONFIG["group_boxes"]["border_colors"]["geo"]
+        set_groupbox_style(geo_groups, geo_border_color)
         geo_layout.addStretch()
 
         # --- Colonne Conjugaison ---
         conj_layout = QVBoxLayout()
         self.conj_title_label = QLabel("Conjugaison")
-        self.conj_title_label.setStyleSheet("font-weight: bold; font-size: 20px; color: #81C784; margin-bottom: 8px; margin-top: 0px;")
+        conj_title_style = UI_STYLE_CONFIG["labels"]["column_title_base"] + \
+                           f"color: {UI_STYLE_CONFIG['labels']['column_title_colors']['conj']};"
+        self.conj_title_label.setStyleSheet(conj_title_style)
         conj_layout.addWidget(self.conj_title_label)
         conj_layout.setContentsMargins(5, 5, 5, 5)
         conj_layout.setSpacing(6)
@@ -423,13 +555,16 @@ class MainWindow(QMainWindow):
         conj_layout.addWidget(self.conj_tense_group)
         # Conjugaison : vert (#81C784)
         conj_groups = [self.conj_number_group, self.conj_group_group, self.conj_tense_group]
-        set_groupbox_style(conj_groups, "#81C784")
+        conj_border_color = UI_STYLE_CONFIG["group_boxes"]["border_colors"]["conj"]
+        set_groupbox_style(conj_groups, conj_border_color)
         conj_layout.addStretch()
 
         # --- Colonne Grammaire ---
         grammar_layout = QVBoxLayout()
         self.grammar_title_label = QLabel("Grammaire")
-        self.grammar_title_label.setStyleSheet("font-weight: bold; font-size: 20px; color: #FFD54F; margin-bottom: 8px; margin-top: 0px;") # Jaune
+        grammar_title_style = UI_STYLE_CONFIG["labels"]["column_title_base"] + \
+                              f"color: {UI_STYLE_CONFIG['labels']['column_title_colors']['grammar']};"
+        self.grammar_title_label.setStyleSheet(grammar_title_style)
         grammar_layout.addWidget(self.grammar_title_label)
         grammar_layout.setContentsMargins(5, 5, 5, 5)
         grammar_layout.setSpacing(6)
@@ -468,13 +603,16 @@ class MainWindow(QMainWindow):
 
         # Grammaire : jaune (#FFD54F)
         grammar_groups = [self.grammar_number_group, self.grammar_type_group, self.grammar_transfo_group]
-        set_groupbox_style(grammar_groups, "#FFD54F")
+        grammar_border_color = UI_STYLE_CONFIG["group_boxes"]["border_colors"]["grammar"]
+        set_groupbox_style(grammar_groups, grammar_border_color)
         grammar_layout.addStretch()
 
         # --- Colonne Orthographe ---
         orthographe_layout = QVBoxLayout()
         self.orthographe_title_label = QLabel("Orthographe")
-        self.orthographe_title_label.setStyleSheet("font-weight: bold; font-size: 20px; color: #FFB300; margin-bottom: 8px; margin-top: 0px;")
+        ortho_title_style = UI_STYLE_CONFIG["labels"]["column_title_base"] + \
+                            f"color: {UI_STYLE_CONFIG['labels']['column_title_colors']['ortho']};"
+        self.orthographe_title_label.setStyleSheet(ortho_title_style)
         orthographe_layout.addWidget(self.orthographe_title_label)
         orthographe_layout.setContentsMargins(5, 5, 5, 5)
         orthographe_layout.setSpacing(6)
@@ -510,13 +648,16 @@ class MainWindow(QMainWindow):
         orthographe_layout.addWidget(self.orthographe_homophone_group)
         # Orthographe : orange foncé (#FFB300)
         ortho_groups = [self.orthographe_number_group, self.orthographe_homophone_group]
-        set_groupbox_style(ortho_groups, "#FFB300")
+        ortho_border_color = UI_STYLE_CONFIG["group_boxes"]["border_colors"]["ortho"]
+        set_groupbox_style(ortho_groups, ortho_border_color)
         orthographe_layout.addStretch()
 
         # --- Colonne Anglais ---
         english_layout = QVBoxLayout()
         self.english_title_label = QLabel("Anglais")
-        self.english_title_label.setStyleSheet("font-weight: bold; font-size: 20px; color: #64B5F6; margin-bottom: 8px; margin-top: 0px;")
+        english_title_style = UI_STYLE_CONFIG["labels"]["column_title_base"] + \
+                              f"color: {UI_STYLE_CONFIG['labels']['column_title_colors']['english']};"
+        self.english_title_label.setStyleSheet(english_title_style)
         english_layout.addWidget(self.english_title_label)
         english_layout.setContentsMargins(5, 5, 5, 5)
         english_layout.setSpacing(6)
@@ -583,13 +724,15 @@ class MainWindow(QMainWindow):
 
         # Anglais : bleu moyen (#64B5F6)
         english_groups = [self.english_complete_group, self.english_relier_group] # themes_group est maintenant stylé différemment et imbriqué
-        set_groupbox_style(english_groups, "#64B5F6")
+        english_border_color = UI_STYLE_CONFIG["group_boxes"]["border_colors"]["english"]
+        set_groupbox_style(english_groups, english_border_color)
         english_layout.addStretch()
         
         # --- Splitter pour 6 colonnes ---
+        # Les colonnes sont maintenant des QWidget simples
         self.calc_column_widget = QWidget()
         self.calc_column_widget.setLayout(calc_layout)
-        self.calc_column_widget.setMinimumWidth(270)
+        self.calc_column_widget.setMinimumWidth(270) # Garder la largeur minimale
 
         self.geo_column_widget = QWidget()
         self.geo_column_widget.setLayout(geo_layout)
@@ -606,21 +749,18 @@ class MainWindow(QMainWindow):
         # Widgets pour les sections Orthographe et Anglais (contenus dans ortho_anglais_column_widget)
         self.orthographe_section_widget = QWidget()
         self.orthographe_section_widget.setLayout(orthographe_layout)
-        self.orthographe_section_widget.setMinimumWidth(270)
 
         self.english_section_widget = QWidget()
         self.english_section_widget.setLayout(english_layout)
-        self.english_section_widget.setMinimumWidth(270)
 
         # Bloc vertical pour orthographe + anglais
         ortho_anglais_layout = QVBoxLayout()
         ortho_anglais_layout.setContentsMargins(0, 0, 0, 0)
         ortho_anglais_layout.setSpacing(0)
-        ortho_anglais_layout.addWidget(self.orthographe_section_widget) # L'alignement n'est plus nécessaire ici
-        ortho_anglais_layout.addWidget(self.english_section_widget)   # L'alignement n'est plus nécessaire ici
+        ortho_anglais_layout.addWidget(self.orthographe_section_widget)
+        ortho_anglais_layout.addWidget(self.english_section_widget)
         ortho_anglais_layout.addStretch(1) # Ajoute un ressort pour pousser les sections vers le haut
-        
-        self.ortho_anglais_column_widget = QWidget()
+        self.ortho_anglais_column_widget = QWidget() # Ce widget contiendra le layout ortho_anglais
         self.ortho_anglais_column_widget.setLayout(ortho_anglais_layout)
         self.ortho_anglais_column_widget.setMinimumWidth(270)
 
@@ -641,7 +781,20 @@ class MainWindow(QMainWindow):
         splitter.addWidget(self.grammar_column_widget)       # Grammaire en 5ème
         for i, config in enumerate(self.splitter_column_configs_initial_order):
             splitter.setStretchFactor(i, config['stretch'])
-        main_layout.addWidget(splitter)
+        
+        # --- ScrollArea principal pour le QSplitter ---
+        self.main_scroll_area = QScrollArea()
+        self.main_scroll_area.setWidgetResizable(True)
+        self.main_scroll_area.setWidget(splitter) # Le splitter est maintenant le widget du scroll area
+        self.main_scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.main_scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.main_scroll_area.setFrameShape(QFrame.Shape.NoFrame)
+
+        # Style pour la barre de défilement du QScrollArea principal (depuis la config)
+        scrollbar_style = UI_STYLE_CONFIG["scroll_bar"]["style_template"].format(**UI_STYLE_CONFIG["scroll_bar"]["values"])
+        self.main_scroll_area.setStyleSheet(scrollbar_style)
+        
+        main_layout.addWidget(self.main_scroll_area) # Ajoute le scroll area principal au layout
         self.splitter = splitter # Garder une référence au splitter
 
         # --- Initialize exercise_widgets_map ---
@@ -660,6 +813,9 @@ class MainWindow(QMainWindow):
             "division_group": self.division_group,
             "division_count_input": self.division_count, "division_digits_input": self.division_digits, "division_decimals_input": self.division_decimals,
             "division_reste_cb": self.division_reste_checkbox,
+            # Petits Problèmes
+            "math_problems_group": self.math_problems_group,
+            "math_problems_count_input": self.math_problems_count,
 
             # Mesures
             "geo_conv_group": self.geo_conv_group,
@@ -736,6 +892,11 @@ class MainWindow(QMainWindow):
         if hasattr(self, 'english_relier_theme_checkboxes'):
             for theme_name, cb_widget in self.english_relier_theme_checkboxes.items():
                 self.exercise_widgets_map[f"english_theme_{theme_name}_cb"] = cb_widget
+        
+        # Ajouter dynamiquement les checkboxes de types de problèmes mathématiques
+        if hasattr(self, 'math_problem_type_checkboxes'):
+            for type_key, cb_widget in self.math_problem_type_checkboxes.items():
+                self.exercise_widgets_map[f"math_problem_type_{type_key}_cb"] = cb_widget
 
         # --- Column Titles and Sections Mapping (for hiding titles of empty columns) ---
         self.column_title_widgets = {
@@ -747,7 +908,7 @@ class MainWindow(QMainWindow):
             "english": self.english_title_label,
         }
         self.column_section_keys = { # Maps column key to list of its main section group keys
-            "calc": ["enumerate_group", "addition_group", "subtraction_group", "multiplication_group", "division_group"],
+            "calc": ["enumerate_group", "addition_group", "subtraction_group", "multiplication_group", "division_group", "math_problems_group"],
             "geo": ["geo_conv_group", "geo_sort_group", "geo_encadrement_group"],
             "conj": ["conj_params_group", "conj_groups_group", "conj_tenses_group"],
             "grammar": ["grammar_params_group", "grammar_types_group", "grammar_transfo_group"],
@@ -759,11 +920,12 @@ class MainWindow(QMainWindow):
         sep_bottom = QFrame()
         sep_bottom.setFrameShape(QFrame.Shape.HLine)
         sep_bottom.setFrameShadow(QFrame.Shadow.Sunken)
-        sep_bottom.setStyleSheet("border-top: 3px solid #505050;") # Couleur pour le séparateur
+        sep_bottom.setStyleSheet(UI_STYLE_CONFIG["separators"]["style"])
         main_layout.addWidget(sep_bottom)
 
         # Bandeau bas : boutons générer + nom du fichier sur la même ligne
         bottom_controls_layout = QHBoxLayout() # Layout principal pour le bas
+        bottom_controls_layout.setContentsMargins(10, 5, 10, 5) # Mêmes marges que top_layout
 
         # Partie gauche pour chemin et nom de fichier
         left_file_controls_layout = QGridLayout()
@@ -776,7 +938,7 @@ class MainWindow(QMainWindow):
         # Style initial sera défini dans _update_output_path_display
 
         self.filename_label = QLabel("Nom du fichier :")
-        self.filename_label.setStyleSheet("font-weight: bold; font-size: 14px;")
+        self.filename_label.setStyleSheet(UI_STYLE_CONFIG["labels"]["filename_label"])
         self.filename_entry = QLineEdit()
         self.filename_entry.setMinimumWidth(150) # Donne une largeur minimale
         self.filename_entry.setMaximumWidth(200)        
@@ -797,84 +959,42 @@ class MainWindow(QMainWindow):
         bottom_controls_layout.addLayout(left_file_controls_layout)
         bottom_controls_layout.addStretch(1) # Espace flexible pour pousser les boutons à droite
 
-        # Styles pour les boutons (normal, désactivé, pressé)
-        pdf_btn_style = """
-            QPushButton {
-                background-color: #FF7043;
-                color: white;
-                font-weight: bold;
-                font-size: 16px;
-                padding: 8px 20px; /* Taille réduite */
-                border-radius: 8px;
-            }
-            QPushButton:disabled {
-                background-color: #cccccc;
-                color: #888888;
-            }
-            QPushButton:pressed {
-                background-color: #d84315;
-            }
-        """
-        word_btn_style = """
-            QPushButton {
-                background-color: #1976D2;
-                color: white;
-                font-weight: bold;
-                font-size: 16px;
-                padding: 8px 20px; /* Taille réduite */
-                border-radius: 8px;
-            }
-            QPushButton:disabled {
-                background-color: #cccccc;
-                color: #888888;
-            }
-            QPushButton:pressed {
-                background-color: #0d47a1;
-            }
-        """
-        preview_btn_style = """
-            QPushButton {
-                background-color: #78909C; /* Blue Grey */
-                color: white;
-                font-weight: bold;
-                font-size: 16px; /* Uniformisé */
-                padding: 8px 20px; /* Uniformisé */
-                border-radius: 8px;
-            }
-            QPushButton:disabled {
-                background-color: #B0BEC5;
-                color: #ECEFF1;
-            }
-            QPushButton:pressed {
-                background-color: #546E7A;
-            }
-        """
-        self.output_path_button.setStyleSheet(preview_btn_style) 
+        # Styles pour les boutons d'action (depuis la config)
+        btn_cfg = UI_STYLE_CONFIG["buttons"]
+        def get_action_button_style(type_key):
+            return btn_cfg["action_button_base_style_template"].format(
+                bg_color=btn_cfg[type_key]["bg_color"],
+                disabled_bg_color=btn_cfg["disabled"]["bg_color"],
+                disabled_text_color=btn_cfg["disabled"]["text_color"],
+                pressed_bg_color=btn_cfg[type_key]["pressed_bg_color"]
+            )
+
+        self.output_path_button.setStyleSheet(get_action_button_style("select_folder"))
         # self.output_path_button.setFixedWidth(150) # Suppression de la largeur fixe
 
         left_file_controls_layout.addLayout(file_controls_line_layout, 0, 0, 1, 2) # Ajout du layout de ligne
         # Partie droite pour les boutons
         action_buttons_layout = QHBoxLayout()
         self.generate_pdf_button = QPushButton("Générer PDF")
-        self.generate_pdf_button.setStyleSheet(pdf_btn_style)
+        self.generate_pdf_button.setStyleSheet(get_action_button_style("pdf"))
         self.generate_pdf_button.clicked.connect(self.generate_pdf)
         # self.generate_pdf_button.setFixedWidth(150) # Suppression de la largeur fixe
         action_buttons_layout.addWidget(self.generate_pdf_button)
 
         self.generate_word_button = QPushButton("Générer Word")
-        self.generate_word_button.setStyleSheet(word_btn_style)
+        self.generate_word_button.setStyleSheet(get_action_button_style("word"))
         self.generate_word_button.clicked.connect(self.generate_word)
         # self.generate_word_button.setFixedWidth(150) # Suppression de la largeur fixe
         action_buttons_layout.addWidget(self.generate_word_button)
 
         self.preview_pdf_button = QPushButton("Prévisualiser PDF")
-        self.preview_pdf_button.setStyleSheet(preview_btn_style)
+        self.preview_pdf_button.setStyleSheet(get_action_button_style("preview_pdf"))
         self.preview_pdf_button.clicked.connect(self.preview_pdf)
         # self.preview_pdf_button.setFixedWidth(150) # Suppression de la largeur fixe
         action_buttons_layout.addWidget(self.preview_pdf_button)
 
         self.preview_word_button = QPushButton("Prévisualiser Word")
-        self.preview_word_button.setStyleSheet(preview_btn_style)
+        self.preview_word_button.setStyleSheet(get_action_button_style("preview_word"))
         self.preview_word_button.clicked.connect(self.preview_word)
         # self.preview_word_button.setFixedWidth(150) # Suppression de la largeur fixe
         action_buttons_layout.addWidget(self.preview_word_button)
@@ -885,7 +1005,7 @@ class MainWindow(QMainWindow):
         main_layout.addLayout(bottom_controls_layout)
 
         # Correction du style pour les QLineEdit (texte noir sur fond sombre)
-        lineedit_style = "color: black; background-color: white; font-size: 14px; border-radius: 4px; padding: 2px 6px;"
+        lineedit_style = UI_STYLE_CONFIG["line_edits"]["default"]
         for le in self.all_line_edits:
             if le: # S'assurer que le widget existe
                 le.setStyleSheet(lineedit_style)
@@ -968,6 +1088,9 @@ class MainWindow(QMainWindow):
             ('encadrement_dizaine', self.encadrement_dizaine, 'checked'),
             ('encadrement_centaine', self.encadrement_centaine, 'checked'),
             ('encadrement_millier', self.encadrement_millier, 'checked'),
+            # Petits Problèmes
+            ('math_problems_count', self.math_problems_count, 'text'),
+            # Les checkboxes de types de problèmes seront ajoutées dynamiquement
             ('current_level', self, 'level_variable'), # Ajout pour sauvegarder le niveau
         ]
         # Ajouter dynamiquement les checkboxes de thèmes anglais à config_fields
@@ -975,6 +1098,12 @@ class MainWindow(QMainWindow):
             for theme_name, cb_widget in self.english_relier_theme_checkboxes.items():
                 # La clé de config doit correspondre à celle dans exercise_widgets_map
                 self.config_fields.append((f"english_theme_{theme_name}_cb", cb_widget, 'checked'))
+        
+        # Ajouter dynamiquement les checkboxes de types de problèmes mathématiques à config_fields
+        if hasattr(self, 'math_problem_type_checkboxes'):
+            for type_key, cb_widget in self.math_problem_type_checkboxes.items():
+                self.config_fields.append((f"math_problem_type_{type_key}_cb", cb_widget, 'checked'))
+
         self.load_config()
         self.update_exercise_visibility() # Set initial visibility based on loaded config (or default)
 
@@ -1005,16 +1134,16 @@ class MainWindow(QMainWindow):
         """Crée une ligne QHBoxLayout avec un QLabel et un QLineEdit."""
         # Le widget conteneur pour la ligne entière
         row_widget = QWidget()
-        row_layout = QHBoxLayout(row_widget) # Appliquer le layout au widget
+        row_layout = QHBoxLayout(row_widget)
         row_layout.setContentsMargins(0,0,0,0) # Pas de marges internes pour le layout de la ligne
         row_layout.setSpacing(5) # Espacement entre label et line_edit
 
         label = QLabel(label_text)
-        label.setStyleSheet("color: #e0e0e0; font-size: 14px; font-weight: normal;") # Style des labels
+        label.setStyleSheet(UI_STYLE_CONFIG["labels"]["field_label"]) # Utilise la config
         row_layout.addWidget(label)
 
         line_edit = QLineEdit()
-        line_edit.setMaximumWidth(max_width)
+        line_edit.setMaximumWidth(max_width) # max_width est toujours un int ici
         # Le style des QLineEdit sera appliqué globalement via self.all_line_edits
         row_layout.addWidget(line_edit)
         return row_widget, line_edit # Retourner le widget conteneur et le line_edit
@@ -1071,10 +1200,11 @@ class MainWindow(QMainWindow):
             border_c = self.darken_color(original_color_hex, 0.7)
 
             is_currently_iter_selected_button = (btn_iter == self.current_selected_level_button)
-            btn_iter.setProperty("selected", is_currently_iter_selected_button)
+            btn_iter.setProperty("selected", is_currently_iter_selected_button) # Propriété pour le style
 
             # Appliquer le style de base (qui réagit à la propriété "selected")
             style_str = self.BASE_LEVEL_BUTTON_STYLE.format(
+                text_color=UI_STYLE_CONFIG["buttons"]["level_button_text_color"],
                 bg_color=original_color_hex,
                 hover_bg_color=hover_color,
                 pressed_bg_color=pressed_color,
@@ -1125,9 +1255,10 @@ class MainWindow(QMainWindow):
     def validate_days_entry(self):
         value = self.days_entry.text().strip()
         is_valid = value.isdigit() and int(value) > 0
-        style = "color: black; background-color: white; font-size: 14px; border-radius: 4px; padding: 2px 6px;"
+        style = UI_STYLE_CONFIG["line_edits"]["default"]
         if not is_valid:
-            style += "border: 2px solid red;"
+            # Ajouter la bordure rouge spécifique pour l'invalidité
+            style += UI_STYLE_CONFIG["line_edits"]["days_invalid_border"]
         self.days_entry.setStyleSheet(style)
         self.generate_pdf_button.setEnabled(is_valid)
         self.generate_word_button.setEnabled(is_valid)
@@ -1192,6 +1323,15 @@ class MainWindow(QMainWindow):
             is_croissant_selected = self.sort_type_croissant.isChecked() if "sort_type_croissant_cb" in allowed_keys else False
             is_decroissant_selected = self.sort_type_decroissant.isChecked() if "sort_type_decroissant_cb" in allowed_keys else False
 
+            # Petits Problèmes Mathématiques
+            math_problems_count_val = self.get_int(self.math_problems_count, field_name="Nombre de problèmes") if "math_problems_group" in allowed_keys else 0
+            selected_math_problem_types = []
+            if hasattr(self, 'math_problem_type_checkboxes') and "math_problems_group" in allowed_keys:
+                for type_key, cb_widget in self.math_problem_type_checkboxes.items():
+                    type_cb_key_map = f"math_problem_type_{type_key}_cb" # Clé dans exercise_widgets_map
+                    if type_cb_key_map in allowed_keys and cb_widget.isChecked():
+                        selected_math_problem_types.append(type_key) # Utiliser la clé JSON (ex: "addition_simple")
+
             if not is_croissant_selected and not is_decroissant_selected: # Si aucun type de tri n'est sélectionné
                 sort_count_val = 0
 
@@ -1242,6 +1382,10 @@ class MainWindow(QMainWindow):
                 'generate_english_full_exercises_func': generate_english_full_exercises, # AJOUT DE CETTE LIGNE
                 'orthographe_ex_count': self.get_int(self.orthographe_ex_count, field_name="Orthographe - nombre d'exercices") if "ortho_params_group" in allowed_keys else 0,
                 # Encadrement
+                # Petits Problèmes
+                'math_problems_count': math_problems_count_val,
+                'selected_math_problem_types': selected_math_problem_types,
+                'current_level_for_problems': self.current_level, # Pour filtrer les problèmes par niveau dans le générateur
                 'encadrement_exercises': encadrement_exercises, # Déjà filtré par allowed_keys pour son propre groupe
                 'selected_english_themes': selected_english_themes, # Déjà filtré par allowed_keys pour chaque checkbox
                 'current_level_for_conversions': self.current_level # Ajout DU NIVEAU ICI
@@ -1249,6 +1393,7 @@ class MainWindow(QMainWindow):
 
             verbs_per_day_val = self.get_int(self.verbs_per_day_entry, field_name="Verbes par jour") if "conj_params_group" in allowed_keys else 0
 
+            params['generate_math_problems_func'] = generate_math_problems
             # Construction corrigée pour conjugation_tenses
             conjugation_tenses_list = []
             for i, tense_cb_widget in enumerate(self.tense_checkboxes):
@@ -1329,7 +1474,8 @@ class MainWindow(QMainWindow):
                 data['orthographe_exercises'],
                 data['enumerate_exercises'], data['sort_exercises'],
                 geo_exercises=data['geo_exercises'], english_exercises=data['english_exercises'],
-                encadrement_exercises=data.get('encadrement_exercises'),
+                encadrement_exercises=data.get('encadrement_exercises'), 
+                story_math_problems_by_day=data.get('math_problems'), # Ajout de cette ligne
                 header_text=header_text, show_name=show_name, show_note=show_note, filename=filename,
                 output_dir_override=output_directory
             )
@@ -1364,7 +1510,8 @@ class MainWindow(QMainWindow):
                 sort_exercises=data['sort_exercises'],
                 geo_exercises=data['geo_exercises'], 
                 english_exercises=data['english_exercises'],
-                encadrement_exercises=data.get('encadrement_exercises'),
+                encadrement_exercises=data.get('encadrement_exercises'), 
+                story_math_problems_by_day=data.get('math_problems'), # Ajout de cette ligne
                 header_text=header_text, show_name=show_name, show_note=show_note, filename=filename,
                 output_dir_override=output_directory
             )
@@ -1397,7 +1544,8 @@ class MainWindow(QMainWindow):
                 data['conjugations'], data['params_list'], data['grammar_exercises'],
                 data['orthographe_exercises'], data['enumerate_exercises'], data['sort_exercises'],
                 geo_exercises=data['geo_exercises'], english_exercises=data['english_exercises'],
-                encadrement_exercises=data.get('encadrement_exercises'),
+                encadrement_exercises=data.get('encadrement_exercises'), 
+                story_math_problems_by_day=data.get('math_problems'), # Ajout de cette ligne
                 header_text=header_text, show_name=show_name, show_note=show_note, filename=filename,
                 output_dir_override=output_directory
             )
@@ -1434,7 +1582,8 @@ class MainWindow(QMainWindow):
                 sort_exercises=data['sort_exercises'],
                 geo_exercises=data['geo_exercises'], 
                 english_exercises=data['english_exercises'],
-                encadrement_exercises=data.get('encadrement_exercises'),
+                encadrement_exercises=data.get('encadrement_exercises'), 
+                story_math_problems_by_day=data.get('math_problems'), # Ajout de cette ligne
                 header_text=header_text, show_name=show_name, show_note=show_note, filename=filename,
                 output_dir_override=output_directory)
             if output_path and os.path.exists(output_path):
@@ -1621,7 +1770,7 @@ class MainWindow(QMainWindow):
         for i, config_to_add in enumerate(final_ordered_configs):
             self.splitter.addWidget(config_to_add['widget'])
             self.splitter.setStretchFactor(i, config_to_add['stretch'])
-            config_to_add['widget'].show() # S'assurer que le conteneur de colonne est visible
+            config_to_add['widget'].show() # S'assurer que le widget de colonne est visible
         
         # Forcer la réinitialisation de la distribution des tailles pour que les stretch factors s'appliquent correctement
         if self.splitter.count() > 0:
@@ -1667,19 +1816,19 @@ class MainWindow(QMainWindow):
         default_relative_path = "output/" # Ce qui est affiché si aucun chemin absolu n'est défini
         max_display_len = 40 # Longueur maximale approximative du chemin affiché (sans le préfixe)
 
+        cfg_labels = UI_STYLE_CONFIG["labels"]
         if not full_path:
             self.output_path_display_label.setText(prefix + default_relative_path)
-            self.output_path_display_label.setStyleSheet("font-style: italic; color: #B0BEC5;")
+            self.output_path_display_label.setStyleSheet(cfg_labels["output_path_display_default"])
         else:
             display_path = full_path
             if len(full_path) > max_display_len:
                 parts = full_path.split(os.sep)
                 if len(parts) > 4: # Assez de parties pour raccourcir (lecteur + ... + 3 dossiers)
-                    # Montre la première partie (lecteur), "...", et les trois dernières parties
                     display_path = parts[0] + os.sep + "..." + os.sep + os.path.join(parts[-3], parts[-2], parts[-1])
             
             self.output_path_display_label.setText(prefix + display_path)
-            self.output_path_display_label.setStyleSheet("font-style: normal; color: #E0E0E0;")
+            self.output_path_display_label.setStyleSheet(cfg_labels["output_path_display_set"])
 
 if __name__ == "__main__":
     import os

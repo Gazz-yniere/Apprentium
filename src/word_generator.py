@@ -21,25 +21,68 @@ def get_output_path(filename, custom_output_dir=None):
     if custom_output_dir and custom_output_dir.strip():
         custom_output_dir = custom_output_dir.strip()
         if os.path.isdir(custom_output_dir):
-            base_dir_for_output = custom_output_dir
+            base_dir_for_output = os.path.normpath(custom_output_dir)
         else:
             try:
                 os.makedirs(custom_output_dir, exist_ok=True)
-                base_dir_for_output = custom_output_dir
+                base_dir_for_output = os.path.normpath(custom_output_dir)
             except OSError:
                 print(f"Avertissement : Impossible de créer le dossier personnalisé '{custom_output_dir}'. Utilisation du dossier par défaut.")
-                # Fallback ci-dessous
 
     if base_dir_for_output is None: # Si custom_output_dir n'est pas fourni ou a échoué
         if getattr(sys, 'frozen', False): # Exécutable PyInstaller
             app_base_path = os.path.dirname(sys.executable)
         else: # Mode script
             app_base_path = os.path.dirname(os.path.dirname(__file__)) # Remonte au dossier parent de src/
-        base_dir_for_output = os.path.join(app_base_path, 'output')
+        base_dir_for_output = os.path.normpath(os.path.join(app_base_path, 'output'))
 
     os.makedirs(base_dir_for_output, exist_ok=True) # S'assure que le dossier final existe
     return os.path.join(base_dir_for_output, filename)
 
+def add_math_problems_to_doc(container, problems_for_day, indent_val=None):
+    if not problems_for_day:
+        return
+    
+    # Ajustement du titre en fonction du nombre de problèmes
+    if len(problems_for_day) == 1:
+        title_str = "Petit Problème:"
+    else:
+        title_str = "Petits Problèmes:"
+    # Remplacer add_heading par add_paragraph et styler le run pour le titre
+    p_heading = container.add_paragraph()
+    run_heading = p_heading.add_run(title_str)
+    run_heading.bold = True
+    # run_heading.underline = True # Retiré pour correspondre aux titres d'opérations
+    # run_heading.font.size = Pt(12) # Retiré pour utiliser la taille par défaut (11pt) comme les titres d'opérations
+    if indent_val:
+        p_heading.paragraph_format.left_indent = indent_val
+    p_heading.paragraph_format.space_before = Pt(6)
+    p_heading.paragraph_format.space_after = Pt(3)
+
+    for idx, problem_data in enumerate(problems_for_day):
+        problem_text = f"{idx + 1}. {problem_data['content']}"
+        p_problem = container.add_paragraph()
+        # Numéro en gras
+        run_number = p_problem.add_run(f"{idx + 1}. ")
+        run_number.bold = True
+        # Texte de l'énoncé en normal
+        p_problem.add_run(problem_data['content'])
+
+        if indent_val:
+            p_problem.paragraph_format.left_indent = indent_val
+        p_problem.paragraph_format.space_before = Pt(0)
+        p_problem.paragraph_format.space_after = Pt(1)
+
+        p_answer = container.add_paragraph("Réponse: ______________________________")
+        if indent_val:
+            p_answer.paragraph_format.left_indent = indent_val
+        p_answer.paragraph_format.space_before = Pt(0)
+        
+        if idx < len(problems_for_day) - 1:
+            p_answer.paragraph_format.space_after = Pt(6) # Espace avant le prochain problème
+        else:
+            p_answer.paragraph_format.space_after = Pt(1) # Espace normal après le dernier problème
+             
 def set_table_borders_invisible(table):
     """Rend toutes les bordures d'un tableau invisibles."""
     tbl = table._tbl
@@ -215,7 +258,8 @@ def set_cell_margins(cell, top=None, bottom=None, left=None, right=None):
 
 def generate_workbook_docx(days, operations, counts, max_digits, conjugations, params_list, grammar_exercises,
                            orthographe_exercises=None, enumerate_exercises=None, sort_exercises=None,
-                           geo_exercises=None, english_exercises=None, encadrement_exercises=None,
+                           geo_exercises=None, english_exercises=None, encadrement_exercises=None, 
+                           story_math_problems_by_day=None, # Ajout du paramètre
                            header_text=None, show_name=False, show_note=False, filename="workbook.docx", output_dir_override=None):
     if geo_exercises is None:
         geo_exercises = []
@@ -225,6 +269,8 @@ def generate_workbook_docx(days, operations, counts, max_digits, conjugations, p
     if enumerate_exercises is None: enumerate_exercises = []
     if sort_exercises is None: sort_exercises = []
     if encadrement_exercises is None: encadrement_exercises = {'count': 0, 'digits': 0, 'types': []}
+    if story_math_problems_by_day is None: # Initialisation
+        story_math_problems_by_day = []
 
     doc = Document()
     # Style général
@@ -280,13 +326,18 @@ def generate_workbook_docx(days, operations, counts, max_digits, conjugations, p
             else:
                 row.cells[2].text = ""
             add_paragraph(doc, "") # Espace après l'en-tête général, ajouté au document principal
+        
+        # Préparer les données des "Petits Problèmes" pour le jour
+        current_day_story_problems = None
+        if len(story_math_problems_by_day) >= day:
+            current_day_story_problems = story_math_problems_by_day[day-1]
 
         section_num = 1 # Compteur pour la numérotation des sections
 
         # Section Calculs
-        has_calculs_content = any(counts) or \
-                              (enumerate_exercises and len(enumerate_exercises) >= day and enumerate_exercises[day-1])
-        if has_calculs_content:
+        if any(counts) or \
+           (enumerate_exercises and len(enumerate_exercises) >= day and enumerate_exercises[day-1]) or \
+           bool(current_day_story_problems): # Condition pour inclure les "Petits Problèmes"
             section_key = "Calculs"
             section_frame_table = doc.add_table(rows=1, cols=1)
             section_color_data = SECTION_ASSETS.get(section_key, {}).get("color", (0.1,0.1,0.1))
@@ -333,6 +384,12 @@ def generate_workbook_docx(days, operations, counts, max_digits, conjugations, p
                         for problem in problems:
                             calc_str = problem.strip().replace(' =', '')
                             add_paragraph(section_cell, f"{calc_str} = ________________________________", style='ListContinue', indent=True)
+            
+            # Ajout des "Petits Problèmes" à la fin de la section Calculs
+            if current_day_story_problems:
+                add_math_problems_to_doc(section_cell, current_day_story_problems, indent_val=CONTENT_INDENT)
+                # Pas besoin d'un add_paragraph(section_cell, "") ici, car add_math_problems_to_doc gère l'espacement interne
+                # et la cellule a une marge inférieure.
             add_paragraph(doc, "") # Espace entre les cadres de section
 
         if conjugations and len(conjugations) >= day and conjugations[day-1]:
@@ -479,7 +536,11 @@ def generate_workbook_docx(days, operations, counts, max_digits, conjugations, p
                 current_day_geo_ex = geo_exercises[day-1]
                 if current_day_geo_ex:
                     para_conv_title = add_paragraph(section_cell, indent=True)
-                    run_conv_title = para_conv_title.add_run("Conversions :")
+                    # Ajustement du titre en fonction du nombre d'exercices de conversion
+                    if len(current_day_geo_ex) == 1:
+                        run_conv_title = para_conv_title.add_run("Conversion :")
+                    else:
+                        run_conv_title = para_conv_title.add_run("Conversions :")
                     run_conv_title.bold = True
                     for ex_conv in current_day_geo_ex:
                         add_paragraph(section_cell, ex_conv, indent=True)
@@ -495,7 +556,11 @@ def generate_workbook_docx(days, operations, counts, max_digits, conjugations, p
                         add_paragraph(section_cell, f"{numbers_str} = _________________________________", indent=True)
             if encadrement_lines_word:
                 para_enc_title = add_paragraph(section_cell, indent=True)
-                run_enc_title = para_enc_title.add_run("Encadre les nombres :")
+                # Ajustement du titre en fonction du nombre d'exercices d'encadrement
+                if len(encadrement_lines_word) == 1:
+                    run_enc_title = para_enc_title.add_run("Encadre le nombre :")
+                else:
+                    run_enc_title = para_enc_title.add_run("Encadre les nombres :")
                 run_enc_title.bold = True
                 for ex_enc in encadrement_lines_word:
                     n_enc, t_enc = ex_enc['number'], ex_enc['type']
