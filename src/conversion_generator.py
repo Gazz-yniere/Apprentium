@@ -32,7 +32,7 @@ CONVERSION_DATA = CONVERSION_DATA_LOADED
 # current_level : le niveau scolaire actuel pour filtrer les conversions
 # Retourne une liste de chaînes (exercices)
 def generate_conversion_exercises(types_selectionnes, n, senses, current_level=None):
-    print(f"generate_conversion_exercises called. current_level: {current_level}, types_selectionnes: {types_selectionnes}, n: {n}, senses: {senses}")
+    # print(f"generate_conversion_exercises called. current_level: {current_level}, types_selectionnes: {types_selectionnes}, n: {n}, senses: {senses}")
     exercises = []
     config_level_order = CONVERSION_DATA.get("level_order", [])
     all_conversions_map = CONVERSION_DATA.get("conversions", {})
@@ -50,10 +50,10 @@ def generate_conversion_exercises(types_selectionnes, n, senses, current_level=N
         if current_level and current_level in config_level_order:
             # Prend tous les niveaux jusqu'au niveau actuel inclus
             levels_to_consider = config_level_order[:config_level_order.index(current_level) + 1]
-            print(f"Levels to consider for level '{current_level}': {levels_to_consider}")
+            # print(f"Levels to consider for level '{current_level}': {levels_to_consider}")
         else: # Aucun niveau sélectionné ou niveau invalide, on prend tout par défaut
             levels_to_consider = config_level_order
-            print(f"No valid level specified ('{current_level}'). Considering all levels: {levels_to_consider}")
+            # print(f"No valid level specified ('{current_level}'). Considering all levels: {levels_to_consider}")
         
         # Collect conversions from allowed levels for the selected type
         for lvl in levels_to_consider:
@@ -82,4 +82,3 @@ def generate_conversion_exercises(types_selectionnes, n, senses, current_level=N
     
     # print(f"Generated {len(exercises)} conversion exercises.")
     return exercises
-

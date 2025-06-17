@@ -63,7 +63,7 @@ def generate_english_full_exercises(types, n_complete, n_relier, n_mots_reliés,
     n_mots_reliés: nombre de mots par jeu
     selected_themes: liste des thèmes choisis pour les mots à relier
     """
-    print(f"DEBUG AnglaisGen: Thèmes reçus pour génération: {selected_themes}, Types: {types}, NComplete: {n_complete}, NRelier: {n_relier}, NMotsRelies: {n_mots_reliés}") # DEBUG
+    # print(f"DEBUG AnglaisGen: Thèmes reçus pour génération: {selected_themes}, Types: {types}, NComplete: {n_complete}, NRelier: {n_relier}, NMotsRelies: {n_mots_reliés}") # DEBUG
     exercises = []
     # Génération des phrases à compléter
     if types and n_complete > 0:
@@ -85,7 +85,7 @@ def generate_english_full_exercises(types, n_complete, n_relier, n_mots_reliés,
             for theme_words_list in MOTS_A_RELIER.values():
                 candidate_words_for_relier.extend(theme_words_list)
 
-        print(f"DEBUG AnglaisGen: Mots candidats après filtrage: {candidate_words_for_relier}") # Nouveau print
+        # print(f"DEBUG AnglaisGen: Mots candidats après filtrage: {candidate_words_for_relier}")
         if candidate_words_for_relier: # S'il y a des mots disponibles
             for _ in range(n_relier):
                 if len(candidate_words_for_relier) == 0: # Au cas où la liste deviendrait vide (ne devrait pas arriver ici)

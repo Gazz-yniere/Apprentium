@@ -91,10 +91,15 @@
   "encadrement_dizaine": true,
   "encadrement_centaine": true,
   "encadrement_millier": false,
-  "current_level": "CP",
-  "english_theme_jours_semaine_cb": true,
+  "current_level": "CM2",
+  "english_theme_jours_semaine_cb": false,
+  "english_theme_aliments_cb": false,
+  "english_theme_corps_humain_cb": false,
+  "english_theme_vetements_cb": false,
+  "english_theme_nombres_cb": false,
+  "english_theme_école_cb": true,
   "english_theme_couleurs_cb": false,
   "english_theme_animaux_cb": false,
-  "english_theme_objets_maison_cb": true,
+  "english_theme_objets_maison_cb": false,
   "english_theme_vrac_cb": false
 }

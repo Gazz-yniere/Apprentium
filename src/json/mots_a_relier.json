@@ -8,6 +8,61 @@
     {"english": "Saturday", "french": "Samedi"},
     {"english": "Sunday", "french": "Dimanche"}
   ],
+  "aliments": [
+    {"english": "Apple", "french": "Pomme"},
+    {"english": "Banana", "french": "Banane"},
+    {"english": "Bread", "french": "Pain"},
+    {"english": "Milk", "french": "Lait"},
+    {"english": "Cheese", "french": "Fromage"},
+    {"english": "Water", "french": "Eau"},
+    {"english": "Juice", "french": "Jus"},
+    {"english": "Carrot", "french": "Carotte"},
+    {"english": "Pizza", "french": "Pizza"},
+    {"english": "Ice cream", "french": "Glace"}
+  ],
+  "corps_humain": [
+    {"english": "Head", "french": "Tête"},
+    {"english": "Arm", "french": "Bras"},
+    {"english": "Leg", "french": "Jambe"},
+    {"english": "Hand", "french": "Main"},
+    {"english": "Foot", "french": "Pied"},
+    {"english": "Eye", "french": "Œil"},
+    {"english": "Ear", "french": "Oreille"},
+    {"english": "Nose", "french": "Nez"},
+    {"english": "Mouth", "french": "Bouche"},
+    {"english": "Hair", "french": "Cheveux"}
+  ],
+  "vetements": [
+    {"english": "Socks", "french": "Chaussettes"},
+    {"english": "Coat", "french": "Manteau"},
+    {"english": "Scarf", "french": "Écharpe"},
+    {"english": "Gloves", "french": "Gants"},
+    {"english": "Skirt", "french": "Jupe"},
+    {"english": "T-shirt", "french": "T-shirt"},
+    {"english": "Jacket", "french": "Veste"}
+  ],
+  "nombres": [
+    {"english": "One", "french": "Un"},
+    {"english": "Two", "french": "Deux"},
+    {"english": "Three", "french": "Trois"},
+    {"english": "Four", "french": "Quatre"},
+    {"english": "Five", "french": "Cinq"},
+    {"english": "Six", "french": "Six"},
+    {"english": "Seven", "french": "Sept"},
+    {"english": "Eight", "french": "Huit"},
+    {"english": "Nine", "french": "Neuf"},
+    {"english": "Ten", "french": "Dix"}
+  ],
+  "école": [
+    {"english": "Teacher", "french": "Maître/Maîtresse"},
+    {"english": "Student", "french": "Élève"},
+    {"english": "Classroom", "french": "Salle de classe"},
+    {"english": "School bag", "french": "Cartable"},
+    {"english": "Pencil case", "french": "Trousse"},
+    {"english": "Book", "french": "Livre"},
+    {"english": "Notebook", "french": "Cahier"},
+    {"english": "Playground", "french": "Cour de récréation"}
+  ],
   "couleurs": [
     {"english": "Red", "french": "Rouge"},
     {"english": "Blue", "french": "Bleu"},
@@ -22,7 +77,7 @@
     {"english": "Gray", "french": "Gris"},
     {"english": "Gold", "french": "Or"},
     {"english": "Silver", "french": "Argent"},
-    {"english": "Bronze", "french": "Bronze"} 
+    {"english": "Bronze", "french": "Bronze"}
   ],
   "animaux": [
     {"english": "Dog", "french": "Chien"},
@@ -50,7 +105,12 @@
     {"english": "Crab", "french": "Crabe"},
     {"english": "Butterfly", "french": "Papillon"},
     {"english": "Ant", "french": "Fourmi"},
-    {"english": "Spider", "french": "Araignée"}
+    {"english": "Spider", "french": "Araignée"},
+    {"english": "Duck", "french": "Canard"},
+    {"english": "Chicken", "french": "Poulet"},
+    {"english": "Pig", "french": "Cochon"},
+    {"english": "Sheep", "french": "Mouton"},
+    {"english": "Mouse", "french": "Souris"}
   ],
   "objets_maison": [
     {"english": "Table", "french": "Table"},
@@ -77,7 +137,11 @@
     {"english": "Hat", "french": "Chapeau"},
     {"english": "Shirt", "french": "Chemise"},
     {"english": "Pants", "french": "Pantalon"},
-    {"english": "Dress", "french": "Robe"}
+    {"english": "Dress", "french": "Robe"},
+    {"english": "Television", "french": "Télévision"},
+    {"english": "Key", "french": "Clé"},
+    {"english": "Ball", "french": "Ballon"},
+    {"english": "Toy", "french": "Jouet"}
   ],
   "vrac": [
     {"english": "Hello", "french": "Bonjour"},

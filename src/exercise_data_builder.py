@@ -9,7 +9,7 @@ class InvalidFieldError(Exception):
 class ExerciseDataBuilder:
     @staticmethod
     def build(params):
-        print(f"ExerciseDataBuilder.build: Received params. params.get('current_level_for_conversions') is {params.get('current_level_for_conversions')}") # Debug print
+        # print(f"ExerciseDataBuilder.build: Received params. params.get('current_level_for_conversions') is {params.get('current_level_for_conversions')}") # Debug print
         try:
             days = params['days']
             relier_count = params.get('relier_count', 0)
@@ -158,7 +158,7 @@ class ExerciseDataBuilder:
             if geo_types and geo_ex_count > 0 and geo_senses and generate_conversion_exercises:
                 for _ in range(days): # Générer pour chaque jour
                     # Passer le niveau actuel à la fonction de génération
-                    print(f"ExerciseDataBuilder: Calling generate_conversion_exercises with current_level={params.get('current_level_for_conversions')}") # Debug print
+                    # print(f"ExerciseDataBuilder: Calling generate_conversion_exercises with current_level={params.get('current_level_for_conversions')}") # Debug print
                     daily_geo_ex = generate_conversion_exercises(
                         types_selectionnes=geo_types,
                         n=geo_ex_count,
@@ -185,7 +185,7 @@ class ExerciseDataBuilder:
             n_complete_param = params.get('english_complete_count', 0)
             n_relier_param = params.get('english_relier_count', 0) # Nombre de jeux
             n_mots_relies_param = params.get('relier_count', 0) # Nombre de mots par jeu
-            print(f"DEBUG Builder: Thèmes reçus: {params.get('selected_english_themes')}") # DEBUG
+            # print(f"DEBUG Builder: Thèmes reçus: {params.get('selected_english_themes')}") # DEBUG
             selected_english_themes = params.get('selected_english_themes', [])
             
             if generate_english_full_exercises_func:

@@ -32,7 +32,7 @@ class MainWindow(QMainWindow):
         icon_path = os.path.join(os.path.dirname(__file__), "EduForge.ico")
         self.setWindowIcon(QIcon(icon_path))
         self.setMinimumWidth(1400)
-        #self.setMinimumHeight(900)
+        self.setMinimumHeight(1000)
 
         # --- Constants for Level Selection ---
         self.LEVEL_COLORS = {
@@ -79,7 +79,7 @@ class MainWindow(QMainWindow):
             levels_config_path = get_resource_path('levels_config.json')
             with open(levels_config_path, 'r', encoding='utf-8') as f:
                 self.level_configuration_data = json.load(f)
-            print(f"Configuration des niveaux chargée depuis : {levels_config_path}")
+            # print(f"Configuration des niveaux chargée depuis : {levels_config_path}")
         except FileNotFoundError:
             print(f"ERREUR: Fichier de configuration des niveaux '{levels_config_path}' introuvable. Utilisation des valeurs par défaut.")
         except json.JSONDecodeError:
@@ -541,24 +541,45 @@ class MainWindow(QMainWindow):
         self.english_relier_group, english_relier_les, eng_rel_rows = self._create_generic_groupbox( # Clé: english_relier
             "Jeux à relier", english_relier_fields
         )
+        # Récupérer le layout existant du groupe "Jeux à relier"
+        english_relier_group_layout = self.english_relier_group.layout()
+
         self.all_line_edits.extend(english_relier_les)
         self._all_row_widgets_for_map.update(eng_rel_rows)
         english_layout.addWidget(self.english_relier_group)
 
         # Ajout des checkboxes de thèmes directement dans le layout de english_relier_group
-        # Pas de QGroupBox séparé pour les thèmes.
         self.english_relier_theme_checkboxes = {} # Dictionnaire pour stocker les checkboxes de thèmes
-        english_relier_group_layout = self.english_relier_group.layout() # Récupérer le layout existant
 
         if self.english_relier_themes: # Si des thèmes ont été chargés
             for theme_name in self.english_relier_themes.keys():
                 cb = QCheckBox(theme_name.replace("_", " ").capitalize())
-                english_relier_group_layout.addWidget(cb) # Ajouter directement au layout du groupe "Jeux à relier"
                 self.english_relier_theme_checkboxes[theme_name] = cb
-        else:
-            no_themes_label = QLabel("Aucun thème défini dans mots_a_relier.json")
-            english_relier_group_layout.addWidget(no_themes_label)
+        
+        # Utiliser un QGridLayout pour afficher les checkboxes de thèmes
+        themes_grid_layout = QGridLayout()
+        themes_grid_layout.setContentsMargins(0, 10, 0, 0) # Espace au-dessus des thèmes
+        themes_grid_layout.setVerticalSpacing(5)    # Espacement vertical entre les lignes de checkboxes
+        themes_grid_layout.setHorizontalSpacing(10) # Espacement horizontal entre les checkboxes
 
+        if self.english_relier_theme_checkboxes:
+            checkbox_values = list(self.english_relier_theme_checkboxes.values())
+            row, col = 0, 0
+            for cb_widget in checkbox_values:
+                themes_grid_layout.addWidget(cb_widget, row, col)
+                col += 1
+                if col == 2: # Passer à la ligne suivante après 2 checkboxes
+                    col = 0
+                    row += 1
+            # S'assurer que les colonnes ne s'étirent pas et que le contenu est poussé à gauche
+            themes_grid_layout.setColumnStretch(0, 0) # Pas d'étirement pour la première colonne de checkboxes
+            themes_grid_layout.setColumnStretch(1, 0) # Pas d'étirement pour la deuxième colonne de checkboxes
+            themes_grid_layout.setColumnStretch(2, 1) # Étire tout l'espace restant à droite
+        elif not self.english_relier_themes: # S'il n'y a pas de thèmes du tout (fichier vide/erreur)
+            no_themes_label = QLabel("Aucun thème défini dans mots_a_relier.json")
+            themes_grid_layout.addWidget(no_themes_label, 0, 0, 1, 2) # Span sur 2 colonnes
+
+        english_relier_group_layout.addLayout(themes_grid_layout)
 
         # Anglais : bleu moyen (#64B5F6)
         english_groups = [self.english_complete_group, self.english_relier_group] # themes_group est maintenant stylé différemment et imbriqué
@@ -602,6 +623,15 @@ class MainWindow(QMainWindow):
         self.ortho_anglais_column_widget = QWidget()
         self.ortho_anglais_column_widget.setLayout(ortho_anglais_layout)
         self.ortho_anglais_column_widget.setMinimumWidth(270)
+
+        # Stocker la configuration initiale des colonnes du splitter pour la réorganisation
+        self.splitter_column_configs_initial_order = [
+            {'widget': self.calc_column_widget, 'stretch': 1, 'key': 'calc'},
+            {'widget': self.geo_column_widget, 'stretch': 1, 'key': 'geo'},
+            {'widget': self.conj_column_widget, 'stretch': 1, 'key': 'conj'},
+            {'widget': self.ortho_anglais_column_widget, 'stretch': 1, 'key': 'ortho_anglais'},
+            {'widget': self.grammar_column_widget, 'stretch': 1, 'key': 'grammar'}
+        ]
         
         splitter = QSplitter(Qt.Orientation.Horizontal)
         splitter.addWidget(self.calc_column_widget)
@@ -609,13 +639,10 @@ class MainWindow(QMainWindow):
         splitter.addWidget(self.conj_column_widget)
         splitter.addWidget(self.ortho_anglais_column_widget) # Ortho/Anglais en 4ème
         splitter.addWidget(self.grammar_column_widget)       # Grammaire en 5ème
-        splitter.setSizes([100, 100, 100, 200, 100]) # Ajustement des tailles
-        splitter.setStretchFactor(0, 1)
-        splitter.setStretchFactor(1, 1)
-        splitter.setStretchFactor(2, 1)
-        splitter.setStretchFactor(3, 2) # ortho_anglais_widget
-        splitter.setStretchFactor(4, 1) # grammar_widget
+        for i, config in enumerate(self.splitter_column_configs_initial_order):
+            splitter.setStretchFactor(i, config['stretch'])
         main_layout.addWidget(splitter)
+        self.splitter = splitter # Garder une référence au splitter
 
         # --- Initialize exercise_widgets_map ---
         # This map will store all controllable widgets with unique keys.
@@ -1077,7 +1104,7 @@ class MainWindow(QMainWindow):
         # QTimer pour s'assurer que les mises à jour de style sont appliquées après le traitement des événements
         QTimer.singleShot(0, self._refresh_level_button_styles)
 
-        print(f"Niveau sélectionné : {self.current_level}")
+        # print(f"Niveau sélectionné : {self.current_level}")
         self.update_exercise_visibility()
 
     def _refresh_level_button_styles(self):
@@ -1114,8 +1141,7 @@ class MainWindow(QMainWindow):
             from grammar_generator import get_random_phrases, get_random_transformation
             from conversion_generator import generate_conversion_exercises
             from anglais_generator import PHRASES_SIMPLES, PHRASES_COMPLEXES, MOTS_A_RELIER
-
-            print(f"EduForge.build_exercise_data: self.current_level is {self.current_level} at start.") # Debug print
+            # print(f"EduForge.build_exercise_data: self.current_level is {self.current_level} at start.") # Debug print
 
             # Get allowed keys for the current level
             allowed_keys = self.get_exercises_for_level(self.current_level)
@@ -1152,7 +1178,7 @@ class MainWindow(QMainWindow):
 
             # Ranger les nombres - Logique améliorée
             # Thèmes anglais sélectionnés
-            print(f"DEBUG EduForge: allowed_keys pour le niveau '{self.current_level}': {allowed_keys}")
+            # print(f"DEBUG EduForge: allowed_keys pour le niveau '{self.current_level}': {allowed_keys}")
             selected_english_themes = []
             if hasattr(self, 'english_relier_theme_checkboxes') and "english_relier_group" in allowed_keys: # Vérifier si la section "jeux à relier" est active
                 for theme_name, cb in self.english_relier_theme_checkboxes.items():
@@ -1160,7 +1186,7 @@ class MainWindow(QMainWindow):
                     # Vérifier si la checkbox de thème elle-même est autorisée par le niveau actuel ET cochée
                     if theme_cb_key in allowed_keys and cb.isChecked():
                         selected_english_themes.append(theme_name)
-            print(f"DEBUG EduForge: Thèmes anglais sélectionnés: {selected_english_themes}")
+            # print(f"DEBUG EduForge: Thèmes anglais sélectionnés: {selected_english_themes}")
 
             sort_count_val = self.get_int(self.sort_count, field_name="Ranger - nombre d'exercices") if "geo_sort_group" in allowed_keys else 0
             is_croissant_selected = self.sort_type_croissant.isChecked() if "sort_type_croissant_cb" in allowed_keys else False
@@ -1268,7 +1294,7 @@ class MainWindow(QMainWindow):
                     orthographe_homophones_list.append(ortho_cb_widget.text())
             params['orthographe_homophones'] = orthographe_homophones_list
 
-            print(f"EduForge.build_exercise_data: Calling ExerciseDataBuilder.build with params['current_level_for_conversions'] = {params.get('current_level_for_conversions')}") # Debug print
+            # print(f"EduForge.build_exercise_data: Calling ExerciseDataBuilder.build with params['current_level_for_conversions'] = {params.get('current_level_for_conversions')}") # Debug print
             result = ExerciseDataBuilder.build(params)
             if result is None:
                 # Si ExerciseDataBuilder.build retourne None, on ne peut pas continuer.
@@ -1511,16 +1537,16 @@ class MainWindow(QMainWindow):
                 else:
                     widget.hide()
         
-        # 2. Déterminer l'activité de chaque colonne/section et mettre à jour la visibilité
-        #    des titres de colonne et des widgets de colonne principaux dans le QSplitter.
+        # 2. Déterminer l'activité de chaque colonne principale et la visibilité de son titre
+        #    et des conteneurs de section (pour Ortho/Anglais).
+        #    Une colonne est active si au moins un de ses QGroupBoxes est autorisé pour le niveau.
 
         is_calc_column_active = False
         for section_key in self.column_section_keys.get("calc", []):
-            if section_key in allowed_exercise_keys:
+            if section_key in allowed_exercise_keys: # Vérifier si le QGroupBox lui-même est autorisé
                 is_calc_column_active = True
                 break
         self.calc_title_label.setVisible(is_calc_column_active)
-        self.calc_column_widget.setVisible(is_calc_column_active)
 
         is_geo_column_active = False
         for section_key in self.column_section_keys.get("geo", []):
@@ -1528,7 +1554,6 @@ class MainWindow(QMainWindow):
                 is_geo_column_active = True
                 break
         self.geo_title_label.setVisible(is_geo_column_active)
-        self.geo_column_widget.setVisible(is_geo_column_active)
 
         is_conj_column_active = False
         for section_key in self.column_section_keys.get("conj", []):
@@ -1536,7 +1561,6 @@ class MainWindow(QMainWindow):
                 is_conj_column_active = True
                 break
         self.conj_title_label.setVisible(is_conj_column_active)
-        self.conj_column_widget.setVisible(is_conj_column_active)
 
         is_grammar_column_active = False
         for section_key in self.column_section_keys.get("grammar", []):
@@ -1544,7 +1568,6 @@ class MainWindow(QMainWindow):
                 is_grammar_column_active = True
                 break
         self.grammar_title_label.setVisible(is_grammar_column_active)
-        self.grammar_column_widget.setVisible(is_grammar_column_active)
 
         # Pour la colonne combinée Orthographe/Anglais
         is_ortho_section_active = False
@@ -1553,7 +1576,7 @@ class MainWindow(QMainWindow):
                 is_ortho_section_active = True
                 break
         self.orthographe_title_label.setVisible(is_ortho_section_active)
-        self.orthographe_section_widget.setVisible(is_ortho_section_active)
+        self.orthographe_section_widget.setVisible(is_ortho_section_active) # Important pour le contenu
 
         is_english_section_active = False
         for section_key in self.column_section_keys.get("english", []):
@@ -1561,11 +1584,49 @@ class MainWindow(QMainWindow):
                 is_english_section_active = True
                 break
         self.english_title_label.setVisible(is_english_section_active)
-        self.english_section_widget.setVisible(is_english_section_active)
-
-        # La colonne combinée elle-même est visible si l'une de ses sections l'est
+        self.english_section_widget.setVisible(is_english_section_active) # Important pour le contenu
         is_ortho_anglais_column_active = is_ortho_section_active or is_english_section_active
-        self.ortho_anglais_column_widget.setVisible(is_ortho_anglais_column_active)
+
+        # 3. Préparer les listes pour la réorganisation du QSplitter
+        column_activity_map = {
+            'calc': is_calc_column_active,
+            'geo': is_geo_column_active,
+            'conj': is_conj_column_active,
+            'ortho_anglais': is_ortho_anglais_column_active,
+            'grammar': is_grammar_column_active
+        }
+
+        active_column_configs = []
+        inactive_column_configs = []
+
+        for config in self.splitter_column_configs_initial_order:
+            if column_activity_map.get(config['key'], False):
+                active_column_configs.append(config)
+            else:
+                inactive_column_configs.append(config)
+        
+        final_ordered_configs = active_column_configs + inactive_column_configs
+
+        # 4. Réorganiser les widgets dans le QSplitter
+        # Détacher tous les widgets actuels du splitter pour éviter les problèmes de ré-ajout
+        # et pour s'assurer que l'ordre est correctement appliqué.
+        widgets_in_splitter_before_reorder = []
+        for i in range(self.splitter.count()):
+            widgets_in_splitter_before_reorder.append(self.splitter.widget(i))
+        
+        for w_to_detach in widgets_in_splitter_before_reorder:
+            w_to_detach.setParent(None) # Détache le widget du splitter
+
+        # Ajouter les widgets dans le nouvel ordre et réappliquer les stretch factors
+        for i, config_to_add in enumerate(final_ordered_configs):
+            self.splitter.addWidget(config_to_add['widget'])
+            self.splitter.setStretchFactor(i, config_to_add['stretch'])
+            config_to_add['widget'].show() # S'assurer que le conteneur de colonne est visible
+        
+        # Forcer la réinitialisation de la distribution des tailles pour que les stretch factors s'appliquent correctement
+        if self.splitter.count() > 0:
+            sizes = [1] * self.splitter.count() # Petites tailles initiales égales
+            self.splitter.setSizes(sizes)
 
     def get_selected_conversion_types(self):
         types = []
