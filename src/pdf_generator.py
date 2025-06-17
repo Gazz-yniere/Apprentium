@@ -31,7 +31,7 @@ PDF_STYLE_CONFIG = {
         "y_offset_no_header": 3,
     },
     "section_frame": { # Cadre général d'une section d'exercices
-        "radius": 20,
+        "radius": 15,
         "stroke_width": 1,
         "default_stroke_color_rgb": (0.7, 0.7, 0.7),
         "content_bottom_padding": -5,
