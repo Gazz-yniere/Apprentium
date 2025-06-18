@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QIcon
 from PyQt6.QtGui import QPalette, QColor
-from problemes_maths_generator import generate_math_problems # Importer la nouvelle fonction
+from calculs_generator import generate_story_math_problems # Modifié pour importer depuis calculs_generator
 from pdf_generator import generate_workbook_pdf
 from conjugation_generator import get_random_verb
 import random
@@ -1110,7 +1110,8 @@ class MainWindow(QMainWindow):
         # Charger la configuration des conversions
         self.conversion_config_data = {}
         try:
-            from conversion_generator import CONVERSION_DATA as cg_conversion_data # Importer les données déjà chargées
+            # Les données de conversion sont maintenant dans mesures_generator
+            from mesures_generator import CONVERSION_DATA as cg_conversion_data
             self.conversion_config_data = cg_conversion_data
         except ImportError:
             print("Avertissement: Impossible de charger CONVERSION_DATA depuis conversion_generator.")
@@ -1268,9 +1269,9 @@ class MainWindow(QMainWindow):
     def build_exercise_data(self):
         try:
             from exercise_data_builder import ExerciseDataBuilder
-            from conjugation_generator import TENSES, VERBS
-            from grammar_generator import get_random_phrases, get_random_transformation
-            from conversion_generator import generate_conversion_exercises
+            from conjugation_generator import TENSES, VERBS # OK
+            from grammar_generator import get_random_phrases, get_random_transformation # OK
+            from mesures_generator import generate_conversion_exercises # Modifié
             from anglais_generator import PHRASES_SIMPLES, PHRASES_COMPLEXES, MOTS_A_RELIER
             # print(f"EduForge.build_exercise_data: self.current_level is {self.current_level} at start.") # Debug print
 
@@ -1278,25 +1279,16 @@ class MainWindow(QMainWindow):
             allowed_keys = self.get_exercises_for_level(self.current_level)
 
             # Génération des exercices d'encadrement
-            encadrement_count = self.get_int(self.encadrement_count, field_name="Encadrement - nombre d'exercices")
-            encadrement_digits = self.get_int(self.encadrement_digits, field_name="Encadrement - chiffres par nombre")
-            encadrement_types = []
-            if self.encadrement_unite.isChecked():
-                encadrement_types.append("unité")
-            if self.encadrement_dizaine.isChecked():
-                encadrement_types.append("dizaine")
-            if self.encadrement_centaine.isChecked():
-                encadrement_types.append("centaine")
-            if self.encadrement_millier.isChecked():
-                encadrement_types.append("millier")
-            
-            # Filter encadrement based on level visibility
-            if "geo_encadrement_group" not in allowed_keys:
-                encadrement_count = 0
-            encadrement_exercises = {
-                'count': encadrement_count,
-                'digits': encadrement_digits,
-                'types': encadrement_types
+            # Les paramètres pour l'encadrement sont collectés ici et passés à ExerciseDataBuilder
+            # ExerciseDataBuilder appellera ensuite une fonction de mesures_generator.py par jour.
+            encadrement_params_for_builder = {
+                'count': self.get_int(self.encadrement_count, field_name="Encadrement - nombre d'exercices") if "geo_encadrement_group" in allowed_keys else 0,
+                'digits': self.get_int(self.encadrement_digits, field_name="Encadrement - chiffres par nombre") if "geo_encadrement_group" in allowed_keys else 0,
+                'types': [name for cb, name, key in zip(
+                    [self.encadrement_unite, self.encadrement_dizaine, self.encadrement_centaine, self.encadrement_millier],
+                    ["unité", "dizaine", "centaine", "millier"],
+                    ["encadrement_unite_cb", "encadrement_dizaine_cb", "encadrement_centaine_cb", "encadrement_millier_cb"]
+                ) if key in allowed_keys and cb.isChecked()]
             }
 
             # Génération des exercices anglais (phrases à compléter + jeux à relier)
@@ -1386,14 +1378,14 @@ class MainWindow(QMainWindow):
                 'math_problems_count': math_problems_count_val,
                 'selected_math_problem_types': selected_math_problem_types,
                 'current_level_for_problems': self.current_level, # Pour filtrer les problèmes par niveau dans le générateur
-                'encadrement_exercises': encadrement_exercises, # Déjà filtré par allowed_keys pour son propre groupe
+                'encadrement_params': encadrement_params_for_builder, # Modifié: passe les paramètres bruts
                 'selected_english_themes': selected_english_themes, # Déjà filtré par allowed_keys pour chaque checkbox
                 'current_level_for_conversions': self.current_level # Ajout DU NIVEAU ICI
             }
 
             verbs_per_day_val = self.get_int(self.verbs_per_day_entry, field_name="Verbes par jour") if "conj_params_group" in allowed_keys else 0
 
-            params['generate_math_problems_func'] = generate_math_problems
+            params['generate_math_problems_func'] = generate_story_math_problems # Modifié
             # Construction corrigée pour conjugation_tenses
             conjugation_tenses_list = []
             for i, tense_cb_widget in enumerate(self.tense_checkboxes):
@@ -1444,8 +1436,7 @@ class MainWindow(QMainWindow):
             if result is None:
                 # Si ExerciseDataBuilder.build retourne None, on ne peut pas continuer.
                 print("Erreur critique : ExerciseDataBuilder.build n'a pas pu construire les données d'exercices.")
-                return None
-            result['encadrement_exercises'] = encadrement_exercises
+                return None # result['encadrement_exercises'] n'est plus nécessaire ici, géré par le builder
             # result['english_exercises'] est maintenant rempli par ExerciseDataBuilder
             return result
         except InvalidFieldError as e:
@@ -1474,8 +1465,8 @@ class MainWindow(QMainWindow):
                 data['orthographe_exercises'],
                 data['enumerate_exercises'], data['sort_exercises'],
                 geo_exercises=data['geo_exercises'], english_exercises=data['english_exercises'],
-                encadrement_exercises=data.get('encadrement_exercises'), 
-                story_math_problems_by_day=data.get('math_problems'), # Ajout de cette ligne
+                encadrement_exercises_list=data.get('encadrement_exercises_list'), # Modifié
+                story_math_problems_by_day=data.get('math_problems'), 
                 header_text=header_text, show_name=show_name, show_note=show_note, filename=filename,
                 output_dir_override=output_directory
             )
@@ -1510,8 +1501,8 @@ class MainWindow(QMainWindow):
                 sort_exercises=data['sort_exercises'],
                 geo_exercises=data['geo_exercises'], 
                 english_exercises=data['english_exercises'],
-                encadrement_exercises=data.get('encadrement_exercises'), 
-                story_math_problems_by_day=data.get('math_problems'), # Ajout de cette ligne
+                encadrement_exercises_list=data.get('encadrement_exercises_list'), # Modifié
+                story_math_problems_by_day=data.get('math_problems'), 
                 header_text=header_text, show_name=show_name, show_note=show_note, filename=filename,
                 output_dir_override=output_directory
             )
@@ -1543,9 +1534,9 @@ class MainWindow(QMainWindow):
                 data['days'], data['operations'], data['counts'], data['max_digits'],
                 data['conjugations'], data['params_list'], data['grammar_exercises'],
                 data['orthographe_exercises'], data['enumerate_exercises'], data['sort_exercises'],
-                geo_exercises=data['geo_exercises'], english_exercises=data['english_exercises'],
-                encadrement_exercises=data.get('encadrement_exercises'), 
-                story_math_problems_by_day=data.get('math_problems'), # Ajout de cette ligne
+                geo_exercises=data['geo_exercises'], english_exercises=data['english_exercises'], # Modifié
+                encadrement_exercises_list=data.get('encadrement_exercises_list'), 
+                story_math_problems_by_day=data.get('math_problems'), 
                 header_text=header_text, show_name=show_name, show_note=show_note, filename=filename,
                 output_dir_override=output_directory
             )
@@ -1580,10 +1571,10 @@ class MainWindow(QMainWindow):
                 orthographe_exercises=data['orthographe_exercises'],
                 enumerate_exercises=data['enumerate_exercises'],
                 sort_exercises=data['sort_exercises'],
-                geo_exercises=data['geo_exercises'], 
-                english_exercises=data['english_exercises'],
-                encadrement_exercises=data.get('encadrement_exercises'), 
-                story_math_problems_by_day=data.get('math_problems'), # Ajout de cette ligne
+                geo_exercises=data['geo_exercises'], # Modifié
+                english_exercises=data['english_exercises'], 
+                encadrement_exercises_list=data.get('encadrement_exercises_list'),
+                story_math_problems_by_day=data.get('math_problems'), 
                 header_text=header_text, show_name=show_name, show_note=show_note, filename=filename,
                 output_dir_override=output_directory)
             if output_path and os.path.exists(output_path):

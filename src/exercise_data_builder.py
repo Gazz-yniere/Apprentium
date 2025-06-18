@@ -1,4 +1,5 @@
 import random
+from mesures_generator import generate_sort_exercises, generate_daily_encadrement_exercises # Ajout des imports
 
 class InvalidFieldError(Exception):
     def __init__(self, field_name, value):
@@ -242,43 +243,23 @@ class ExerciseDataBuilder:
                 for _ in range(days):
                     all_enumerate_exercises.append([])
 
-            # Ranger les nombres
-            sort_count = params.get('sort_count', 0)
-            sort_digits = params.get('sort_digits', 0)
-            sort_n_numbers = params.get('sort_n_numbers', 0)
-            sort_type_croissant_param = params.get('sort_type_croissant', True)
-            sort_type_decroissant_param = params.get('sort_type_decroissant', False)
+            # Ranger les nombres (utilise la nouvelle fonction de mesures_generator)
+            all_sort_exercises = generate_sort_exercises(params, jours)
 
-            all_sort_exercises = [] # Sera une liste de listes (une par jour)
-            if sort_count > 0 and sort_digits > 0 and sort_n_numbers > 0:
-                # Déterminer si le tri aléatoire quotidien est nécessaire
-                needs_daily_random_sort = sort_type_croissant_param and sort_type_decroissant_param
-
-                for _ in range(days): # Générer pour chaque jour
-                    daily_sort_ex = []
-                    # Déterminer le type de tri pour CE JOUR
-                    actual_sort_type_for_day = 'croissant' # Par défaut si un seul est coché ou si aléatoire et choisi
-                    if needs_daily_random_sort:
-                        actual_sort_type_for_day = random.choice(['croissant', 'decroissant'])
-                    elif sort_type_decroissant_param: # Si seulement décroissant est coché
-                         actual_sort_type_for_day = 'decroissant'
-                    # Si seulement croissant est coché, actual_sort_type_for_day reste 'croissant' (initialisé)
-
-                    for _ in range(sort_count): # N exercices de rangement par jour
-                        # S'assurer que sort_digits > 0 avant d'appeler 10**sort_digits-1
-                        max_val = (10**sort_digits - 1) if sort_digits > 0 else 0
-                        numbers = [random.randint(0, max_val) for _ in range(sort_n_numbers)]
-                        daily_sort_ex.append({
-                            'numbers': numbers,
-                            'type': actual_sort_type_for_day # Utilise le type déterminé pour ce jour
-                        })
-                    all_sort_exercises.append(daily_sort_ex)
-            else: # Assurer la cohérence de la structure
-                for _ in range(days):
-                    all_sort_exercises.append([])
-
-            # Encadrement de nombre (déjà préparé dans EduForge.py et passé dans params)
-            encadrement_exercises_from_params = params.get('encadrement_exercises', {'count': 0, 'digits': 0, 'types': []})
+            # Encadrement de nombre
+            encadrement_build_params = params.get('encadrement_params', {'count': 0, 'digits': 0, 'types': []})
+            all_encadrement_exercises_list = []
+            if encadrement_build_params['count'] > 0 and encadrement_build_params['digits'] > 0 and encadrement_build_params['types']:
+                for _ in range(jours):
+                    daily_ex = generate_daily_encadrement_exercises(
+                        encadrement_build_params['count'],
+                        encadrement_build_params['digits'],
+                        encadrement_build_params['types']
+                    )
+                    all_encadrement_exercises_list.append(daily_ex)
+            else:
+                for _ in range(jours):
+                    all_encadrement_exercises_list.append([])
 
             # Petits Problèmes Mathématiques
             generate_math_problems_func = params.get('generate_math_problems_func')
@@ -312,7 +293,7 @@ class ExerciseDataBuilder:
                 'orthographe_exercises': orthographe_exercises,
                 'enumerate_exercises': all_enumerate_exercises,
                 'sort_exercises': all_sort_exercises, 
-                'encadrement_exercises': encadrement_exercises_from_params, # Utiliser celui des params
+                'encadrement_exercises_list': all_encadrement_exercises_list, # Modifié pour la nouvelle structure
                 'math_problems': all_math_problems
             }
         except InvalidFieldError as e:

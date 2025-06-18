@@ -5,8 +5,8 @@ from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT, WD_TABLE_DIRECTION
 from docx.oxml.ns import qn
 from docx.text.paragraph import Paragraph # Import pour pouvoir wrapper lxml element
 from docx.oxml import OxmlElement
-from pdf_generator import generate_math_problems
-from pdf_generator import SECTION_ASSETS, get_resource_path_pdf # Pour les images et couleurs
+from calculs_generator import generate_arithmetic_problems # Modifié pour utiliser la nouvelle fonction
+from pdf_generator import SECTION_ASSETS, get_resource_path_pdf # Pour les images et couleurs (get_resource_path_pdf est ok ici)
 import random
 import warnings
 import os
@@ -258,17 +258,17 @@ def set_cell_margins(cell, top=None, bottom=None, left=None, right=None):
 
 def generate_workbook_docx(days, operations, counts, max_digits, conjugations, params_list, grammar_exercises,
                            orthographe_exercises=None, enumerate_exercises=None, sort_exercises=None,
-                           geo_exercises=None, english_exercises=None, encadrement_exercises=None, 
+                           geo_exercises=None, english_exercises=None, encadrement_exercises_list=None, # Modifié
                            story_math_problems_by_day=None, # Ajout du paramètre
                            header_text=None, show_name=False, show_note=False, filename="workbook.docx", output_dir_override=None):
     if geo_exercises is None:
         geo_exercises = []
     if english_exercises is None:
         english_exercises = []
-    if orthographe_exercises is None: orthographe_exercises = [] # Initialisation pour la cohérence
+    if orthographe_exercises is None: orthographe_exercises = []
     if enumerate_exercises is None: enumerate_exercises = []
     if sort_exercises is None: sort_exercises = []
-    if encadrement_exercises is None: encadrement_exercises = {'count': 0, 'digits': 0, 'types': []}
+    if encadrement_exercises_list is None: encadrement_exercises_list = [] # Modifié
     if story_math_problems_by_day is None: # Initialisation
         story_math_problems_by_day = []
 
@@ -380,7 +380,7 @@ def generate_workbook_docx(days, operations, counts, max_digits, conjugations, p
                         p_op = add_paragraph(section_cell, indent=True) 
                         run_op = p_op.add_run(f"{operation.capitalize()} :")
                         run_op.bold = True
-                        problems = generate_math_problems(operation, params_list[i])
+                        problems = generate_arithmetic_problems(operation, params_list[i]) # Utilise la fonction importée
                         for problem in problems:
                             calc_str = problem.strip().replace(' =', '')
                             add_paragraph(section_cell, f"{calc_str} = ________________________________", style='ListContinue', indent=True)
@@ -487,24 +487,8 @@ def generate_workbook_docx(days, operations, counts, max_digits, conjugations, p
         if sort_exercises and len(sort_exercises) >= day and sort_exercises[day-1]:
             has_mesures_content_for_day = True
 
-        encadrement_lines_word = [] 
-        if encadrement_exercises and encadrement_exercises.get('count', 0) > 0 and \
-           encadrement_exercises.get('digits', 0) > 0 and encadrement_exercises.get('types'):
-            has_mesures_content_for_day = True 
-            digits = encadrement_exercises['digits']
-            types_enc = encadrement_exercises['types']
-            if digits > 0: 
-                min_val = 0
-                if digits == 1: max_val = 9
-                elif digits > 1:
-                    min_val = 10**(digits-1)
-                    max_val = 10**digits - 1
-                else: max_val = 0 
-
-                for _ in range(encadrement_exercises['count']):
-                    t = random.choice(types_enc)
-                    n = random.randint(min_val, max_val)
-                    encadrement_lines_word.append({'number': n, 'type': t})
+        current_day_encadrement_lines = encadrement_exercises_list[day-1] if len(encadrement_exercises_list) >= day else None
+        if current_day_encadrement_lines: has_mesures_content_for_day = True
 
         if has_mesures_content_for_day:
             section_key = "Mesures"
@@ -554,15 +538,15 @@ def generate_workbook_docx(days, operations, counts, max_digits, conjugations, p
                     for ex_sort in current_day_sort_ex:
                         numbers_str = ", ".join(str(n) for n in ex_sort['numbers'])
                         add_paragraph(section_cell, f"{numbers_str} = _________________________________", indent=True)
-            if encadrement_lines_word:
+            if current_day_encadrement_lines:
                 para_enc_title = add_paragraph(section_cell, indent=True)
                 # Ajustement du titre en fonction du nombre d'exercices d'encadrement
-                if len(encadrement_lines_word) == 1:
+                if len(current_day_encadrement_lines) == 1:
                     run_enc_title = para_enc_title.add_run("Encadre le nombre :")
                 else:
                     run_enc_title = para_enc_title.add_run("Encadre les nombres :")
                 run_enc_title.bold = True
-                for ex_enc in encadrement_lines_word:
+                for ex_enc in current_day_encadrement_lines:
                     n_enc, t_enc = ex_enc['number'], ex_enc['type']
                     label = f"à l'{t_enc}" if t_enc == "unité" else f"à la {t_enc}" if t_enc in ["dizaine", "centaine"] else f"au {t_enc}"
                     add_paragraph(section_cell, f"{n_enc} {label} : ______  {n_enc}  ______", indent=True)

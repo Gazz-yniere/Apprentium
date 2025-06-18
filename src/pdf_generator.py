@@ -1,7 +1,7 @@
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 # from reportlab.platypus import Spacer # Import non utilisé si write_math_problems est commenté
-import random
+import random # Conservé pour english_relier
 import sys
 import os
 
@@ -103,6 +103,7 @@ def get_resource_path_pdf(relative_path):
 # from reportlab.platypus import Paragraph, Spacer
 # from reportlab.lib.units import inch
 # def write_math_problems(story, problems_for_day, styles):
+#     # This function was for story problems, which are now handled by draw_canvas_story_problems
 #     if not problems_for_day:
 #         return
 #     story.append(Paragraph("<u>Petits Problèmes:</u>", styles['h2']))
@@ -275,65 +276,10 @@ def draw_canvas_story_problems(pdf, y_position, problems_for_day, exercise_conte
     y_position -= cfg_sp["final_spacing_after_section"]
     return y_position
 
-def generate_math_problems(operation, params):
-    problems = []
-    count = params.get('count', 5)
-    digits = params.get('digits', 2)
-    decimals = params.get('decimals', 0)
-    with_decimals = decimals > 0
-    allow_negative = params.get('allow_negative', False)
-    division_reste = params.get('division_reste', False)
-    division_quotient_decimal = params.get('division_quotient_decimal', False)
-    division_decimals = params.get('division_decimals', 0)
+# La fonction generate_math_problems (pour l'arithmétique) a été déplacée vers calculs_generator.py
+# et renommée en generate_arithmetic_problems.
+from calculs_generator import generate_arithmetic_problems
 
-    for _ in range(count):
-        if operation == "addition":
-            if with_decimals:
-                a = round(random.uniform(0, 10**digits-1), decimals)
-                b = round(random.uniform(0, 10**digits-1), decimals)
-            else:
-                a = random.randint(0, 10**digits-1)
-                b = random.randint(0, 10**digits-1)
-            problems.append(f"{a} + {b} = ")
-        elif operation == "soustraction":
-            if with_decimals:
-                a = round(random.uniform(0, 10**digits-1), decimals)
-                b = round(random.uniform(0, 10**digits-1), decimals)
-            else:
-                a = random.randint(0, 10**digits-1)
-                b = random.randint(0, 10**digits-1)
-            if not allow_negative and a < b:
-                a, b = b, a
-            problems.append(f"{a} - {b} = ")
-        elif operation == "multiplication":
-            if with_decimals:
-                a = round(random.uniform(0, 10**digits-1), decimals)
-                b = round(random.uniform(0, 10**digits-1), decimals)
-            else:
-                a = random.randint(0, 10**digits-1)
-                b = random.randint(0, 10**digits-1)
-            problems.append(f"{a} × {b} = ")
-        elif operation == "division":
-            min_divisor = 2 if digits < 2 else 1
-            max_divisor = 10**digits-1 if digits >= 1 else 9
-            if division_quotient_decimal and division_decimals > 0:
-                divisor = round(random.uniform(min_divisor, max_divisor), division_decimals)
-                quotient = round(random.uniform(1, 10), division_decimals)
-                dividend = round(divisor * quotient, division_decimals)
-                problems.append(f"{dividend} ÷ {divisor} = ")
-            elif not division_reste:
-                divisor = random.randint(min_divisor, max_divisor)
-                quotient = random.randint(2, 10)
-                dividend = divisor * quotient
-                problems.append(f"{dividend} ÷ {divisor} = ")
-            else:
-                divisor = random.randint(min_divisor, max_divisor)
-                quotient = random.randint(2, 10)
-                reste = random.randint(1, divisor-1)
-                dividend = divisor * quotient + reste
-                problems.append(f"{dividend} ÷ {divisor} = ")
-    return problems
-        
 def get_output_path(filename, custom_output_dir=None):
     import sys, os
     base_dir_for_output = None
@@ -372,12 +318,14 @@ def draw_section_image_in_frame(pdf, section_data, current_frame_top_y, page_wid
             print(f"Erreur drawImage (in-frame) pour {image_file_path}: {e}")
 
 def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, params_list, grammar_exercises, orthographe_exercises, enumerate_exercises, sort_exercises, 
-                          story_math_problems_by_day=None, # Ajout du paramètre pour les "Petits Problèmes"
-                          geo_exercises=None, english_exercises=None, encadrement_exercises=None, header_text=None, filename="workbook.pdf", division_entier=False, show_name=False, show_note=False, output_dir_override=None):
+                          story_math_problems_by_day=None, 
+                          geo_exercises=None, english_exercises=None, 
+                          encadrement_exercises_list=None, # Modifié: attend une liste d'exercices par jour
+                          header_text=None, filename="workbook.pdf", division_entier=False, show_name=False, show_note=False, output_dir_override=None):
     if geo_exercises is None:
         geo_exercises = []
     if english_exercises is None: english_exercises = []
-    if encadrement_exercises is None: encadrement_exercises = {'count': 0, 'digits': 0, 'types': []}
+    if encadrement_exercises_list is None: encadrement_exercises_list = [] # Liste de listes (une par jour)
     if story_math_problems_by_day is None: story_math_problems_by_day = []
 
     cfg_page = PDF_STYLE_CONFIG["page"]
@@ -493,7 +441,7 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                 pdf.setFont(cfg_calc_ops["title_font_name"], cfg_calc_ops["title_font_size"])
                 for i, operation in enumerate(operations):
                     params = params_list[i]
-                    problems = generate_math_problems(operation, params)
+                    problems = generate_arithmetic_problems(operation, params) # Utilise la fonction importée
                     pdf.drawString(exercise_content_x_start, y_position, f"{operation.capitalize()} :")
                     y_position -= cfg_calc_ops["line_spacing_after_title"]
                     pdf.setFont(cfg_calc_ops["content_font_name"], cfg_calc_ops["content_font_size"])
@@ -535,19 +483,11 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
             y_position = box_actual_bottom_y - PDF_STYLE_CONFIG["section_frame"]["y_offset_after_box"]
 
         # Section Mesures
-        encadrement_lines = []
-        if encadrement_exercises and encadrement_exercises['count'] > 0 and encadrement_exercises['digits'] > 0 and encadrement_exercises['types']:
-            digits = encadrement_exercises['digits']
-            min_n = 10**(digits-1) if digits > 0 else 0 
-            max_n = (10**digits - 1) if digits > 0 else 0
-            types_enc = encadrement_exercises['types']
-            for _ in range(encadrement_exercises['count']):
-                t = random.choice(types_enc)
-                n = random.randint(min_n, max_n)
-                encadrement_lines.append({'number': n, 'type': t})
+        current_day_encadrement_lines = encadrement_exercises_list[day-1] if len(encadrement_exercises_list) >= day else None
         
         has_mesures_content_for_day = False
-        if encadrement_lines: has_mesures_content_for_day = True
+        if current_day_encadrement_lines: has_mesures_content_for_day = True
+
         if geo_exercises and len(geo_exercises) >= day and geo_exercises[day-1]: has_mesures_content_for_day = True
         if sort_exercises and len(sort_exercises) >= day and sort_exercises[day-1]: has_mesures_content_for_day = True
 
@@ -565,7 +505,7 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                  first_block_content_height = cfg_mes_conv["line_spacing_after_title"] + cfg_mes_conv["line_spacing_per_item"] + cfg_mes_conv["spacing_after_section"]
             elif sort_exercises and len(sort_exercises) >= day and sort_exercises[day-1]:
                  first_block_content_height = cfg_mes_sort["line_spacing_after_title"] + cfg_mes_sort["line_spacing_per_item"] + cfg_mes_sort["spacing_after_section"]
-            elif encadrement_lines:
+            elif current_day_encadrement_lines:
                  first_block_content_height = 16 + 22 + 8 # Encadrement title + first item + spacing
 
             required_height_for_first_block = HEADER_HEIGHT_ESTIMATE + first_block_content_height
@@ -626,16 +566,16 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                             pdf.setFont(cfg_mes_sort["content_font_name"], cfg_mes_sort["content_font_size"])
                     y_position -= cfg_mes_sort["spacing_after_section"]
 
-            if encadrement_lines:
+            if current_day_encadrement_lines:
                 pdf.setFont(cfg_mes_enc["title_font_name"], cfg_mes_enc["title_font_size"])
                 # Ajustement du titre en fonction du nombre d'exercices d'encadrement
-                if len(encadrement_lines) == 1:
+                if len(current_day_encadrement_lines) == 1:
                     pdf.drawString(exercise_content_x_start, y_position, "Encadre le nombre :")
                 else:
                     pdf.drawString(exercise_content_x_start, y_position, "Encadre les nombres :")
                 y_position -= cfg_mes_enc["line_spacing_after_title"]
                 pdf.setFont(cfg_mes_enc["content_font_name"], cfg_mes_enc["content_font_size"])
-                for ex in encadrement_lines:
+                for ex in current_day_encadrement_lines:
                     n = ex['number']
                     t = ex['type']
                     label = f"à l'{t}" if t == "unité" else f"à la {t}" if t in ["dizaine", "centaine"] else f"au {t}"
