@@ -1,12 +1,8 @@
-from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QLabel, QLineEdit, QCheckBox,
-                             QPushButton, QFrame, QSizePolicy, QGroupBox, QSplitter, QSpacerItem, QFileDialog, QLayout, QGraphicsOpacityEffect, QScrollArea)
+from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QLabel, QLineEdit, QCheckBox, QPushButton, QFrame, QGroupBox, QSplitter, QFileDialog, QLayout, QGraphicsOpacityEffect, QScrollArea)
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QIcon
 from PyQt6.QtGui import QPalette, QColor
-from calculs_generator import generate_story_math_problems, generate_arithmetic_problems
-from pdf_generator import generate_workbook_pdf
-from conjugation_generator import get_random_verb
-import random
+from calculs_generator import generate_story_math_problems
 import os
 import json
 import sys
@@ -318,7 +314,7 @@ class MainWindow(QMainWindow):
             # Lighter hover for dark theme
             hover_color = self.darken_color(color_hex, 0.95)
             pressed_color = self.darken_color(color_hex, 0.85)
-            border_c = self.darken_color(color_hex, 0.7)
+            #border_c = self.darken_color(color_hex, 0.7)
 
             button.setStyleSheet(self.BASE_LEVEL_BUTTON_STYLE.format(
                 text_color=UI_STYLE_CONFIG["buttons"]["level_button_text_color"],
@@ -1540,7 +1536,7 @@ class MainWindow(QMainWindow):
 
             # Génération des exercices anglais (phrases à compléter + jeux à relier)
             from anglais_generator import generate_english_full_exercises
-            english_types = self.get_selected_english_types()
+            #english_types = self.get_selected_english_types()
             n_complete = self.get_int(
                 self.english_complete_count) if "english_complete_group" in allowed_keys else 0
             n_relier = self.get_int(

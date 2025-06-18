@@ -91,8 +91,8 @@ PDF_STYLE_CONFIG = {
 }
 
 # Estimation de la hauteur de l'en-tête de section (numéro+titre)
-HEADER_HEIGHT_ESTIMATE = (2 * PDF_STYLE_CONFIG["section_header"]["box_padding"] +
-                          max(2 * PDF_STYLE_CONFIG["section_header"]["circle_radius"], PDF_STYLE_CONFIG["section_header"]["title_font_size"]))
+HEADER_HEIGHT_ESTIMATE = (2 * PDF_STYLE_CONFIG["section_header"]["box_padding"]
+                          + max(2 * PDF_STYLE_CONFIG["section_header"]["circle_radius"], PDF_STYLE_CONFIG["section_header"]["title_font_size"]))
 
 
 def get_resource_path_pdf(relative_path):
@@ -149,8 +149,8 @@ def draw_section_header(pdf, y_header_top, section_key, section_num, margin, pag
     # Couleur par défaut si non trouvée
     section_color_rgb = section_data.get("color", (0, 0, 0))
 
-    y_title_baseline = y_header_top - \
-        cfg_sh["box_padding"] - cfg_sh["title_font_size"]
+    y_title_baseline = (y_header_top
+                        - cfg_sh["box_padding"] - cfg_sh["title_font_size"])
     circle_center_x = margin + cfg_sh["box_padding"] + cfg_sh["circle_radius"]
     circle_center_y = y_title_baseline + cfg_sh["title_font_size"] * 0.3
 
@@ -163,15 +163,15 @@ def draw_section_header(pdf, y_header_top, section_key, section_num, margin, pag
                 cfg_sh["number_in_circle_font_size"])
     pdf.setFillColorRGB(*section_color_rgb)
     pdf.drawCentredString(circle_center_x, circle_center_y -
-                          (cfg_sh["number_in_circle_font_size"] / 3.0), str(section_num))
-    exercise_content_x_start = circle_center_x + \
-        cfg_sh["circle_radius"] + cfg_sh["content_x_start_offset_from_circle"]
+                          (cfg_sh["number_in_circle_font_size"] / 3.0), str(section_num)) # noqa E501
+    exercise_content_x_start = (circle_center_x
+                                + cfg_sh["circle_radius"] + cfg_sh["content_x_start_offset_from_circle"]) # noqa E501
 
     pdf.setFont(cfg_sh["title_font_name"], cfg_sh["title_font_size"])
     pdf.setFillColorRGB(*section_color_rgb)
     pdf.drawString(exercise_content_x_start, y_title_baseline, section_key)
 
-    # Reset fill color
+    # Reset fill color # noqa E501
     pdf.setFillColorRGB(*PDF_STYLE_CONFIG["default_font"]["color_rgb"])
     y_after_header = y_title_baseline - \
         (2 * cfg_sh["circle_radius"]) - cfg_sh["box_padding"]
@@ -203,8 +203,8 @@ def draw_canvas_story_problems(pdf, y_position, problems_for_day, exercise_conte
         title_text = "Petit Problème:"
     else:
         title_text = "Petits Problèmes:"
-    title_height_estimate = title_font_size + \
-        cfg_sp["line_spacing_after_section_title"]
+    title_height_estimate = (title_font_size
+                             + cfg_sp["line_spacing_after_section_title"])
 
     if y_position - title_height_estimate < margin:
         draw_rounded_box_with_color(pdf, margin, margin, page_width - 2 * margin,
@@ -220,8 +220,8 @@ def draw_canvas_story_problems(pdf, y_position, problems_for_day, exercise_conte
     y_position -= title_height_estimate  # Utilise l'estimation basée sur la config
 
     # La police pour le contenu sera définie plus tard, avant de dessiner les lignes
-    max_text_width = page_width - exercise_content_x_start - \
-        margin - PDF_STYLE_CONFIG["section_header"]["box_padding"]
+    max_text_width = (page_width - exercise_content_x_start
+                      - margin - PDF_STYLE_CONFIG["section_header"]["box_padding"])
 
     for idx, problem_data in enumerate(problems_for_day):
         number_prefix_str = f"{idx + 1}. "
@@ -244,8 +244,8 @@ def draw_canvas_story_problems(pdf, y_position, problems_for_day, exercise_conte
 
         for line_idx_in_problem, line_text_segment in enumerate(lines_to_draw):
             # Check if the current line fits, if not, page break
-            line_height_check = content_font_size + \
-                cfg_sp["line_spacing_between_wrapped_lines"]
+            line_height_check = (content_font_size
+                                 + cfg_sp["line_spacing_between_wrapped_lines"])
             if y_position - line_height_check < margin:
                 draw_rounded_box_with_color(pdf, margin, margin, page_width - 2 * margin,
                                             current_frame_segment_top_y_ref[0] - margin, stroke_rgb_color=section_color_rgb)
@@ -288,15 +288,15 @@ def draw_canvas_story_problems(pdf, y_position, problems_for_day, exercise_conte
                             content_font_size)  # Police normale
                 pdf.drawString(current_x_cursor, y_position, line_text_segment)
 
-            y_position -= (content_font_size +
-                           cfg_sp["line_spacing_between_wrapped_lines"])
+            y_position -= (content_font_size
+                           + cfg_sp["line_spacing_between_wrapped_lines"])
 
-        y_position -= (cfg_sp["line_spacing_after_problem_text_block"] -
-                       cfg_sp["line_spacing_between_wrapped_lines"])
+        y_position -= (cfg_sp["line_spacing_after_problem_text_block"]
+                       - cfg_sp["line_spacing_between_wrapped_lines"])
 
         # "Réponse:" line
-        answer_line_total_height = cfg_sp["answer_font_size"] + \
-            cfg_sp["line_spacing_after_answer_line"]
+        answer_line_total_height = (cfg_sp["answer_font_size"]
+                                    + cfg_sp["line_spacing_after_answer_line"])
         if y_position - answer_line_total_height < margin:
             draw_rounded_box_with_color(pdf, margin, margin, page_width - 2 * margin,
                                         current_frame_segment_top_y_ref[0] - margin, stroke_rgb_color=section_color_rgb)
@@ -315,9 +315,9 @@ def draw_canvas_story_problems(pdf, y_position, problems_for_day, exercise_conte
                            cfg_sp["line_spacing_after_section_title"])
 
         # Police pour "Réponse:"
-        pdf.setFont(cfg_sp["answer_font_name"], cfg_sp["answer_font_size"])
-        pdf.drawString(exercise_content_x_start +
-                       cfg_sp["answer_font_size"], y_position, "Réponse: _________________________________")
+        pdf.setFont(cfg_sp["answer_font_name"], cfg_sp["answer_font_size"]) # noqa E501
+        pdf.drawString(exercise_content_x_start
+                       + cfg_sp["answer_font_size"], y_position, "Réponse: _________________________________") # noqa E501
         y_position -= answer_line_total_height
 
     y_position -= cfg_sp["final_spacing_after_section"]
@@ -361,11 +361,11 @@ def draw_section_image_in_frame(pdf, section_data, current_frame_top_y, page_wid
     cfg_sh = PDF_STYLE_CONFIG["section_header"]
     image_file_path = get_resource_path_pdf(section_data.get("image_path", ""))
     if image_file_path and os.path.exists(image_file_path):
-        img_draw_x = page_width - page_margin - \
-            cfg_sh["box_padding"] - cfg_sh["img_width"]
+        img_draw_x = (page_width - page_margin
+                      - cfg_sh["box_padding"] - cfg_sh["img_width"])
         # Y for bottom-left corner of image
-        img_draw_y = current_frame_top_y - \
-            cfg_sh["box_padding"] - cfg_sh["img_height"]
+        img_draw_y = (current_frame_top_y
+                      - cfg_sh["box_padding"] - cfg_sh["img_height"])
         try:
             pdf.drawImage(image_file_path, img_draw_x, img_draw_y,
                           width=cfg_sh["img_width"], height=cfg_sh["img_height"], mask='auto')
@@ -432,9 +432,8 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
             if show_note:
                 # Utiliser la police et taille par défaut pour stringWidth
                 note_text = "Note : ____________"
-                note_x = width - margin - 10 - \
-                    pdf.stringWidth(
-                        note_text, cfg_gen_header["text_font_name"], cfg_gen_header["text_font_size"])
+                note_x = (width - margin - 10 - pdf.stringWidth(
+                        note_text, cfg_gen_header["text_font_name"], cfg_gen_header["text_font_size"]))
                 pdf.drawString(note_x, y_header_text, note_text)
             y_position = box_y_header - cfg_gen_header["y_offset_after_box"]
         else:
@@ -464,9 +463,9 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
 
             first_block_content_height = 0
             if enumerate_exercises and len(enumerate_exercises) >= day and enumerate_exercises[day-1]:
-                first_block_content_height = cfg_calc_enum["line_spacing_after_title"] + \
-                    cfg_calc_enum["line_spacing_per_item"] + \
-                    cfg_calc_enum["spacing_after_section"]
+                first_block_content_height = (cfg_calc_enum["line_spacing_after_title"]
+                                              + cfg_calc_enum["line_spacing_per_item"]
+                                              + cfg_calc_enum["spacing_after_section"])
             elif current_day_story_problems:  # Estimation pour "Petits Problèmes"
                 # Title + space + problem + space + answer + space
                 first_block_content_height = 10 + 6 + 9 + 4 + 9 + 13
@@ -573,14 +572,13 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                 pdf.setFont(original_font_calc, original_size_calc)
                 pdf.setFillColor(original_fill_color_obj)
 
-            box_actual_bottom_y = y_position - \
-                PDF_STYLE_CONFIG["section_frame"]["content_bottom_padding"]
+            box_actual_bottom_y = (y_position
+                                   - PDF_STYLE_CONFIG["section_frame"]["content_bottom_padding"])
             draw_rounded_box_with_color(pdf,
                                         margin, box_actual_bottom_y,
                                         width - 2 * margin, current_frame_segment_top_y - box_actual_bottom_y,
                                         stroke_rgb_color=section_color_rgb)
-            y_position = box_actual_bottom_y - \
-                PDF_STYLE_CONFIG["section_frame"]["y_offset_after_box"]
+            y_position = box_actual_bottom_y - PDF_STYLE_CONFIG["section_frame"]["y_offset_after_box"]
 
         # Section Mesures
         current_day_encadrement_lines = encadrement_exercises_list[day-1] if len(
@@ -614,13 +612,13 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
 
             first_block_content_height = 0
             if geo_exercises and len(geo_exercises) >= day and geo_exercises[day-1]:
-                first_block_content_height = cfg_mes_conv["line_spacing_after_title"] + \
-                    cfg_mes_conv["line_spacing_per_item"] + \
-                    cfg_mes_conv["spacing_after_section"]
+                first_block_content_height = (cfg_mes_conv["line_spacing_after_title"]
+                                              + cfg_mes_conv["line_spacing_per_item"]
+                                              + cfg_mes_conv["spacing_after_section"])
             elif sort_exercises and len(sort_exercises) >= day and sort_exercises[day-1]:
-                first_block_content_height = cfg_mes_sort["line_spacing_after_title"] + \
-                    cfg_mes_sort["line_spacing_per_item"] + \
-                    cfg_mes_sort["spacing_after_section"]
+                first_block_content_height = (cfg_mes_sort["line_spacing_after_title"]
+                                              + cfg_mes_sort["line_spacing_per_item"]
+                                              + cfg_mes_sort["spacing_after_section"])
             elif current_day_encadrement_lines:
                 # Encadrement title + first item + spacing
                 first_block_content_height = 16 + 22 + 8
@@ -803,14 +801,13 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                             cfg_mes_enc["content_font_name"], cfg_mes_enc["content_font_size"])
                 y_position -= cfg_mes_enc["spacing_after_section"]
 
-            box_actual_bottom_y = y_position - \
-                PDF_STYLE_CONFIG["section_frame"]["content_bottom_padding"]
+            box_actual_bottom_y = (y_position
+                                   - PDF_STYLE_CONFIG["section_frame"]["content_bottom_padding"])
             draw_rounded_box_with_color(pdf,
                                         margin, box_actual_bottom_y,
                                         width - 2 * margin, current_frame_segment_top_y - box_actual_bottom_y,
                                         stroke_rgb_color=section_color_rgb)
-            y_position = box_actual_bottom_y - \
-                PDF_STYLE_CONFIG["section_frame"]["y_offset_after_box"]
+            y_position = box_actual_bottom_y - PDF_STYLE_CONFIG["section_frame"]["y_offset_after_box"]
 
         # Section Conjugaison
         if conjugations and len(conjugations) >= day and conjugations[day-1]:
@@ -820,8 +817,8 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
             section_color_rgb = section_data.get("color", (0.7, 0.3, 0.2))
 
             # Calculate required height for header + first block
-            first_block_content_height = (cfg_conj["line_spacing_after_title"] + cfg_conj["line_spacing_before_pronouns"] +
-                                          cfg_conj["line_spacing_per_pronoun"] + cfg_conj["spacing_after_verb_block"])
+            first_block_content_height = (cfg_conj["line_spacing_after_title"] + cfg_conj["line_spacing_before_pronouns"]
+                                          + cfg_conj["line_spacing_per_pronoun"] + cfg_conj["spacing_after_verb_block"])
             required_height_for_first_block = HEADER_HEIGHT_ESTIMATE + first_block_content_height
 
             if y_position - required_height_for_first_block < margin:
@@ -879,14 +876,13 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                 y_position -= cfg_conj["spacing_after_verb_block"]
                 y_position -= cfg_conj["spacing_after_last_verb_block"]
 
-            box_actual_bottom_y = y_position - \
-                PDF_STYLE_CONFIG["section_frame"]["content_bottom_padding"]
+            box_actual_bottom_y = (y_position
+                                   - PDF_STYLE_CONFIG["section_frame"]["content_bottom_padding"])
             draw_rounded_box_with_color(pdf,
                                         margin, box_actual_bottom_y,
                                         width - 2 * margin, current_frame_segment_top_y - box_actual_bottom_y,
                                         stroke_rgb_color=section_color_rgb)
-            y_position = box_actual_bottom_y - \
-                PDF_STYLE_CONFIG["section_frame"]["y_offset_after_box"]
+            y_position = box_actual_bottom_y - PDF_STYLE_CONFIG["section_frame"]["y_offset_after_box"]
 
         # Section Grammaire
         if grammar_exercises and len(grammar_exercises) >= day and grammar_exercises[day-1]:
@@ -896,8 +892,8 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
             section_color_rgb = section_data.get("color", (0.5, 0.2, 0.7))
 
             # Calculate required height for header + first block
-            first_block_content_height = (cfg_gram["line_spacing_per_line"] * 2 + cfg_gram["spacing_before_answer"] +
-                                          cfg_gram["line_spacing_answer"] + cfg_gram["spacing_after_exercise_block"])
+            first_block_content_height = (cfg_gram["line_spacing_per_line"] * 2 + cfg_gram["spacing_before_answer"]
+                                          + cfg_gram["line_spacing_answer"] + cfg_gram["spacing_after_exercise_block"])
             required_height_for_first_block = HEADER_HEIGHT_ESTIMATE + first_block_content_height
 
             if y_position - required_height_for_first_block < margin:
@@ -922,8 +918,8 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                             cfg_gram["title_font_size"])
                 pdf.drawString(exercise_content_x_start,
                                y_position, f"Phrase :")
-                pdf.setFont(cfg_gram["content_font_name"],
-                            cfg_gram["content_font_size"])
+                pdf.setFont(cfg_gram["content_font_name"], # noqa E501
+                            cfg_gram["content_font_size"]) # noqa E501
                 pdf.drawString(exercise_content_x_start +
                                55, y_position, phrase)
                 y_position -= cfg_gram["line_spacing_per_line"]
@@ -942,8 +938,8 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                             cfg_gram["title_font_size"])
                 pdf.drawString(exercise_content_x_start,
                                y_position, f"Transformation demandée :")
-                pdf.setFont(cfg_gram["content_font_name"],
-                            cfg_gram["content_font_size"])
+                pdf.setFont(cfg_gram["content_font_name"], # noqa E501
+                            cfg_gram["content_font_size"]) # noqa E501
                 pdf.drawString(exercise_content_x_start + 130,
                                y_position, transformation)
                 y_position -= cfg_gram["line_spacing_per_line"]
@@ -974,14 +970,13 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                     pdf.setFont(cfg_gram["content_font_name"],
                                 cfg_gram["content_font_size"])
 
-            box_actual_bottom_y = y_position - \
-                PDF_STYLE_CONFIG["section_frame"]["content_bottom_padding"]
+            box_actual_bottom_y = (y_position
+                                   - PDF_STYLE_CONFIG["section_frame"]["content_bottom_padding"])
             draw_rounded_box_with_color(pdf,
                                         margin, box_actual_bottom_y,
                                         width - 2 * margin, current_frame_segment_top_y - box_actual_bottom_y,
                                         stroke_rgb_color=section_color_rgb)
-            y_position = box_actual_bottom_y - \
-                PDF_STYLE_CONFIG["section_frame"]["y_offset_after_box"]
+            y_position = box_actual_bottom_y - PDF_STYLE_CONFIG["section_frame"]["y_offset_after_box"]
 
         # Section Orthographe
         if orthographe_exercises and len(orthographe_exercises) >= day and orthographe_exercises[day-1]:
@@ -993,8 +988,8 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
             # Calculate required height for header + first block
             first_block_content_height = 0
             # Homophone line + spacing
-            first_block_content_height = cfg_ortho["line_spacing_per_item"] + \
-                cfg_ortho["spacing_after_item"]
+            first_block_content_height = (cfg_ortho["line_spacing_per_item"]
+                                          + cfg_ortho["spacing_after_item"])
             required_height_for_first_block = HEADER_HEIGHT_ESTIMATE + first_block_content_height
 
             if y_position - required_height_for_first_block < margin:
@@ -1017,8 +1012,8 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                                 cfg_ortho["title_font_size"])
                     pdf.drawString(exercise_content_x_start,
                                    y_position, f"{ex['homophone']} :")
-                    pdf.setFont(cfg_ortho["content_font_name"],
-                                cfg_ortho["content_font_size"])
+                    pdf.setFont(cfg_ortho["content_font_name"], # noqa E501
+                                cfg_ortho["content_font_size"]) # noqa E501
                     pdf.drawString(exercise_content_x_start +
                                    60, y_position, ex['content'])
                     y_position -= cfg_ortho["line_spacing_per_item"]
@@ -1034,14 +1029,13 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                     pdf.setFont(cfg_ortho["content_font_name"],
                                 cfg_ortho["content_font_size"])
 
-            box_actual_bottom_y = y_position - \
-                PDF_STYLE_CONFIG["section_frame"]["content_bottom_padding"]
+            box_actual_bottom_y = (y_position
+                                   - PDF_STYLE_CONFIG["section_frame"]["content_bottom_padding"])
             draw_rounded_box_with_color(pdf,
                                         margin, box_actual_bottom_y,
                                         width - 2 * margin, current_frame_segment_top_y - box_actual_bottom_y,
                                         stroke_rgb_color=section_color_rgb)
-            y_position = box_actual_bottom_y - \
-                PDF_STYLE_CONFIG["section_frame"]["y_offset_after_box"]
+            y_position = box_actual_bottom_y - PDF_STYLE_CONFIG["section_frame"]["y_offset_after_box"]
 
         # Section Anglais
         if english_exercises and len(english_exercises) >= day and english_exercises[day-1]:
@@ -1054,13 +1048,13 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
             # Calculate required height for header + first block
             first_block_content_height = 0
             if english_exercises[day-1]:  # Check if there's at least one exercise
-                first_ex = english_exercises[day-1][0]
+                first_ex = english_exercises[day-1][0] # noqa F841
                 if first_ex['type'] in ('simple', 'complexe'):
-                    first_block_content_height = (cfg_eng_comp["line_spacing_after_title"] + cfg_eng_comp["spacing_before_first_item"] +
-                                                  cfg_eng_comp["line_spacing_per_item"] + cfg_eng_comp["spacing_after_item"])
+                    first_block_content_height = (cfg_eng_comp["line_spacing_after_title"] + cfg_eng_comp["spacing_before_first_item"] # noqa E501
+                                                  + cfg_eng_comp["line_spacing_per_item"] + cfg_eng_comp["spacing_after_item"]) # noqa E501
                 elif first_ex['type'] == 'relier':
-                    first_block_content_height = (cfg_eng_rel["line_spacing_after_title"] + cfg_eng_rel["spacing_before_first_item"] +
-                                                  cfg_eng_rel["line_spacing_per_item"] + cfg_eng_rel["spacing_after_block"])
+                    first_block_content_height = (cfg_eng_rel["line_spacing_after_title"] + cfg_eng_rel["spacing_before_first_item"] # noqa E501
+                                                  + cfg_eng_rel["line_spacing_per_item"] + cfg_eng_rel["spacing_after_block"]) # noqa E501
             required_height_for_first_block = HEADER_HEIGHT_ESTIMATE + first_block_content_height
 
             if y_position - required_height_for_first_block < margin:
@@ -1131,14 +1125,14 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                     random.shuffle(anglais_words)
 
                     max_len = max(len(anglais_words), len(francais_words))
-                    x_anglais = exercise_content_x_start + \
-                        cfg_eng_rel["x_offset_anglais"]
-                    x_bullet1 = exercise_content_x_start + \
-                        cfg_eng_rel["x_offset_bullet1"]
-                    x_bullet2 = x_bullet1 + \
-                        cfg_eng_rel["x_offset_bullet2_from_bullet1"]
-                    x_francais = x_bullet2 + \
-                        cfg_eng_rel["x_offset_francais_from_bullet2"]
+                    x_anglais = (exercise_content_x_start
+                                 + cfg_eng_rel["x_offset_anglais"])
+                    x_bullet1 = (exercise_content_x_start
+                                 + cfg_eng_rel["x_offset_bullet1"])
+                    x_bullet2 = (x_bullet1
+                                 + cfg_eng_rel["x_offset_bullet2_from_bullet1"])
+                    x_francais = (x_bullet2
+                                  + cfg_eng_rel["x_offset_francais_from_bullet2"])
 
                     for i in range(max_len):
                         a = anglais_words[i] if i < len(anglais_words) else ''
@@ -1178,14 +1172,13 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                     # Reset to default content font
                     pdf.setFont(cfg_def_font["name"], cfg_def_font["size"])
 
-            box_actual_bottom_y = y_position - \
-                PDF_STYLE_CONFIG["section_frame"]["content_bottom_padding"]
+            box_actual_bottom_y = (y_position
+                                   - PDF_STYLE_CONFIG["section_frame"]["content_bottom_padding"])
             draw_rounded_box_with_color(pdf,
                                         margin, box_actual_bottom_y,
                                         width - 2 * margin, current_frame_segment_top_y - box_actual_bottom_y,
                                         stroke_rgb_color=section_color_rgb)
-            y_position = box_actual_bottom_y - \
-                PDF_STYLE_CONFIG["section_frame"]["y_offset_after_box"]
+            y_position = box_actual_bottom_y - PDF_STYLE_CONFIG["section_frame"]["y_offset_after_box"]
 
         if day < days:
             pdf.showPage()

@@ -314,7 +314,7 @@ def generate_logical_sequences_exercises(params, days, current_level):
                         generated_valid_sequence_for_slot = True
                         break  # Sortir de la boucle d'essais, passer au prochain slot d'exercice
                 if not generated_valid_sequence_for_slot:  # Check if a sequence was generated for the slot
-                    pass  # Optionally log or handle the case where no sequence could be generated
+                    pass  # Optionnellement, enregistrer ou gérer le cas où aucune séquence n'a pu être générée
             # This was potentially mis-indented or logic error
             all_sequences_exercises.append(daily_sequences_ex)
     else:

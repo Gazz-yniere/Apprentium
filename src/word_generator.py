@@ -71,7 +71,7 @@ def add_math_problems_to_doc(container, problems_for_day, indent_val=None):
     p_heading.paragraph_format.space_after = Pt(3)
 
     for idx, problem_data in enumerate(problems_for_day):
-        problem_text = f"{idx + 1}. {problem_data['content']}"
+        # problem_text = f"{idx + 1}. {problem_data['content']}" # F841 local variable 'problem_text' is assigned to but never used
         p_problem = container.add_paragraph()
         # Numéro en gras
         run_number = p_problem.add_run(f"{idx + 1}. ")
@@ -704,7 +704,7 @@ def generate_workbook_docx(days, operations, counts, max_digits, conjugations, p
                     pass
 
             completer_subtitle_shown = False
-            relier_subtitle_shown = False  # Non utilisé, mais conservé pour la logique
+            # relier_subtitle_shown = False  # F841 local variable 'relier_subtitle_shown' is assigned to but never used
 
             for ex in english_exercises[day-1]:
                 if ex['type'] in ('simple', 'complexe'):
