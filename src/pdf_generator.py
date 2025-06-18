@@ -900,10 +900,9 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                     pdf.setFont(cfg_gram["content_font_name"],
                                 cfg_gram["content_font_size"])
 
-                pdf.setFont(cfg_gram["title_font_name"],
-                            cfg_gram["title_font_size"])
-                pdf.drawString(exercise_content_x_start, y_position, f"Transformation demandée :")
-                pdf.setFont(cfg_gram["content_font_name"], cfg_gram["content_font_size"]) 
+                pdf.setFont(cfg_gram["title_font_name"], cfg_gram["title_font_size"])
+                pdf.drawString(exercise_content_x_start, y_position, "Transformation demandée :")
+                pdf.setFont(cfg_gram["content_font_name"], cfg_gram["content_font_size"])
                 pdf.drawString(exercise_content_x_start + 130,
                                y_position, transformation)
                 y_position -= cfg_gram["line_spacing_per_line"]
