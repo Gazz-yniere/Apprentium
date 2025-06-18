@@ -3,6 +3,8 @@
 /src/build/
 /src/output/
 /output/
+/tests/
+/font/
 /src/old/
 /src/config.json
 /dist/

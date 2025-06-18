@@ -570,7 +570,12 @@ def generate_workbook_docx(days, operations, counts, max_digits, conjugations, p
             # Intégration de "Suites Logiques" dans la section Mesures (Word)
             if current_day_logical_sequences:
                 para_seq_title = add_paragraph(section_cell, indent=True)
-                run_seq_title = para_seq_title.add_run("Complète les suites logiques :")
+                # Déterminer le titre en fonction du nombre d'exercices
+                if len(current_day_logical_sequences) == 1:
+                    title_text_seq = "Complète la suite logique :"
+                else:
+                    title_text_seq = "Complète les suites logiques :"
+                run_seq_title = para_seq_title.add_run(title_text_seq)
                 run_seq_title.bold = True
                 for ex_seq in current_day_logical_sequences:
                     sequence_str = " ".join(map(str, ex_seq['sequence_displayed']))

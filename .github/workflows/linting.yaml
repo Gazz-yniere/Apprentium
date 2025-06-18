@@ -1,0 +1,37 @@
+name: Code Linting
+
+on: # Les événements qui déclenchent ce workflow
+  push:
+    branches:
+      - main # Exécute le linting quand tu pushes sur la branche 'main' (ou 'master')
+      - dev  # Ou toute autre branche de développement
+  pull_request:
+    branches:
+      - main
+      - dev
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest # Le système d'exploitation sur lequel l'action va s'exécuter
+    steps:
+    - uses: actions/checkout@v4 # Étape pour récupérer ton code du dépôt
+      name: Checkout code
+
+    - name: Set up Python # Étape pour configurer l'environnement Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x' # Utilise la dernière version de Python 3 disponible (ex: 3.10, 3.11...)
+
+    - name: Install linters # Étape pour installer les outils de linting
+      run: |
+        pip install flake8 black # Tu peux ajouter d'autres linters ici si tu veux, comme pylint
+
+    - name: Run Flake8 # Étape pour exécuter Flake8
+      run: |
+        flake8 . --max-line-length=120 # Adapte --max-line-length si tu as une autre préférence
+        # '.' signifie analyser tous les fichiers Python dans le répertoire courant et ses sous-répertoires
+
+    - name: Check code format with Black # Étape pour vérifier le formatage avec Black
+      run: |
+        black --check . # '--check' permet de vérifier si le code est formaté correctement sans le modifier
+        # Si Black trouve du code non formaté, cette étape échouera, ce qui est l'objectif !

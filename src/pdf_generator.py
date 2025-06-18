@@ -621,7 +621,12 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
             # Intégration de "Suites Logiques" dans la section Mesures
             if current_day_logical_sequences:
                 pdf.setFont(cfg_mes_enc["title_font_name"], cfg_mes_enc["title_font_size"])
-                pdf.drawString(exercise_content_x_start, y_position, "Complète les suites logiques :")
+                # Déterminer le titre en fonction du nombre d'exercices
+                if len(current_day_logical_sequences) == 1:
+                    title_text_seq = "Complète la suite logique :"
+                else:
+                    title_text_seq = "Complète les suites logiques :"
+                pdf.drawString(exercise_content_x_start, y_position, title_text_seq)
                 y_position -= cfg_mes_enc["line_spacing_after_title"]
                 pdf.setFont(cfg_mes_enc["content_font_name"], cfg_mes_enc["content_font_size"])
                 for ex_seq in current_day_logical_sequences:
