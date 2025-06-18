@@ -74,10 +74,13 @@ def generate_conversion_exercises(types_selectionnes, n, senses, current_level):
     for _ in range(n):
         chosen_conv = random.choice(possible_conversions)
 
-        val_from = random.randint(chosen_conv["range"][0], chosen_conv["range"][1])
-        exercices.append(f"{val_from} {chosen_conv['from_unit']} = ......... {chosen_conv['to_unit']}")
+        val_from = random.randint(
+            chosen_conv["range"][0], chosen_conv["range"][1])
+        exercices.append(
+            f"{val_from} {chosen_conv['from_unit']} = ......... {chosen_conv['to_unit']}")
 
     return exercices
+
 
 def generate_sort_exercises(params, days):
     """ Génère des exercices de rangement de nombres pour plusieurs jours. """
@@ -97,7 +100,8 @@ def generate_sort_exercises(params, days):
             daily_sort_ex = []
             actual_sort_type_for_day = 'croissant'
             if needs_daily_random_sort:
-                actual_sort_type_for_day = random.choice(['croissant', 'decroissant'])
+                actual_sort_type_for_day = random.choice(
+                    ['croissant', 'decroissant'])
             elif sort_type_decroissant_param:
                 actual_sort_type_for_day = 'decroissant'
 
@@ -111,7 +115,8 @@ def generate_sort_exercises(params, days):
                 else:
                     max_val = 0
 
-                numbers = [random.randint(min_val, max_val) for _ in range(sort_n_numbers)]
+                numbers = [random.randint(min_val, max_val)
+                           for _ in range(sort_n_numbers)]
                 daily_sort_ex.append({
                     'numbers': numbers,
                     'type': actual_sort_type_for_day
@@ -122,6 +127,7 @@ def generate_sort_exercises(params, days):
             all_sort_exercises.append([])
 
     return all_sort_exercises
+
 
 def generate_daily_encadrement_exercises(count, digits, types):
     """ Génère des exercices d'encadrement pour un jour. """
@@ -157,12 +163,14 @@ def generate_compare_numbers_exercises(params, days):
         if compare_digits == 1:
             max_val = 9
         elif compare_digits > 1:
-            min_val = 10**(compare_digits - 1) if compare_digits > 1 else 0  # Pour éviter 0 si digits=1
+            # Pour éviter 0 si digits=1
+            min_val = 10**(compare_digits - 1) if compare_digits > 1 else 0
             max_val = 10**compare_digits - 1
         else:  # digits == 0 or invalid
             max_val = 9  # fallback
             min_val = 0
-        if min_val > max_val: min_val = max_val  # Sanity check
+        if min_val > max_val:
+            min_val = max_val  # Sanity check
 
         for _ in range(days):
             daily_compare_ex = []
@@ -181,8 +189,10 @@ def generate_compare_numbers_exercises(params, days):
     return all_compare_exercises
 
 
-MIN_VALID_SEQUENCE_LENGTH = 3  # Une suite doit avoir au moins 3 éléments pour être valide.
-MAX_GENERATION_ATTEMPTS_PER_EXERCISE = 10  # Max tentatives pour générer une suite valide par slot d'exercice.
+# Une suite doit avoir au moins 3 éléments pour être valide.
+MIN_VALID_SEQUENCE_LENGTH = 3
+# Max tentatives pour générer une suite valide par slot d'exercice.
+MAX_GENERATION_ATTEMPTS_PER_EXERCISE = 10
 
 
 def generate_logical_sequences_exercises(params, days, current_level):
@@ -199,10 +209,12 @@ def generate_logical_sequences_exercises(params, days, current_level):
     if sequences_count > 0 and selected_types:
         for _ in range(days):
             daily_sequences_ex = []
-            for _ in range(sequences_count):  # Pour chaque slot d'exercice demandé pour la journée
+            # Pour chaque slot d'exercice demandé pour la journée
+            for _ in range(sequences_count):
                 generated_valid_sequence_for_slot = False
                 for attempt in range(MAX_GENERATION_ATTEMPTS_PER_EXERCISE):
-                    if not selected_types: break  # Aucun type sélectionné
+                    if not selected_types:
+                        break  # Aucun type sélectionné
                     chosen_type = random.choice(selected_types)
 
                     step, start_value = 0, 0
@@ -211,7 +223,8 @@ def generate_logical_sequences_exercises(params, days, current_level):
                         step = random.randint(1, 9)
                         start_value = random.randint(1, 50)
                         if chosen_type == 'arithmetic_minus' and sequence_length > 4:
-                            start_value = random.randint(step * (sequence_length // 2) + 5, 60 + step * (sequence_length // 2))
+                            start_value = random.randint(
+                                step * (sequence_length // 2) + 5, 60 + step * (sequence_length // 2))
                     elif chosen_type == 'arithmetic_multiply':
                         step = random.randint(2, 10)
                         start_value = random.randint(1, 100)
@@ -219,7 +232,8 @@ def generate_logical_sequences_exercises(params, days, current_level):
                         step = random.randint(2, 5)  # Diviseur
                         # Générer la suite "à l'envers" en partant d'un petit nombre
                         # et en multipliant, puis inverser la suite.
-                        last_term = random.randint(1, 10)  # Le plus petit nombre de la suite
+                        # Le plus petit nombre de la suite
+                        last_term = random.randint(1, 10)
 
                         temp_sequence_for_division = [last_term]
                         current_val_for_multi = last_term
@@ -238,38 +252,47 @@ def generate_logical_sequences_exercises(params, days, current_level):
                         if not possible_to_generate or len(temp_sequence_for_division) != sequence_length:
                             continue  # Impossible de générer, essayer une autre tentative
 
-                        temp_sequence_for_division.reverse()  # Inverser pour obtenir la suite de division
+                        # Inverser pour obtenir la suite de division
+                        temp_sequence_for_division.reverse()
                         sequence = temp_sequence_for_division
-                        start_value = sequence[0]  # Le premier terme de la suite de division
+                        # Le premier terme de la suite de division
+                        start_value = sequence[0]
                         # current_val sera initialisé à start_value plus bas
 
                     if chosen_type != 'arithmetic_divide':  # Pour les autres types, initialiser comme avant
                         sequence = [start_value]
                     current_val = start_value
 
-                    for i in range(1, sequence_length):  # Essayer de construire jusqu'à la longueur désirée
+                    # Essayer de construire jusqu'à la longueur désirée
+                    for i in range(1, sequence_length):
                         prev_val = current_val
                         if chosen_type == 'arithmetic_plus':
                             current_val += step
                         elif chosen_type == 'arithmetic_minus':
-                            if current_val == 0: break
+                            if current_val == 0:
+                                break
                             current_val -= step
-                            if current_val < 0: current_val = 0
+                            if current_val < 0:
+                                current_val = 0
                         elif chosen_type == 'arithmetic_multiply':
                             # Suppression de la limite de 10000
-                            if prev_val > (10**12) / step:  # Vérifier avant multiplication
+                            # Vérifier avant multiplication
+                            if prev_val > (10**12) / step:
                                 break
                             current_val *= step
-                            if current_val > 10**12: break  # Limite très haute pour éviter des nombres gigantesques
+                            if current_val > 10**12:
+                                break  # Limite très haute pour éviter des nombres gigantesques
                         elif chosen_type == 'arithmetic_divide':
-                            if step == 0: break
+                            if step == 0:
+                                break
                             if current_val < step or current_val % step != 0:
                                 break
                             current_val //= step
                             if current_val == 0 and prev_val > 0:  # Éviter de finir sur 0
-                                if len(sequence) > 1: sequence.pop()  # Retirer le 0
+                                if len(sequence) > 1:
+                                    sequence.pop()  # Retirer le 0
                                 break
-                            if current_val < 1 and prev_val > 0 :  # Si on obtient une fraction < 1
+                            if current_val < 1 and prev_val > 0:  # Si on obtient une fraction < 1
                                 break
 
                         # Pour la division, la séquence est déjà construite.
@@ -279,7 +302,8 @@ def generate_logical_sequences_exercises(params, days, current_level):
 
                      # La suite doit avoir exactement la longueur demandée
                     if len(sequence) == sequence_length:
-                        blank_pos = random.randint(1, len(sequence) - 2)  # Blank pas aux extrémités
+                        # Blank pas aux extrémités
+                        blank_pos = random.randint(1, len(sequence) - 2)
                         daily_sequences_ex.append({
                             'type': chosen_type,
                             'sequence_displayed': [val if idx != blank_pos else "____" for idx, val in enumerate(sequence)],

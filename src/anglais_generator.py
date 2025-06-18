@@ -1,11 +1,10 @@
 import random
 import json
-import os
 
 
 def get_resource_path(filename):
     import sys
-    import os
+    import os  # os est utilisé ici
     if hasattr(sys, '_MEIPASS'):
         return os.path.join(sys._MEIPASS, "json", filename)
     return os.path.join(os.path.dirname(__file__), "json", filename)
@@ -26,7 +25,8 @@ except Exception:
 # Chargement des mots à relier
 try:
     with open(get_resource_path('mots_a_relier.json'), encoding='utf-8') as f:
-        MOTS_A_RELIER = json.load(f)  # Sera maintenant un dictionnaire de thèmes
+        # Sera maintenant un dictionnaire de thèmes
+        MOTS_A_RELIER = json.load(f)
 except Exception:
     MOTS_A_RELIER = {}  # Par défaut un dictionnaire vide
 
@@ -96,9 +96,11 @@ def generate_english_full_exercises(types, n_complete, n_relier, n_mots_reliés,
             for _ in range(n_relier):
                 if not candidate_words_for_relier:  # Au cas où la liste deviendrait vide
                     break
-                num_to_sample = min(n_mots_reliés, len(candidate_words_for_relier))
+                num_to_sample = min(n_mots_reliés, len(
+                    candidate_words_for_relier))
                 if num_to_sample > 0:
-                    mots = random.sample(candidate_words_for_relier, num_to_sample)
+                    mots = random.sample(
+                        candidate_words_for_relier, num_to_sample)
                     exercises.append({'type': 'relier', 'content': mots})
                 # Si num_to_sample est 0 (parce que n_mots_reliés est 0 ou candidate_words_for_relier est vide),
                 # on ne fait rien pour ce jeu.

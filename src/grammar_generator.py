@@ -1,11 +1,10 @@
 import random
 import json
-import os
 
 
 def get_resource_path(filename):
     import sys
-    import os
+    import os  # os est utilisé ici
     if hasattr(sys, '_MEIPASS'):
         return os.path.join(sys._MEIPASS, "json", filename)
     return os.path.join(os.path.dirname(__file__), "json", filename)
