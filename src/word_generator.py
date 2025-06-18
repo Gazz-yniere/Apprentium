@@ -260,6 +260,8 @@ def generate_workbook_docx(days, operations, counts, max_digits, conjugations, p
                            orthographe_exercises=None, enumerate_exercises=None, sort_exercises=None,
                            geo_exercises=None, english_exercises=None, encadrement_exercises_list=None, # Modifié
                            story_math_problems_by_day=None, # Ajout du paramètre
+                           compare_numbers_exercises_list=None, # Nouveau
+                           logical_sequences_exercises_list=None, # Nouveau
                            header_text=None, show_name=False, show_note=False, filename="workbook.docx", output_dir_override=None):
     if geo_exercises is None:
         geo_exercises = []
@@ -385,6 +387,7 @@ def generate_workbook_docx(days, operations, counts, max_digits, conjugations, p
                             calc_str = problem.strip().replace(' =', '')
                             add_paragraph(section_cell, f"{calc_str} = ________________________________", style='ListContinue', indent=True)
             
+            
             # Ajout des "Petits Problèmes" à la fin de la section Calculs
             if current_day_story_problems:
                 add_math_problems_to_doc(section_cell, current_day_story_problems, indent_val=CONTENT_INDENT)
@@ -489,7 +492,11 @@ def generate_workbook_docx(days, operations, counts, max_digits, conjugations, p
 
         current_day_encadrement_lines = encadrement_exercises_list[day-1] if len(encadrement_exercises_list) >= day else None
         if current_day_encadrement_lines: has_mesures_content_for_day = True
-
+        current_day_compare_numbers = compare_numbers_exercises_list[day-1] if compare_numbers_exercises_list and len(compare_numbers_exercises_list) >= day else None
+        if current_day_compare_numbers: has_mesures_content_for_day = True
+        current_day_logical_sequences = logical_sequences_exercises_list[day-1] if logical_sequences_exercises_list and len(logical_sequences_exercises_list) >= day else None
+        if current_day_logical_sequences: has_mesures_content_for_day = True
+        
         if has_mesures_content_for_day:
             section_key = "Mesures"
             section_frame_table = doc.add_table(rows=1, cols=1)
@@ -551,6 +558,29 @@ def generate_workbook_docx(days, operations, counts, max_digits, conjugations, p
                     label = f"à l'{t_enc}" if t_enc == "unité" else f"à la {t_enc}" if t_enc in ["dizaine", "centaine"] else f"au {t_enc}"
                     add_paragraph(section_cell, f"{n_enc} {label} : ______  {n_enc}  ______", indent=True)
             add_paragraph(doc, "") # Espace entre les cadres de section
+            
+            # Intégration de "Comparer des nombres" dans la section Mesures (Word)
+            if current_day_compare_numbers:
+                para_compare_title = add_paragraph(section_cell, indent=True)
+                run_compare_title = para_compare_title.add_run("Comparer les nombres (<, >, =) :")
+                run_compare_title.bold = True
+                for ex_compare in current_day_compare_numbers:
+                    add_paragraph(section_cell, f"{ex_compare['num1']} ______ {ex_compare['num2']}", indent=True)
+
+            # Intégration de "Suites Logiques" dans la section Mesures (Word)
+            if current_day_logical_sequences:
+                para_seq_title = add_paragraph(section_cell, indent=True)
+                run_seq_title = para_seq_title.add_run("Complète les suites logiques :")
+                run_seq_title.bold = True
+                for ex_seq in current_day_logical_sequences:
+                    sequence_str = " ".join(map(str, ex_seq['sequence_displayed']))
+                    # type_desc = ""
+                    # if ex_seq['type'] == 'arithmetic_plus':
+                    #     type_desc = f" (+{ex_seq['step']})"
+                    # elif ex_seq['type'] == 'arithmetic_minus':
+                    #     type_desc = f" (-{ex_seq['step']})"
+                    add_paragraph(section_cell, f"{sequence_str}", indent=True)
+            # L'espace après la section Mesures est géré par add_paragraph(doc, "") plus bas si d'autres sections suivent
 
         if english_exercises and len(english_exercises) >= day and english_exercises[day-1]: 
             section_key = "Anglais"
@@ -612,9 +642,9 @@ def generate_workbook_docx(days, operations, counts, max_digits, conjugations, p
                         tblLayout_obj.type = 'fixed' # Sets <w:tblLayout w:type="fixed"/>
 
                         col_indent_width = CONTENT_INDENT # Largeur de la nouvelle colonne d'indentation
-                        col_word_width = Inches(1.1) 
-                        col_bullet_width = Inches(0.15) 
-                        col_space_width = Inches(0.5)  
+                        col_word_width = Inches(2) # Largeur doublée pour les colonnes de mots
+                        col_bullet_width = Inches(0.1) 
+                        col_space_width = Inches(0.2)  
                         
                         target_table_width_inches = col_indent_width.inches + (col_word_width.inches * 2) + (col_bullet_width.inches * 2) + col_space_width.inches
                         target_table_width_dxa = int(target_table_width_inches * 1440) 

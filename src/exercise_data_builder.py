@@ -1,5 +1,5 @@
 import random
-from mesures_generator import generate_sort_exercises, generate_daily_encadrement_exercises # Ajout des imports
+from mesures_generator import generate_sort_exercises, generate_daily_encadrement_exercises, generate_compare_numbers_exercises, generate_logical_sequences_exercises
 
 class InvalidFieldError(Exception):
     def __init__(self, field_name, value):
@@ -20,10 +20,12 @@ class ExerciseDataBuilder:
             if params.get('addition_count', 0) > 0 and params.get('addition_digits', 0) > 0:
                 count = params['addition_count']
                 digits = params['addition_digits']
+                num_operands = params.get('addition_num_operands', 2)
                 decimals = params.get('addition_decimals', 0)
                 params_list.append({
                     'operation': 'addition',
                     'count': count,
+                    'num_operands': num_operands,
                     'digits': digits,
                     'with_decimals': decimals > 0,
                     'decimals': decimals
@@ -33,11 +35,13 @@ class ExerciseDataBuilder:
             if params.get('subtraction_count', 0) > 0 and params.get('subtraction_digits', 0) > 0:
                 count = params['subtraction_count']
                 digits = params['subtraction_digits']
+                num_operands = params.get('subtraction_num_operands', 2)
                 decimals = params.get('subtraction_decimals', 0)
                 allow_negative = params.get('subtraction_negative', False)
                 params_list.append({
                     'operation': 'soustraction',
                     'count': count,
+                    'num_operands': num_operands,
                     'digits': digits,
                     'with_decimals': decimals > 0,
                     'decimals': decimals,
@@ -48,10 +52,12 @@ class ExerciseDataBuilder:
             if params.get('multiplication_count', 0) > 0 and params.get('multiplication_digits', 0) > 0:
                 count = params['multiplication_count']
                 digits = params['multiplication_digits']
+                num_operands = params.get('multiplication_num_operands', 2)
                 decimals = params.get('multiplication_decimals', 0)
                 params_list.append({
                     'operation': 'multiplication',
                     'count': count,
+                    'num_operands': num_operands,
                     'digits': digits,
                     'with_decimals': decimals > 0,
                     'decimals': decimals
@@ -61,12 +67,14 @@ class ExerciseDataBuilder:
             if params.get('division_count', 0) > 0 and params.get('division_digits', 0) > 0:
                 count = params['division_count']
                 digits = params['division_digits']
+                # num_operands pour division reste à 2 par défaut dans le générateur
                 division_reste = params.get('division_reste', False)
                 division_decimals = params.get('division_decimals', 0)
                 division_quotient_decimal = division_decimals > 0
                 params_list.append({
                     'operation': 'division',
                     'count': count,
+                    'num_operands': 2, # Forcé à 2 pour la division pour l'instant
                     'digits': digits,
                     'division_reste': division_reste,
                     'division_quotient_decimal': division_quotient_decimal,
@@ -246,6 +254,21 @@ class ExerciseDataBuilder:
             # Ranger les nombres (utilise la nouvelle fonction de mesures_generator)
             all_sort_exercises = generate_sort_exercises(params, jours)
 
+            # Comparer des nombres
+            compare_numbers_build_params = {
+                'count': params.get('compare_numbers_count', 0),
+                'digits': params.get('compare_numbers_digits', 0)
+            }
+            all_compare_numbers_exercises = generate_compare_numbers_exercises(compare_numbers_build_params, jours)
+
+            # Suites Logiques
+            logical_sequences_build_params = params.get('logical_sequences_params', {'count': 0, 'types': [], 'step': 1})
+            # Le 'step' n'est plus dans logical_sequences_build_params depuis l'UI, il sera géré dans le générateur.
+            # On passe les paramètres de direction.
+            all_logical_sequences_exercises = generate_logical_sequences_exercises(
+                logical_sequences_build_params, # Contient count, types
+                jours, 
+                params.get('current_level_for_problems')) # Utiliser le niveau actuel
             # Encadrement de nombre
             encadrement_build_params = params.get('encadrement_params', {'count': 0, 'digits': 0, 'types': []})
             all_encadrement_exercises_list = []
@@ -292,7 +315,9 @@ class ExerciseDataBuilder:
                 'english_exercises': english_exercises_data, # Utiliser les données générées ici
                 'orthographe_exercises': orthographe_exercises,
                 'enumerate_exercises': all_enumerate_exercises,
-                'sort_exercises': all_sort_exercises, 
+                'sort_exercises': all_sort_exercises,
+                'compare_numbers_exercises_list': all_compare_numbers_exercises, # Nouveau
+                'logical_sequences_exercises_list': all_logical_sequences_exercises, # Nouveau
                 'encadrement_exercises_list': all_encadrement_exercises_list, # Modifié pour la nouvelle structure
                 'math_problems': all_math_problems
             }

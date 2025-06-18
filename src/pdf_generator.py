@@ -32,7 +32,7 @@ PDF_STYLE_CONFIG = {
     },
     "section_frame": { # Cadre général d'une section d'exercices
         "radius": 15,
-        "stroke_width": 1,
+        "stroke_width": 2,
         "default_stroke_color_rgb": (0.7, 0.7, 0.7),
         "content_bottom_padding": -5,
         "y_offset_after_box": 15,
@@ -320,11 +320,13 @@ def draw_section_image_in_frame(pdf, section_data, current_frame_top_y, page_wid
 def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, params_list, grammar_exercises, orthographe_exercises, enumerate_exercises, sort_exercises, 
                           story_math_problems_by_day=None, 
                           geo_exercises=None, english_exercises=None, 
-                          encadrement_exercises_list=None, # Modifié: attend une liste d'exercices par jour
-                          header_text=None, filename="workbook.pdf", division_entier=False, show_name=False, show_note=False, output_dir_override=None):
+                          encadrement_exercises_list=None, 
+                          header_text=None, filename="workbook.pdf", division_entier=False, show_name=False, show_note=False, output_dir_override=None,
+                          compare_numbers_exercises_list=None, # Nouveau
+                          logical_sequences_exercises_list=None): # Nouveau
     if geo_exercises is None:
         geo_exercises = []
-    if english_exercises is None: english_exercises = []
+    if english_exercises is None: english_exercises = [] # Initialisation
     if encadrement_exercises_list is None: encadrement_exercises_list = [] # Liste de listes (une par jour)
     if story_math_problems_by_day is None: story_math_problems_by_day = []
 
@@ -487,7 +489,11 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
         
         has_mesures_content_for_day = False
         if current_day_encadrement_lines: has_mesures_content_for_day = True
-
+        current_day_compare_numbers = compare_numbers_exercises_list[day-1] if compare_numbers_exercises_list and len(compare_numbers_exercises_list) >= day else None
+        if current_day_compare_numbers: has_mesures_content_for_day = True
+        current_day_logical_sequences = logical_sequences_exercises_list[day-1] if logical_sequences_exercises_list and len(logical_sequences_exercises_list) >= day else None
+        if current_day_logical_sequences: has_mesures_content_for_day = True
+        
         if geo_exercises and len(geo_exercises) >= day and geo_exercises[day-1]: has_mesures_content_for_day = True
         if sort_exercises and len(sort_exercises) >= day and sort_exercises[day-1]: has_mesures_content_for_day = True
 
@@ -507,6 +513,10 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                  first_block_content_height = cfg_mes_sort["line_spacing_after_title"] + cfg_mes_sort["line_spacing_per_item"] + cfg_mes_sort["spacing_after_section"]
             elif current_day_encadrement_lines:
                  first_block_content_height = 16 + 22 + 8 # Encadrement title + first item + spacing
+            elif current_day_compare_numbers: # Estimation pour comparer des nombres
+                 first_block_content_height = 16 + 22 + 8 # Titre + premier item + espacement
+            elif current_day_logical_sequences: # Estimation pour suites logiques
+                 first_block_content_height = 16 + 22 + 8 # Titre + premier item + espacement
 
             required_height_for_first_block = HEADER_HEIGHT_ESTIMATE + first_block_content_height
 
@@ -581,6 +591,48 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                     label = f"à l'{t}" if t == "unité" else f"à la {t}" if t in ["dizaine", "centaine"] else f"au {t}"
                     pdf.drawString(exercise_content_x_start, y_position, f"{n} {label} : ______  {n}  ______")
                     y_position -= 22
+                    if y_position < margin:
+                        draw_rounded_box_with_color(pdf, margin, margin, width - 2 * margin, current_frame_segment_top_y - margin, stroke_rgb_color=section_color_rgb)
+                        pdf.showPage()
+                        y_position = height - margin
+                        current_frame_segment_top_y = y_position
+                        draw_section_image_in_frame(pdf, section_data, current_frame_segment_top_y, width, margin)
+                        pdf.setFont(cfg_mes_enc["content_font_name"], cfg_mes_enc["content_font_size"])
+                y_position -= cfg_mes_enc["spacing_after_section"]
+            
+            # Intégration de "Comparer des nombres" dans la section Mesures
+            if current_day_compare_numbers:
+                pdf.setFont(cfg_mes_enc["title_font_name"], cfg_mes_enc["title_font_size"]) # Utilise le style d'encadrement pour le titre
+                pdf.drawString(exercise_content_x_start, y_position, "Comparer les nombres (<, >, =) :")
+                y_position -= cfg_mes_enc["line_spacing_after_title"]
+                pdf.setFont(cfg_mes_enc["content_font_name"], cfg_mes_enc["content_font_size"])
+                for ex_compare in current_day_compare_numbers:
+                    pdf.drawString(exercise_content_x_start, y_position, f"{ex_compare['num1']} ______ {ex_compare['num2']}")
+                    y_position -= cfg_mes_enc["line_spacing_per_item"] # Utilise l'espacement d'encadrement
+                    if y_position < margin:
+                        draw_rounded_box_with_color(pdf, margin, margin, width - 2 * margin, current_frame_segment_top_y - margin, stroke_rgb_color=section_color_rgb)
+                        pdf.showPage()
+                        y_position = height - margin
+                        current_frame_segment_top_y = y_position
+                        draw_section_image_in_frame(pdf, section_data, current_frame_segment_top_y, width, margin)
+                        pdf.setFont(cfg_mes_enc["content_font_name"], cfg_mes_enc["content_font_size"])
+                y_position -= cfg_mes_enc["spacing_after_section"]
+
+            # Intégration de "Suites Logiques" dans la section Mesures
+            if current_day_logical_sequences:
+                pdf.setFont(cfg_mes_enc["title_font_name"], cfg_mes_enc["title_font_size"])
+                pdf.drawString(exercise_content_x_start, y_position, "Complète les suites logiques :")
+                y_position -= cfg_mes_enc["line_spacing_after_title"]
+                pdf.setFont(cfg_mes_enc["content_font_name"], cfg_mes_enc["content_font_size"])
+                for ex_seq in current_day_logical_sequences:
+                    sequence_str = " ".join(map(str, ex_seq['sequence_displayed']))
+                    # type_desc = ""
+                    # if ex_seq['type'] == 'arithmetic_plus':
+                    #     type_desc = f" (+{ex_seq['step']})"
+                    # elif ex_seq['type'] == 'arithmetic_minus':
+                    #     type_desc = f" (-{ex_seq['step']})"
+                    pdf.drawString(exercise_content_x_start, y_position, f"{sequence_str}")
+                    y_position -= cfg_mes_enc["line_spacing_per_item"]
                     if y_position < margin:
                         draw_rounded_box_with_color(pdf, margin, margin, width - 2 * margin, current_frame_segment_top_y - margin, stroke_rgb_color=section_color_rgb)
                         pdf.showPage()

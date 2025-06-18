@@ -56,12 +56,19 @@ def generate_story_math_problems(selected_problem_types, num_problems, target_le
     if not PROBLEMS_DATA or not selected_problem_types or num_problems == 0:
         return generated_exercises
 
+    # print(f"DEBUG calculs_generator: target_level = {target_level}, selected_problem_types = {selected_problem_types}")
+
     candidate_problem_templates = []
     for problem_type_key in selected_problem_types:
         if problem_type_key in PROBLEMS_DATA:
             for template in PROBLEMS_DATA[problem_type_key]:
-                if target_level in template.get("levels", []):
+                problem_levels = template.get("levels", [])
+                # If target_level is None (no level selected), or no specific levels are defined for the problem,
+                # or the target_level matches one of the problem's levels.
+                if target_level is None or not problem_levels or target_level in problem_levels:
                     candidate_problem_templates.append(template)
+    
+    # print(f"DEBUG calculs_generator: Found {len(candidate_problem_templates)} candidate problem templates.")
     
     if not candidate_problem_templates:
         return generated_exercises
@@ -111,6 +118,7 @@ def generate_arithmetic_problems(operation, params):
     """ Génère des problèmes arithmétiques simples (addition, soustraction, etc.). """
     problems = []
     count = params.get('count', 5)
+    num_operands = params.get('num_operands', 2)
     digits = params.get('digits', 2)
     decimals = params.get('decimals', 0)
     with_decimals = decimals > 0
@@ -119,40 +127,99 @@ def generate_arithmetic_problems(operation, params):
     division_quotient_decimal = params.get('division_quotient_decimal', False) # This was from pdf_generator, but seems it should be based on division_decimals
     division_decimals = params.get('division_decimals', 0)
 
+    if num_operands < 2: # S'assurer qu'il y a au moins 2 opérandes
+        num_operands = 2
+
     for _ in range(count):
+        operands = []
+        # Génération standard des opérandes (non nuls)
+        for i_op_gen in range(num_operands):
+            min_op_val = 0.1 * (10**(-decimals)) if with_decimals else 1 # Eviter 0
+
+            if with_decimals:
+                # Max value: 10^digits - epsilon, or 9.99... if digits=0
+                max_val_raw = (10**digits - (0.1**(decimals+2))) if digits > 0 else (10 - (0.1**(decimals+2)))
+                op_val_raw = random.uniform(min_op_val, max_val_raw)
+                op = round(op_val_raw, decimals)
+                if op == 0 : op = min_op_val # S'assurer qu'il n'est pas 0.0 après arrondi
+            else:
+                # Max value: 10^digits - 1, or 9 if digits=0
+                max_val_int = (10**digits - 1) if digits > 0 else 9
+                op = random.randint(min_op_val, max_val_int if max_val_int >= min_op_val else min_op_val)
+                if op == 0 : op = 1 # S'assurer qu'il n'est pas 0
+            operands.append(op)
+
         if operation == "addition":
-            if with_decimals:
-                a = round(random.uniform(0, 10**digits-1), decimals)
-                b = round(random.uniform(0, 10**digits-1), decimals)
-            else:
-                a = random.randint(0, 10**digits-1)
-                b = random.randint(0, 10**digits-1)
-            problems.append(f"{a} + {b} = ")
+            # Pour l'addition, tous les opérandes sont ajoutés
+            problem_str = " + ".join(map(str, operands))
+            problems.append(f"{problem_str} = ")
+
         elif operation == "soustraction":
-            if with_decimals:
-                a = round(random.uniform(0, 10**digits-1), decimals)
-                b = round(random.uniform(0, 10**digits-1), decimals)
+            if allow_negative:
+                # La génération standard des opérandes est utilisée si les négatifs sont autorisés
+                # (operands a déjà été rempli au début de la boucle)
+                problem_str = " - ".join(map(str, operands))
             else:
-                a = random.randint(0, 10**digits-1)
-                b = random.randint(0, 10**digits-1)
-            if not allow_negative and a < b:
-                a, b = b, a
-            problems.append(f"{a} - {b} = ")
+                # Assurer un résultat positif ou nul
+                subtractors = []
+                # Générer les N-1 opérandes à soustraire
+                for _ in range(num_operands - 1):
+                    min_op_val = 0.1 * (10**(-decimals)) if with_decimals else 1
+                    if with_decimals:
+                        max_val_raw = (10**digits - (0.1**(decimals+2))) if digits > 0 else (10 - (0.1**(decimals+2)))
+                        op_val_raw = random.uniform(min_op_val, max_val_raw)
+                        op = round(op_val_raw, decimals)
+                        if op == 0 : op = min_op_val
+                    else:
+                        max_val_int = (10**digits - 1) if digits > 0 else 9
+                        op = random.randint(min_op_val, max_val_int if max_val_int >= min_op_val else min_op_val)
+                        if op == 0 : op = 1
+                    subtractors.append(op)
+
+                sum_of_subtractors = sum(subtractors)
+                
+                # Générer le premier opérande (minuend)
+                minuend_min_val = sum_of_subtractors 
+                
+                # Définir une plage pour la partie "résultat" de l'opération
+                if with_decimals:
+                    result_range_max = (10**digits - (0.1**(decimals+2))) if digits > 0 else (10 - (0.1**(decimals+2)))
+                    minuend_val = round(random.uniform(minuend_min_val, minuend_min_val + result_range_max), decimals)
+                    if minuend_val < minuend_min_val: # Assurer après arrondi
+                        minuend_val = minuend_min_val
+                else:
+                    result_range_max = (10**digits - 1) if digits > 0 else 9
+                    # Assurer que result_range_max est au moins 0 pour éviter randint error si digits=0 et sum_of_subtractors est grand
+                    if result_range_max < 0: result_range_max = 0 
+                    minuend_val = random.randint(int(minuend_min_val), int(minuend_min_val + result_range_max))
+
+                final_operands = [minuend_val] + subtractors
+                problem_str = " - ".join(map(str, final_operands))
+            problems.append(f"{problem_str} = ")
+
         elif operation == "multiplication":
-            if with_decimals:
-                a = round(random.uniform(0, 10**digits-1), decimals)
-                b = round(random.uniform(0, 10**digits-1), decimals)
-            else:
-                a = random.randint(0, 10**digits-1)
-                b = random.randint(0, 10**digits-1)
-            problems.append(f"{a} × {b} = ")
+            # Pour la multiplication, tous les opérandes sont multipliés
+            problem_str = " × ".join(map(str, operands))
+            problems.append(f"{problem_str} = ")
+
         elif operation == "division":
+            # La division reste à 2 opérandes (dividende et diviseur) pour l'instant
+            # car la division multiple (a / b / c) est moins courante et plus ambiguë.
+            # On utilise les deux premiers opérandes générés.
+            if len(operands) < 2: # S'assurer qu'on a au moins deux opérandes pour la division
+                if with_decimals:
+                    operands.append(round(random.uniform(0, 10**digits-1), decimals))
+                else:
+                    operands.append(random.randint(0, 10**digits-1))
+
+            dividend_base = operands[0] # Sera ajusté
+            
             min_divisor = 1 # Divisor can be 1
             # Max divisor should be based on digits, ensuring it's not 0 if digits is 0 or 1
             max_divisor = (10**digits -1) if digits > 0 else 9 # if digits is 0, max_divisor is 9 (single digit)
             if max_divisor == 0 : max_divisor = 1 # Ensure max_divisor is at least 1
             
-            divisor = random.randint(min_divisor, max_divisor)
+            divisor = operands[1] if operands[1] >= min_divisor and operands[1] <= max_divisor else random.randint(min_divisor, max_divisor)
             if divisor == 0: divisor = 1 # Avoid division by zero explicitly
 
             if division_quotient_decimal and division_decimals > 0: # Corrected from pdf_generator
@@ -166,18 +233,18 @@ def generate_arithmetic_problems(operation, params):
                 problems.append(f"{dividend} ÷ {divisor} = ")
             elif not division_reste: # Exact division
                 quotient = random.randint(1, 10**(digits if digits > 0 else 1)) # Quotient can also have 'digits'
-                dividend = divisor * quotient
+                dividend = divisor * quotient # Ensure quotient is not 0
                 problems.append(f"{dividend} ÷ {divisor} = ")
             else: # Division with remainder
                 quotient = random.randint(1, 10**(digits if digits > 0 else 1))
                 # Remainder must be less than divisor. If divisor is 1, remainder is 0.
                 reste = random.randint(0, divisor - 1) if divisor > 1 else 0
-                dividend = divisor * quotient + reste
+                dividend = divisor * quotient + reste # Ensure quotient is not 0
                 problems.append(f"{dividend} ÷ {divisor} = ")
     return problems
 
 if __name__ == '__main__':
-    # Test story problems
+    # Test story problems with no level
     test_problems_cp = generate_story_math_problems(["addition_simple", "soustraction_simple"], 2, "CP")
     print("Problèmes CP (Story):", test_problems_cp)
     test_problems_ce1_mult = generate_story_math_problems(["multiplication_simple"], 1, "CE1")
@@ -185,13 +252,19 @@ if __name__ == '__main__':
     
     # Test arithmetic problems
     print("\nProblèmes Arithmétiques:")
-    add_params = {'count': 2, 'digits': 2, 'decimals': 0}
+    add_params = {'count': 2, 'digits': 1, 'decimals': 0, 'num_operands': 2}
     print("Addition:", generate_arithmetic_problems("addition", add_params))
     
-    sub_params = {'count': 2, 'digits': 2, 'decimals': 1, 'allow_negative': True}
-    print("Soustraction:", generate_arithmetic_problems("soustraction", sub_params))
+    add_params_zero_digits = {'count': 1, 'digits': 0, 'decimals': 0, 'num_operands': 2} # digits=0 means single digit 1-9
+    print("Addition (digits 0):", generate_arithmetic_problems("addition", add_params_zero_digits))
 
-    mult_params = {'count': 1, 'digits': 1, 'decimals': 0}
+    sub_params = {'count': 2, 'digits': 2, 'decimals': 0, 'allow_negative': False, 'num_operands': 2}
+    print("Soustraction:", generate_arithmetic_problems("soustraction", sub_params))
+    sub_params_neg = {'count': 1, 'digits': 1, 'decimals': 0, 'allow_negative': True, 'num_operands': 2}
+    print("Soustraction (neg ok):", generate_arithmetic_problems("soustraction", sub_params_neg))
+
+
+    mult_params = {'count': 1, 'digits': 1, 'decimals': 0, 'num_operands': 4}
     print("Multiplication:", generate_arithmetic_problems("multiplication", mult_params))
 
     div_params_exact = {'count': 2, 'digits': 2, 'division_reste': False}

@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QIcon
 from PyQt6.QtGui import QPalette, QColor
-from calculs_generator import generate_story_math_problems # Modifié pour importer depuis calculs_generator
+from calculs_generator import generate_story_math_problems, generate_arithmetic_problems
 from pdf_generator import generate_workbook_pdf
 from conjugation_generator import get_random_verb
 import random
@@ -321,41 +321,52 @@ class MainWindow(QMainWindow):
         # Addition
         addition_fields = [
             ("Nombre de calculs :", "addition_count", 60),
-            ("Chiffres par nombre :", "addition_digits", 60),
-            ("Nb décimales :", "addition_decimals", 60) # Clé: addition
+            ("Chiffres par opérande :", "addition_digits", 60), # "opérande" au lieu de "nombre"
+            ("Nb décimales :", "addition_decimals", 60),
+            ("Nombre d'opérandes :", "addition_num_operands", 60) # Nouveau champ
         ]
         self.addition_group, addition_les, add_rows = self._create_generic_groupbox("Addition", addition_fields)
         self.all_line_edits.extend(addition_les)
         self._all_row_widgets_for_map.update(add_rows)
+        # Initialiser la valeur par défaut pour le nombre d'opérandes si le champ existe
+        if hasattr(self, 'addition_num_operands'):
+            self.addition_num_operands.setText("2")
 
         # Soustraction
         self.subtraction_negative_checkbox = QCheckBox("Soustraction négative possible")
         subtraction_fields = [
             ("Nombre de calculs :", "subtraction_count", 60),
-            ("Chiffres par nombre :", "subtraction_digits", 60), # Clé: subtraction
-            ("Nb décimales :", "subtraction_decimals", 60)
+            ("Chiffres par opérande :", "subtraction_digits", 60),
+            ("Nb décimales :", "subtraction_decimals", 60),
+            ("Nombre d'opérandes :", "subtraction_num_operands", 60) # Nouveau champ
         ]
         self.subtraction_group, subtraction_les, sub_rows = self._create_generic_groupbox(
             "Soustraction", subtraction_fields, extra_items=[self.subtraction_negative_checkbox]
         )
         self.all_line_edits.extend(subtraction_les)
         self._all_row_widgets_for_map.update(sub_rows)
+        if hasattr(self, 'subtraction_num_operands'):
+            self.subtraction_num_operands.setText("2")
 
         # Multiplication
         multiplication_fields = [
             ("Nombre de calculs :", "multiplication_count", 60), # Clé: multiplication
-            ("Chiffres par nombre :", "multiplication_digits", 60),
-            ("Nb décimales :", "multiplication_decimals", 60)
+            ("Chiffres par opérande :", "multiplication_digits", 60),
+            ("Nb décimales :", "multiplication_decimals", 60),
+            ("Nombre d'opérandes :", "multiplication_num_operands", 60) # Nouveau champ
         ]
         self.multiplication_group, multiplication_les, mult_rows = self._create_generic_groupbox("Multiplication", multiplication_fields)
         self.all_line_edits.extend(multiplication_les)
         self._all_row_widgets_for_map.update(mult_rows)
+        # Initialiser la valeur par défaut pour le nombre d'opérandes si le champ existe
+        if hasattr(self, 'multiplication_num_operands'):
+            self.multiplication_num_operands.setText("2")
 
         # Division
         self.division_reste_checkbox = QCheckBox("Division avec reste")
         division_fields = [
             ("Nombre de calculs :", "division_count", 60), # Clé: division
-            ("Chiffres par nombre :", "division_digits", 60),
+            ("Chiffres par opérande :", "division_digits", 60), # Diviseur pour l'instant
             ("Nb décimales :", "division_decimals", 60)
         ]
         self.division_group, division_les, div_rows = self._create_generic_groupbox(
@@ -458,21 +469,25 @@ class MainWindow(QMainWindow):
         self.sort_type_croissant = QCheckBox("Croissant")
         self.sort_type_decroissant = QCheckBox("Décroissant")
         self.sort_type_croissant.setChecked(True)
-        sort_type_layout = QHBoxLayout()
-        sort_type_layout.addWidget(self.sort_type_croissant)
-        sort_type_layout.addWidget(self.sort_type_decroissant)
         
-        sort_type_row_layout = QHBoxLayout()
-        sort_type_row_layout.addWidget(QLabel("Type :"))
-        sort_type_row_layout.addLayout(sort_type_layout)
+        # Utiliser un QGridLayout pour aligner sur deux colonnes
+        sort_grid_type_layout = QGridLayout()
+        sort_grid_type_layout.setContentsMargins(0, 0, 0, 0) # Pas de marges internes pour le layout de la grille
+        sort_grid_type_layout.setVerticalSpacing(5)
+        sort_grid_type_layout.setHorizontalSpacing(10)
+        sort_grid_type_layout.addWidget(self.sort_type_croissant, 0, 0)
+        sort_grid_type_layout.addWidget(self.sort_type_decroissant, 0, 1)
+        # Étirer la colonne à droite des cases à cocher pour les pousser à gauche
+        sort_grid_type_layout.setColumnStretch(2, 1) 
+
 
         sort_fields = [
             ("Nombre d'exercices :", "sort_count", 60),
             ("Chiffres par nombre :", "sort_digits", 60),
             ("Nombres à ranger :", "sort_n_numbers", 60)
         ]
-        self.sort_group, sort_les, sort_rows = self._create_generic_groupbox( # Clé: geo_sort
-            "Ranger les nombres", sort_fields, extra_items=[sort_type_row_layout]
+        self.sort_group, sort_les, sort_rows = self._create_generic_groupbox(
+            "Ranger les nombres", sort_fields, extra_items=[sort_grid_type_layout] # Utiliser le layout en grille
         )
         self.all_line_edits.extend(sort_les)
         self._all_row_widgets_for_map.update(sort_rows)
@@ -485,28 +500,75 @@ class MainWindow(QMainWindow):
         ]
 
         # Types d'encadrement
-        type_label = QLabel("Type :")
+        # type_label = QLabel("Type :") # Supprimé
         self.encadrement_unite = QCheckBox("Unité")
         self.encadrement_dizaine = QCheckBox("Dizaine")
         self.encadrement_centaine = QCheckBox("Centaine")
         self.encadrement_millier = QCheckBox("Millier")
         
-        type_layout1 = QHBoxLayout()
-        type_layout1.addWidget(self.encadrement_unite)
-        type_layout1.addWidget(self.encadrement_dizaine)
-        type_layout2 = QHBoxLayout()
-        type_layout2.addWidget(self.encadrement_centaine)
-        type_layout2.addWidget(self.encadrement_millier)
+        # Utiliser un QGridLayout pour aligner sur deux colonnes
+        encadrement_grid_type_layout = QGridLayout()
+        encadrement_grid_type_layout.setContentsMargins(0, 0, 0, 0)
+        encadrement_grid_type_layout.setVerticalSpacing(5)
+        encadrement_grid_type_layout.setHorizontalSpacing(10)
+        
+        encadrement_checkboxes_list = [
+            self.encadrement_unite, self.encadrement_dizaine,
+            self.encadrement_centaine, self.encadrement_millier
+        ]
+        row, col = 0, 0
+        for cb in encadrement_checkboxes_list:
+            encadrement_grid_type_layout.addWidget(cb, row, col)
+            col = (col + 1) % 2
+            if col == 0: row += 1
+        encadrement_grid_type_layout.setColumnStretch(2, 1) # Pousse à gauche
 
         self.encadrement_group, encadrement_les, enc_rows = self._create_generic_groupbox(
-            "Encadrer un nombre", encadrement_fields, extra_items=[type_label, type_layout1, type_layout2]
+            "Encadrer un nombre", encadrement_fields, extra_items=[encadrement_grid_type_layout] # Utiliser le layout en grille
         )
         self.all_line_edits.extend(encadrement_les)
         self._all_row_widgets_for_map.update(enc_rows)
         geo_layout.addWidget(self.encadrement_group)
 
-        # Mesures : violet (#BA68C8)
-        geo_groups = [self.geo_conv_group, self.sort_group, self.encadrement_group]
+        # Section : Comparer des nombres
+        compare_numbers_fields = [
+            ("Nombre d'exercices :", "compare_numbers_count", 60),
+            ("Chiffres par nombre :", "compare_numbers_digits", 60)
+        ]
+        self.compare_numbers_group, compare_numbers_les, cn_rows = self._create_generic_groupbox(
+            "Comparer des nombres", compare_numbers_fields
+        )
+        self.all_line_edits.extend(compare_numbers_les)
+        self._all_row_widgets_for_map.update(cn_rows)
+        geo_layout.addWidget(self.compare_numbers_group)
+
+        # Section : Suites Logiques
+        logical_sequences_fields = [
+            ("Nombre d'exercices :", "logical_sequences_count", 60),
+            ("Nombre d'éléments (suite) :", "logical_sequences_length", 60) # Nouveau champ
+        ]
+        # Types de suites
+        self.logical_sequences_type_arithmetic_plus_cb = QCheckBox("Suite arithmétique (+)")
+        self.logical_sequences_type_arithmetic_minus_cb = QCheckBox("Suite arithmétique (-)")
+        self.logical_sequences_type_arithmetic_multiply_cb = QCheckBox("Suite arithmétique (x)")
+        self.logical_sequences_type_arithmetic_divide_cb = QCheckBox("Suite arithmétique (÷)")
+        
+        self.logical_sequences_group, logical_sequences_les, ls_rows = self._create_generic_groupbox(
+            "Suites Logiques", logical_sequences_fields,
+            extra_items=[QLabel("Types de suites :"), self.logical_sequences_type_arithmetic_plus_cb,
+                         self.logical_sequences_type_arithmetic_minus_cb,
+                         self.logical_sequences_type_arithmetic_multiply_cb, # Ajouté
+                         self.logical_sequences_type_arithmetic_divide_cb]   # Ajouté
+        )
+        self.all_line_edits.extend(logical_sequences_les)
+        self._all_row_widgets_for_map.update(ls_rows)
+        # Initialiser la valeur par défaut pour la longueur des suites
+        if hasattr(self, 'logical_sequences_length'):
+            self.logical_sequences_length.setText("5") # Valeur par défaut
+        geo_layout.addWidget(self.logical_sequences_group)
+
+        # Mesures : violet (#BA68C8) - Ajout des nouveaux groupes
+        geo_groups = [self.geo_conv_group, self.sort_group, self.encadrement_group, self.compare_numbers_group, self.logical_sequences_group]
         geo_border_color = UI_STYLE_CONFIG["group_boxes"]["border_colors"]["geo"]
         set_groupbox_style(geo_groups, geo_border_color)
         geo_layout.addStretch()
@@ -804,12 +866,15 @@ class MainWindow(QMainWindow):
             "enumerate_group": self.enumerate_group,
             "enumerate_count_input": self.enumerate_count, "enumerate_digits_input": self.enumerate_digits,
             "addition_group": self.addition_group,
-            "addition_count_input": self.addition_count, "addition_digits_input": self.addition_digits, "addition_decimals_input": self.addition_decimals,
+            "addition_count_input": self.addition_count, "addition_digits_input": self.addition_digits,
+            "addition_decimals_input": self.addition_decimals, "addition_num_operands_input": self.addition_num_operands,
             "subtraction_group": self.subtraction_group,
-            "subtraction_count_input": self.subtraction_count, "subtraction_digits_input": self.subtraction_digits, "subtraction_decimals_input": self.subtraction_decimals,
+            "subtraction_count_input": self.subtraction_count, "subtraction_digits_input": self.subtraction_digits,
+            "subtraction_decimals_input": self.subtraction_decimals, "subtraction_num_operands_input": self.subtraction_num_operands,
             "subtraction_negative_cb": self.subtraction_negative_checkbox,
             "multiplication_group": self.multiplication_group,
-            "multiplication_count_input": self.multiplication_count, "multiplication_digits_input": self.multiplication_digits, "multiplication_decimals_input": self.multiplication_decimals,
+            "multiplication_count_input": self.multiplication_count, "multiplication_digits_input": self.multiplication_digits,
+            "multiplication_decimals_input": self.multiplication_decimals, "multiplication_num_operands_input": self.multiplication_num_operands,
             "division_group": self.division_group,
             "division_count_input": self.division_count, "division_digits_input": self.division_digits, "division_decimals_input": self.division_decimals,
             "division_reste_cb": self.division_reste_checkbox,
@@ -830,6 +895,17 @@ class MainWindow(QMainWindow):
             "geo_encadrement_group": self.encadrement_group,
             "encadrement_count_input": self.encadrement_count, "encadrement_digits_input": self.encadrement_digits,
             "encadrement_unite_cb": self.encadrement_unite, "encadrement_dizaine_cb": self.encadrement_dizaine, "encadrement_centaine_cb": self.encadrement_centaine, "encadrement_millier_cb": self.encadrement_millier,
+            
+            "geo_compare_numbers_group": self.compare_numbers_group,
+            "compare_numbers_count_input": self.compare_numbers_count, "compare_numbers_digits_input": self.compare_numbers_digits,
+
+            "geo_logical_sequences_group": self.logical_sequences_group,
+            "logical_sequences_count_input": self.logical_sequences_count,
+            "logical_sequences_length_input": self.logical_sequences_length, # Nouveau
+            "logical_sequences_type_arithmetic_plus_cb": self.logical_sequences_type_arithmetic_plus_cb,
+            "logical_sequences_type_arithmetic_minus_cb": self.logical_sequences_type_arithmetic_minus_cb,
+            "logical_sequences_type_arithmetic_multiply_cb": self.logical_sequences_type_arithmetic_multiply_cb,
+            "logical_sequences_type_arithmetic_divide_cb": self.logical_sequences_type_arithmetic_divide_cb,
 
             # Conjugaison
             "conj_params_group": self.conj_number_group, # Renamed for clarity from conj_number_group
@@ -908,8 +984,8 @@ class MainWindow(QMainWindow):
             "english": self.english_title_label,
         }
         self.column_section_keys = { # Maps column key to list of its main section group keys
-            "calc": ["enumerate_group", "addition_group", "subtraction_group", "multiplication_group", "division_group", "math_problems_group"],
-            "geo": ["geo_conv_group", "geo_sort_group", "geo_encadrement_group"],
+            "calc": ["enumerate_group", "addition_group", "subtraction_group", "multiplication_group", "division_group", "math_problems_group"], # No change here
+            "geo": ["geo_conv_group", "geo_sort_group", "geo_encadrement_group", "geo_compare_numbers_group", "geo_logical_sequences_group"], # Added new groups
             "conj": ["conj_params_group", "conj_groups_group", "conj_tenses_group"],
             "grammar": ["grammar_params_group", "grammar_types_group", "grammar_transfo_group"],
             "ortho": ["ortho_params_group", "ortho_homophones_group"], 
@@ -1038,18 +1114,22 @@ class MainWindow(QMainWindow):
             ('header_entry', self.header_entry, 'text'),
             ('addition_count', self.addition_count, 'text'),
             ('addition_digits', self.addition_digits, 'text'),
+            ('addition_num_operands', self.addition_num_operands, 'text'),
             ('addition_decimals', self.addition_decimals, 'text'),
             ('subtraction_count', self.subtraction_count, 'text'),
             ('subtraction_digits', self.subtraction_digits, 'text'),
+            ('subtraction_num_operands', self.subtraction_num_operands, 'text'),
             ('subtraction_decimals', self.subtraction_decimals, 'text'),
             ('subtraction_negative_checkbox', self.subtraction_negative_checkbox, 'checked'),
             ('multiplication_count', self.multiplication_count, 'text'),
             ('multiplication_digits', self.multiplication_digits, 'text'),
+            ('multiplication_num_operands', self.multiplication_num_operands, 'text'),
             ('multiplication_decimals', self.multiplication_decimals, 'text'),
             ('division_count', self.division_count, 'text'),
             ('division_digits', self.division_digits, 'text'),
             ('division_decimals', self.division_decimals, 'text'),
             ('division_reste_checkbox', self.division_reste_checkbox, 'checked'),
+            # Groupes de conjugaison
             ('group_1_checkbox', self.group_1_checkbox, 'checked'),
             ('group_2_checkbox', self.group_2_checkbox, 'checked'),
             ('group_3_checkbox', self.group_3_checkbox, 'checked'),
@@ -1090,6 +1170,16 @@ class MainWindow(QMainWindow):
             ('encadrement_millier', self.encadrement_millier, 'checked'),
             # Petits Problèmes
             ('math_problems_count', self.math_problems_count, 'text'),
+            # Comparer des nombres
+            ('compare_numbers_count', self.compare_numbers_count, 'text'),
+            ('compare_numbers_digits', self.compare_numbers_digits, 'text'),
+            # Suites Logiques
+            ('logical_sequences_count', self.logical_sequences_count, 'text'),
+            ('logical_sequences_length', self.logical_sequences_length, 'text'), # Nouveau
+            ('logical_sequences_type_arithmetic_plus_cb', self.logical_sequences_type_arithmetic_plus_cb, 'checked'),
+            ('logical_sequences_type_arithmetic_minus_cb', self.logical_sequences_type_arithmetic_minus_cb, 'checked'),
+            ('logical_sequences_type_arithmetic_multiply_cb', self.logical_sequences_type_arithmetic_multiply_cb, 'checked'),
+            ('logical_sequences_type_arithmetic_divide_cb', self.logical_sequences_type_arithmetic_divide_cb, 'checked'),
             # Les checkboxes de types de problèmes seront ajoutées dynamiquement
             ('current_level', self, 'level_variable'), # Ajout pour sauvegarder le niveau
         ]
@@ -1270,7 +1360,7 @@ class MainWindow(QMainWindow):
         try:
             from exercise_data_builder import ExerciseDataBuilder
             from conjugation_generator import TENSES, VERBS # OK
-            from grammar_generator import get_random_phrases, get_random_transformation # OK
+            from grammar_generator import get_random_phrases, get_random_transformation
             from mesures_generator import generate_conversion_exercises # Modifié
             from anglais_generator import PHRASES_SIMPLES, PHRASES_COMPLEXES, MOTS_A_RELIER
             # print(f"EduForge.build_exercise_data: self.current_level is {self.current_level} at start.") # Debug print
@@ -1324,6 +1414,27 @@ class MainWindow(QMainWindow):
                     if type_cb_key_map in allowed_keys and cb_widget.isChecked():
                         selected_math_problem_types.append(type_key) # Utiliser la clé JSON (ex: "addition_simple")
 
+            # Suites Logiques
+            logical_sequences_count_val = self.get_int(self.logical_sequences_count, field_name="Suites Logiques - nombre d'exercices") if "geo_logical_sequences_group" in allowed_keys else 0
+            logical_sequences_length_val = self.get_int(self.logical_sequences_length, default=5, field_name="Suites Logiques - nombre d'éléments") if "logical_sequences_length_input" in allowed_keys else 5
+            logical_sequences_params_for_builder = {
+                'count': logical_sequences_count_val,
+                'length': logical_sequences_length_val,
+                'types': [],
+                # Le 'step' n'est plus récupéré de l'UI
+            }
+            if "logical_sequences_type_arithmetic_plus_cb" in allowed_keys and self.logical_sequences_type_arithmetic_plus_cb.isChecked():
+                logical_sequences_params_for_builder['types'].append('arithmetic_plus')
+            if "logical_sequences_type_arithmetic_minus_cb" in allowed_keys and self.logical_sequences_type_arithmetic_minus_cb.isChecked():
+                logical_sequences_params_for_builder['types'].append('arithmetic_minus')
+            if "logical_sequences_type_arithmetic_multiply_cb" in allowed_keys and self.logical_sequences_type_arithmetic_multiply_cb.isChecked():
+                logical_sequences_params_for_builder['types'].append('arithmetic_multiply')
+            if "logical_sequences_type_arithmetic_divide_cb" in allowed_keys and self.logical_sequences_type_arithmetic_divide_cb.isChecked():
+                logical_sequences_params_for_builder['types'].append('arithmetic_divide')
+
+            if not logical_sequences_params_for_builder['types']: # Si aucun type de suite n'est coché
+                logical_sequences_params_for_builder['count'] = 0 # Ne pas générer d'exercices de suite
+
             if not is_croissant_selected and not is_decroissant_selected: # Si aucun type de tri n'est sélectionné
                 sort_count_val = 0
 
@@ -1340,13 +1451,16 @@ class MainWindow(QMainWindow):
                 'days': self.get_int(self.days_entry, field_name="Nombre de jours"),
                 'relier_count': n_mots_reliés, # Already filtered based on english_relier_group
                 'addition_count': self.get_int(self.addition_count, field_name="Addition - nombre de calculs") if "addition_group" in allowed_keys else 0,
+                'addition_num_operands': self.get_int(self.addition_num_operands, default=2, field_name="Addition - nombre d'opérandes") if "addition_num_operands_input" in allowed_keys else 2,
                 'addition_digits': self.get_int(self.addition_digits, field_name="Addition - chiffres") if "addition_group" in allowed_keys else 0,
                 'addition_decimals': self.get_int(self.addition_decimals, field_name="Addition - décimales") if "addition_decimals_input" in allowed_keys else 0,
                 'subtraction_count': self.get_int(self.subtraction_count, field_name="Soustraction - nombre de calculs") if "subtraction_group" in allowed_keys else 0,
+                'subtraction_num_operands': self.get_int(self.subtraction_num_operands, default=2, field_name="Soustraction - nombre d'opérandes") if "subtraction_num_operands_input" in allowed_keys else 2,
                 'subtraction_digits': self.get_int(self.subtraction_digits, field_name="Soustraction - chiffres") if "subtraction_group" in allowed_keys else 0,
                 'subtraction_decimals': self.get_int(self.subtraction_decimals, field_name="Soustraction - décimales") if "subtraction_decimals_input" in allowed_keys else 0,
                 'subtraction_negative': self.subtraction_negative_checkbox.isChecked() if "subtraction_negative_cb" in allowed_keys else False,
                 'multiplication_count': self.get_int(self.multiplication_count, field_name="Multiplication - nombre de calculs") if "multiplication_group" in allowed_keys else 0,
+                'multiplication_num_operands': self.get_int(self.multiplication_num_operands, default=2, field_name="Multiplication - nombre d'opérandes") if "multiplication_num_operands_input" in allowed_keys else 2,
                 'multiplication_digits': self.get_int(self.multiplication_digits, field_name="Multiplication - chiffres") if "multiplication_group" in allowed_keys else 0,
                 'multiplication_decimals': self.get_int(self.multiplication_decimals, field_name="Multiplication - décimales") if "multiplication_decimals_input" in allowed_keys else 0,
                 'division_count': self.get_int(self.division_count, field_name="Division - nombre de calculs") if "division_group" in allowed_keys else 0,
@@ -1374,13 +1488,18 @@ class MainWindow(QMainWindow):
                 'generate_english_full_exercises_func': generate_english_full_exercises, # AJOUT DE CETTE LIGNE
                 'orthographe_ex_count': self.get_int(self.orthographe_ex_count, field_name="Orthographe - nombre d'exercices") if "ortho_params_group" in allowed_keys else 0,
                 # Encadrement
+                'encadrement_params': encadrement_params_for_builder,
+                # Comparer des nombres
+                'compare_numbers_count': self.get_int(self.compare_numbers_count, field_name="Comparer - nombre d'exercices") if "geo_compare_numbers_group" in allowed_keys else 0,
+                'compare_numbers_digits': self.get_int(self.compare_numbers_digits, field_name="Comparer - chiffres par nombre") if "geo_compare_numbers_group" in allowed_keys else 0,
+                # Suites Logiques
+                'logical_sequences_params': logical_sequences_params_for_builder,
                 # Petits Problèmes
                 'math_problems_count': math_problems_count_val,
                 'selected_math_problem_types': selected_math_problem_types,
                 'current_level_for_problems': self.current_level, # Pour filtrer les problèmes par niveau dans le générateur
-                'encadrement_params': encadrement_params_for_builder, # Modifié: passe les paramètres bruts
-                'selected_english_themes': selected_english_themes, # Déjà filtré par allowed_keys pour chaque checkbox
-                'current_level_for_conversions': self.current_level # Ajout DU NIVEAU ICI
+                'selected_english_themes': selected_english_themes,
+                'current_level_for_conversions': self.current_level
             }
 
             verbs_per_day_val = self.get_int(self.verbs_per_day_entry, field_name="Verbes par jour") if "conj_params_group" in allowed_keys else 0
@@ -1465,7 +1584,9 @@ class MainWindow(QMainWindow):
                 data['orthographe_exercises'],
                 data['enumerate_exercises'], data['sort_exercises'],
                 geo_exercises=data['geo_exercises'], english_exercises=data['english_exercises'],
-                encadrement_exercises_list=data.get('encadrement_exercises_list'), # Modifié
+                encadrement_exercises_list=data.get('encadrement_exercises_list'),
+                compare_numbers_exercises_list=data.get('compare_numbers_exercises_list'), # Nouveau
+                logical_sequences_exercises_list=data.get('logical_sequences_exercises_list'), # Nouveau
                 story_math_problems_by_day=data.get('math_problems'), 
                 header_text=header_text, show_name=show_name, show_note=show_note, filename=filename,
                 output_dir_override=output_directory
@@ -1501,7 +1622,9 @@ class MainWindow(QMainWindow):
                 sort_exercises=data['sort_exercises'],
                 geo_exercises=data['geo_exercises'], 
                 english_exercises=data['english_exercises'],
-                encadrement_exercises_list=data.get('encadrement_exercises_list'), # Modifié
+                encadrement_exercises_list=data.get('encadrement_exercises_list'),
+                compare_numbers_exercises_list=data.get('compare_numbers_exercises_list'), # Nouveau
+                logical_sequences_exercises_list=data.get('logical_sequences_exercises_list'), # Nouveau
                 story_math_problems_by_day=data.get('math_problems'), 
                 header_text=header_text, show_name=show_name, show_note=show_note, filename=filename,
                 output_dir_override=output_directory
@@ -1535,7 +1658,9 @@ class MainWindow(QMainWindow):
                 data['conjugations'], data['params_list'], data['grammar_exercises'],
                 data['orthographe_exercises'], data['enumerate_exercises'], data['sort_exercises'],
                 geo_exercises=data['geo_exercises'], english_exercises=data['english_exercises'], # Modifié
-                encadrement_exercises_list=data.get('encadrement_exercises_list'), 
+                encadrement_exercises_list=data.get('encadrement_exercises_list'),
+                compare_numbers_exercises_list=data.get('compare_numbers_exercises_list'), # Nouveau
+                logical_sequences_exercises_list=data.get('logical_sequences_exercises_list'), # Nouveau
                 story_math_problems_by_day=data.get('math_problems'), 
                 header_text=header_text, show_name=show_name, show_note=show_note, filename=filename,
                 output_dir_override=output_directory
@@ -1573,7 +1698,9 @@ class MainWindow(QMainWindow):
                 sort_exercises=data['sort_exercises'],
                 geo_exercises=data['geo_exercises'], # Modifié
                 english_exercises=data['english_exercises'], 
-                encadrement_exercises_list=data.get('encadrement_exercises_list'),
+                encadrement_exercises_list=data.get('encadrement_exercises_list'), # Nouveau
+                compare_numbers_exercises_list=data.get('compare_numbers_exercises_list'), # Nouveau
+                logical_sequences_exercises_list=data.get('logical_sequences_exercises_list'), 
                 story_math_problems_by_day=data.get('math_problems'), 
                 header_text=header_text, show_name=show_name, show_note=show_note, filename=filename,
                 output_dir_override=output_directory)

@@ -137,3 +137,152 @@ def generate_daily_encadrement_exercises(count, digits, types):
                 n = random.randint(min_n, max_n)
             generated_lines.append({'number': n, 'type': t})
     return generated_lines
+
+def generate_compare_numbers_exercises(params, days):
+    """ Génère des exercices de comparaison de nombres pour plusieurs jours. """
+    compare_count = params.get('count', 0)
+    compare_digits = params.get('digits', 0)
+    all_compare_exercises = []
+
+    if compare_count > 0 and compare_digits > 0:
+        min_val = 0
+        if compare_digits == 1: max_val = 9
+        elif compare_digits > 1:
+            min_val = 10**(compare_digits - 1) if compare_digits > 1 else 0 # Pour éviter 0 si digits=1
+            max_val = 10**compare_digits - 1
+        else: # digits == 0 or invalid
+            max_val = 9 # fallback
+            min_val = 0
+        if min_val > max_val : min_val = max_val # Sanity check
+
+        for _ in range(days):
+            daily_compare_ex = []
+            for _ in range(compare_count):
+                num1 = random.randint(min_val, max_val)
+                num2 = random.randint(min_val, max_val)
+                # S'assurer que les nombres sont différents pour rendre l'exercice pertinent
+                while num1 == num2:
+                    num2 = random.randint(min_val, max_val)
+                daily_compare_ex.append({'num1': num1, 'num2': num2})
+            all_compare_exercises.append(daily_compare_ex)
+    else:
+        for _ in range(days):
+            all_compare_exercises.append([])
+            
+    return all_compare_exercises
+
+MIN_VALID_SEQUENCE_LENGTH = 3 # Une suite doit avoir au moins 3 éléments pour être valide.
+MAX_GENERATION_ATTEMPTS_PER_EXERCISE = 10 # Max tentatives pour générer une suite valide par slot d'exercice.
+
+def generate_logical_sequences_exercises(params, days, current_level):
+    """ Génère des exercices de suites logiques pour plusieurs jours. """
+    sequences_count = params.get('count', 0)
+    # sequence_length est le nombre total d'éléments souhaités dans la suite. Min 3.
+    sequence_length = max(3, params.get('length', 5)) 
+    selected_types = params.get('types', [])
+    all_sequences_exercises = []
+
+    # Adapter la complexité en fonction du niveau (longueur de la suite, valeur du pas)
+    num_blanks = 1      # Nombre de trous dans la suite
+
+    if sequences_count > 0 and selected_types:
+        for _ in range(days):
+            daily_sequences_ex = []
+            for _ in range(sequences_count): # Pour chaque slot d'exercice demandé pour la journée
+                generated_valid_sequence_for_slot = False
+                for attempt in range(MAX_GENERATION_ATTEMPTS_PER_EXERCISE):
+                    if not selected_types: break # Aucun type sélectionné, on saute cet exercice
+                    chosen_type = random.choice(selected_types)
+
+                    step, start_value = 0, 0
+                    # Déterminer step et start_value en fonction du type
+                    if chosen_type in ['arithmetic_plus', 'arithmetic_minus']:
+                        step = random.randint(1, 9)
+                        start_value = random.randint(1, 50)
+                        if chosen_type == 'arithmetic_minus' and sequence_length > 4:
+                            start_value = random.randint(step * (sequence_length // 2) + 5, 60 + step * (sequence_length // 2))
+                    elif chosen_type == 'arithmetic_multiply':
+                        step = random.randint(2, 10) 
+                        start_value = random.randint(1, 100)
+                    elif chosen_type == 'arithmetic_divide':
+                        step = random.randint(2, 5) # Diviseur
+                        # Générer la suite "à l'envers" en partant d'un petit nombre
+                        # et en multipliant, puis inverser la suite.
+                        last_term = random.randint(1, 10) # Le plus petit nombre de la suite de division
+                        
+                        temp_sequence_for_division = [last_term]
+                        current_val_for_multi = last_term
+                        possible_to_generate = True
+                        for _ in range(sequence_length - 1):
+                            try:
+                                next_val = current_val_for_multi * step
+                                if next_val > 10**12: # Limite très haute pour éviter des nombres ingérables
+                                    possible_to_generate = False
+                                    break
+                                temp_sequence_for_division.append(next_val)
+                                current_val_for_multi = next_val
+                            except OverflowError:
+                                possible_to_generate = False
+                                break
+                        if not possible_to_generate or len(temp_sequence_for_division) != sequence_length:
+                            continue # Impossible de générer la suite avec ces paramètres, essayer une autre tentative
+                        
+                        temp_sequence_for_division.reverse() # Inverser pour obtenir la suite de division
+                        sequence = temp_sequence_for_division
+                        start_value = sequence[0] # Le premier terme de la suite de division
+                        # current_val sera initialisé à start_value plus bas
+                    
+                    if chosen_type != 'arithmetic_divide': # Pour les autres types, initialiser comme avant
+                        sequence = [start_value]
+                    current_val = start_value
+
+                    for i in range(1, sequence_length): # Essayer de construire jusqu'à la longueur désirée
+                        prev_val = current_val
+                        if chosen_type == 'arithmetic_plus':
+                            current_val += step
+                        elif chosen_type == 'arithmetic_minus':
+                            if current_val == 0: break 
+                            current_val -= step
+                            if current_val < 0: current_val = 0 
+                        elif chosen_type == 'arithmetic_multiply':
+                            # Suppression de la limite de 10000
+                            if prev_val > (10**12) / step : # Vérifier avant multiplication pour éviter Overflow
+                                break 
+                            current_val *= step
+                            if current_val > 10**12: break # Limite très haute pour éviter des nombres gigantesques
+                        elif chosen_type == 'arithmetic_divide':
+                            if step == 0: break 
+                            if current_val < step or current_val % step != 0: 
+                                break 
+                            current_val //= step
+                            if current_val == 0 and prev_val > 0 : # Éviter de finir sur 0 si on peut s'arrêter avant
+                                if len(sequence) > 1 : sequence.pop() # Retirer le 0 si le terme précédent était > 0
+                                break
+                            if current_val < 1 and prev_val > 0 : # Si on obtient une fraction < 1
+                                break
+
+                        # Pour la division, la séquence est déjà construite.
+                        # Pour les autres, on ajoute le terme.
+                        if chosen_type != 'arithmetic_divide':
+                            sequence.append(current_val)
+
+                     # La suite doit avoir exactement la longueur demandée
+                    if len(sequence) == sequence_length:
+                        blank_pos = random.randint(1, len(sequence) - 2) # Blank pas aux extrémités
+                        daily_sequences_ex.append({
+                            'type': chosen_type, 
+                            'sequence_displayed': [val if idx != blank_pos else "____" for idx, val in enumerate(sequence)],
+                            'full_sequence': sequence, 
+                            'blank_position': blank_pos,
+                            'step': step 
+                        })
+                        generated_valid_sequence_for_slot = True
+                        break # Sortir de la boucle d'essais, passer au prochain slot d'exercice
+                # if not generated_valid_sequence_for_slot:
+                #     print(f"Avertissement: Impossible de générer une suite valide pour un slot après {MAX_GENERATION_ATTEMPTS_PER_EXERCISE} essais.")
+            all_sequences_exercises.append(daily_sequences_ex)
+    else:
+        for _ in range(days):
+            all_sequences_exercises.append([])
+            
+    return all_sequences_exercises
