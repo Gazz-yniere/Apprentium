@@ -300,7 +300,7 @@ def generate_logical_sequences_exercises(params, days, current_level):
                         if chosen_type != 'arithmetic_divide':
                             sequence.append(current_val)
 
-                     # La suite doit avoir exactement la longueur demandée
+                    # La suite doit avoir exactement la longueur demandée
                     if len(sequence) == sequence_length:
                         # Blank pas aux extrémités
                         blank_pos = random.randint(1, len(sequence) - 2)

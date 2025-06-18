@@ -28,7 +28,7 @@ jobs:
 
     - name: Run Flake8 # Étape pour exécuter Flake8
       run: |
-        flake8 . --ignore=E501,E226,E241 # Adapte --max-line-length si tu as une autre préférence
+        flake8 . --ignore=E501,E226,E241,W503 # Adapte --max-line-length si tu as une autre préférence
         # '.' signifie analyser tous les fichiers Python dans le répertoire courant et ses sous-répertoires
 
     - name: Check code format with Black # Étape pour vérifier le formatage avec Black

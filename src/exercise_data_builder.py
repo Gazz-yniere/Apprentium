@@ -228,7 +228,7 @@ class ExerciseDataBuilder:
             with open(homophones_path, encoding='utf-8') as f:
                 homophones_data = json.load(f)
             orthographe_exercises = []
-            for _ in range(jours): 
+            for _ in range(jours):
                 daily_orthographe = []
                 for _ in range(orthographe_ex_count):
                     if orthographe_homophones:

@@ -91,8 +91,7 @@ PDF_STYLE_CONFIG = {
 }
 
 # Estimation de la hauteur de l'en-tête de section (numéro+titre)
-HEADER_HEIGHT_ESTIMATE = (2 * PDF_STYLE_CONFIG["section_header"]["box_padding"]
-                          + max(2 * PDF_STYLE_CONFIG["section_header"]["circle_radius"], PDF_STYLE_CONFIG["section_header"]["title_font_size"]))
+HEADER_HEIGHT_ESTIMATE = (2 * PDF_STYLE_CONFIG["section_header"]["box_padding"] + max(2 * PDF_STYLE_CONFIG["section_header"]["circle_radius"], PDF_STYLE_CONFIG["section_header"]["title_font_size"]))
 
 
 def get_resource_path_pdf(relative_path):
@@ -149,8 +148,7 @@ def draw_section_header(pdf, y_header_top, section_key, section_num, margin, pag
     # Couleur par défaut si non trouvée
     section_color_rgb = section_data.get("color", (0, 0, 0))
 
-    y_title_baseline = (y_header_top
-                        - cfg_sh["box_padding"] - cfg_sh["title_font_size"])
+    y_title_baseline = (y_header_top - cfg_sh["box_padding"] - cfg_sh["title_font_size"])
     circle_center_x = margin + cfg_sh["box_padding"] + cfg_sh["circle_radius"]
     circle_center_y = y_title_baseline + cfg_sh["title_font_size"] * 0.3
 
@@ -162,10 +160,8 @@ def draw_section_header(pdf, y_header_top, section_key, section_num, margin, pag
     pdf.setFont(cfg_sh["number_in_circle_font_name"],
                 cfg_sh["number_in_circle_font_size"])
     pdf.setFillColorRGB(*section_color_rgb)
-    pdf.drawCentredString(circle_center_x, circle_center_y -
-                          (cfg_sh["number_in_circle_font_size"] / 3.0), str(section_num)) # noqa E501
-    exercise_content_x_start = (circle_center_x
-                                + cfg_sh["circle_radius"] + cfg_sh["content_x_start_offset_from_circle"]) # noqa E501
+    pdf.drawCentredString(circle_center_x, circle_center_y - (cfg_sh["number_in_circle_font_size"] / 3.0), str(section_num)) # noqa E501
+    exercise_content_x_start = (circle_center_x + cfg_sh["circle_radius"] + cfg_sh["content_x_start_offset_from_circle"]) # noqa E501
 
     pdf.setFont(cfg_sh["title_font_name"], cfg_sh["title_font_size"])
     pdf.setFillColorRGB(*section_color_rgb)
@@ -173,8 +169,7 @@ def draw_section_header(pdf, y_header_top, section_key, section_num, margin, pag
 
     # Reset fill color # noqa E501
     pdf.setFillColorRGB(*PDF_STYLE_CONFIG["default_font"]["color_rgb"])
-    y_after_header = y_title_baseline - \
-        (2 * cfg_sh["circle_radius"]) - cfg_sh["box_padding"]
+    y_after_header = y_title_baseline - (2 * cfg_sh["circle_radius"]) - cfg_sh["box_padding"]
     return y_after_header, exercise_content_x_start
 
 
@@ -203,25 +198,21 @@ def draw_canvas_story_problems(pdf, y_position, problems_for_day, exercise_conte
         title_text = "Petit Problème:"
     else:
         title_text = "Petits Problèmes:"
-    title_height_estimate = (title_font_size
-                             + cfg_sp["line_spacing_after_section_title"])
+    title_height_estimate = (title_font_size + cfg_sp["line_spacing_after_section_title"])
 
     if y_position - title_height_estimate < margin:
-        draw_rounded_box_with_color(pdf, margin, margin, page_width - 2 * margin,
-                                    current_frame_segment_top_y_ref[0] - margin, stroke_rgb_color=section_color_rgb)
+        draw_rounded_box_with_color(pdf, margin, margin, page_width - 2 * margin, current_frame_segment_top_y_ref[0] - margin, stroke_rgb_color=section_color_rgb)
         pdf.showPage()
         y_position = page_height - margin
         current_frame_segment_top_y_ref[0] = y_position
-        draw_section_image_in_frame(
-            pdf, section_data_for_image, current_frame_segment_top_y_ref[0], page_width, margin)
+        draw_section_image_in_frame( pdf, section_data_for_image, current_frame_segment_top_y_ref[0], page_width, margin)
 
     pdf.setFont(cfg_sp["title_font_name"], title_font_size)
     pdf.drawString(exercise_content_x_start, y_position, title_text)
     y_position -= title_height_estimate  # Utilise l'estimation basée sur la config
 
     # La police pour le contenu sera définie plus tard, avant de dessiner les lignes
-    max_text_width = (page_width - exercise_content_x_start
-                      - margin - PDF_STYLE_CONFIG["section_header"]["box_padding"])
+    max_text_width = (page_width - exercise_content_x_start - margin - PDF_STYLE_CONFIG["section_header"]["box_padding"])
 
     for idx, problem_data in enumerate(problems_for_day):
         number_prefix_str = f"{idx + 1}. "
@@ -244,11 +235,9 @@ def draw_canvas_story_problems(pdf, y_position, problems_for_day, exercise_conte
 
         for line_idx_in_problem, line_text_segment in enumerate(lines_to_draw):
             # Check if the current line fits, if not, page break
-            line_height_check = (content_font_size
-                                 + cfg_sp["line_spacing_between_wrapped_lines"])
+            line_height_check = (content_font_size + cfg_sp["line_spacing_between_wrapped_lines"])
             if y_position - line_height_check < margin:
-                draw_rounded_box_with_color(pdf, margin, margin, page_width - 2 * margin,
-                                            current_frame_segment_top_y_ref[0] - margin, stroke_rgb_color=section_color_rgb)
+                draw_rounded_box_with_color(pdf, margin, margin, page_width - 2 * margin, current_frame_segment_top_y_ref[0] - margin, stroke_rgb_color=section_color_rgb)
                 pdf.showPage()
                 y_position = page_height - margin
                 current_frame_segment_top_y_ref[0] = y_position
@@ -262,10 +251,8 @@ def draw_canvas_story_problems(pdf, y_position, problems_for_day, exercise_conte
                 # Utiliser le titre original pour la première page de la section,
                 # et le titre "(suite)" pour les pages suivantes de la même section de problèmes.
                 # La logique ici est pour quand on saute une page AU MILIEU des problèmes.
-                pdf.drawString(exercise_content_x_start,
-                               y_position, suite_title_text)
-                y_position -= (title_font_size +
-                               cfg_sp["line_spacing_after_section_title"])
+                pdf.drawString(exercise_content_x_start, y_position, suite_title_text)
+                y_position -= (title_font_size + cfg_sp["line_spacing_after_section_title"])
 
             current_x_cursor = exercise_content_x_start
             if line_idx_in_problem == 0 and line_text_segment.startswith(number_prefix_str):
@@ -274,8 +261,7 @@ def draw_canvas_story_problems(pdf, y_position, problems_for_day, exercise_conte
                 # Police grasse (ex: Helvetica-Bold)
                 pdf.setFont(number_font_name, content_font_size)
                 pdf.drawString(current_x_cursor, y_position, number_prefix_str)
-                current_x_cursor += pdf.stringWidth(
-                    number_prefix_str, number_font_name, content_font_size)
+                current_x_cursor += pdf.stringWidth(number_prefix_str, number_font_name, content_font_size)
 
                 # Dessiner le reste de la première ligne en police normale
                 text_after_prefix = line_text_segment[len(number_prefix_str):]
@@ -288,18 +274,14 @@ def draw_canvas_story_problems(pdf, y_position, problems_for_day, exercise_conte
                             content_font_size)  # Police normale
                 pdf.drawString(current_x_cursor, y_position, line_text_segment)
 
-            y_position -= (content_font_size
-                           + cfg_sp["line_spacing_between_wrapped_lines"])
+            y_position -= (content_font_size + cfg_sp["line_spacing_between_wrapped_lines"])
 
-        y_position -= (cfg_sp["line_spacing_after_problem_text_block"]
-                       - cfg_sp["line_spacing_between_wrapped_lines"])
+        y_position -= (cfg_sp["line_spacing_after_problem_text_block"] - cfg_sp["line_spacing_between_wrapped_lines"])
 
         # "Réponse:" line
-        answer_line_total_height = (cfg_sp["answer_font_size"]
-                                    + cfg_sp["line_spacing_after_answer_line"])
+        answer_line_total_height = (cfg_sp["answer_font_size"] + cfg_sp["line_spacing_after_answer_line"])
         if y_position - answer_line_total_height < margin:
-            draw_rounded_box_with_color(pdf, margin, margin, page_width - 2 * margin,
-                                        current_frame_segment_top_y_ref[0] - margin, stroke_rgb_color=section_color_rgb)
+            draw_rounded_box_with_color(pdf, margin, margin, page_width - 2 * margin, current_frame_segment_top_y_ref[0] - margin, stroke_rgb_color=section_color_rgb)
             pdf.showPage()
             y_position = page_height - margin
             current_frame_segment_top_y_ref[0] = y_position
@@ -309,15 +291,12 @@ def draw_canvas_story_problems(pdf, y_position, problems_for_day, exercise_conte
                 problems_for_day) == 1 else "Petits Problèmes (suite):"
             # Redraw title if new page starts with answer
             pdf.setFont(cfg_sp["title_font_name"], title_font_size)
-            pdf.drawString(exercise_content_x_start,
-                           y_position, suite_title_text)
-            y_position -= (title_font_size +
-                           cfg_sp["line_spacing_after_section_title"])
+            pdf.drawString(exercise_content_x_start, y_position, suite_title_text)
+            y_position -= (title_font_size + cfg_sp["line_spacing_after_section_title"])
 
         # Police pour "Réponse:"
         pdf.setFont(cfg_sp["answer_font_name"], cfg_sp["answer_font_size"]) # noqa E501
-        pdf.drawString(exercise_content_x_start
-                       + cfg_sp["answer_font_size"], y_position, "Réponse: _________________________________") # noqa E501
+        pdf.drawString(exercise_content_x_start + cfg_sp["answer_font_size"], y_position, "Réponse: _________________________________") # noqa E501
         y_position -= answer_line_total_height
 
     y_position -= cfg_sp["final_spacing_after_section"]
@@ -361,14 +340,11 @@ def draw_section_image_in_frame(pdf, section_data, current_frame_top_y, page_wid
     cfg_sh = PDF_STYLE_CONFIG["section_header"]
     image_file_path = get_resource_path_pdf(section_data.get("image_path", ""))
     if image_file_path and os.path.exists(image_file_path):
-        img_draw_x = (page_width - page_margin
-                      - cfg_sh["box_padding"] - cfg_sh["img_width"])
+        img_draw_x = (page_width - page_margin - cfg_sh["box_padding"] - cfg_sh["img_width"])
         # Y for bottom-left corner of image
-        img_draw_y = (current_frame_top_y
-                      - cfg_sh["box_padding"] - cfg_sh["img_height"])
+        img_draw_y = (current_frame_top_y - cfg_sh["box_padding"] - cfg_sh["img_height"])
         try:
-            pdf.drawImage(image_file_path, img_draw_x, img_draw_y,
-                          width=cfg_sh["img_width"], height=cfg_sh["img_height"], mask='auto')
+            pdf.drawImage(image_file_path, img_draw_x, img_draw_y, width=cfg_sh["img_width"], height=cfg_sh["img_height"], mask='auto')
         except Exception as e:
             print(f"Erreur drawImage (in-frame) pour {image_file_path}: {e}")
 
@@ -419,21 +395,17 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
             pdf.setFillColorRGB(*cfg_gen_header["text_color_rgb"])
 
             if show_name:
-                pdf.drawString(margin + 10, y_header_text,
-                               "Nom : _________________")
+                pdf.drawString(margin + 10, y_header_text, "Nom : _________________")
             if header_text:
-                pdf.setFont(cfg_gen_header["title_font_name"],
-                            cfg_gen_header["title_font_size"])
+                pdf.setFont(cfg_gen_header["title_font_name"], cfg_gen_header["title_font_size"])
                 pdf.drawCentredString(
                     width // 2, y_header_text + 1, header_text)
-                pdf.setFont(cfg_gen_header["text_font_name"],
-                            cfg_gen_header["text_font_size"])
+                pdf.setFont(cfg_gen_header["text_font_name"], cfg_gen_header["text_font_size"])
                 pdf.setFillColorRGB(*cfg_gen_header["text_color_rgb"])
             if show_note:
                 # Utiliser la police et taille par défaut pour stringWidth
                 note_text = "Note : ____________"
-                note_x = (width - margin - 10 - pdf.stringWidth(
-                        note_text, cfg_gen_header["text_font_name"], cfg_gen_header["text_font_size"]))
+                note_x = (width - margin - 10 - pdf.stringWidth(note_text, cfg_gen_header["text_font_name"], cfg_gen_header["text_font_size"]))
                 pdf.drawString(note_x, y_header_text, note_text)
             y_position = box_y_header - cfg_gen_header["y_offset_after_box"]
         else:
@@ -463,9 +435,7 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
 
             first_block_content_height = 0
             if enumerate_exercises and len(enumerate_exercises) >= day and enumerate_exercises[day-1]:
-                first_block_content_height = (cfg_calc_enum["line_spacing_after_title"]
-                                              + cfg_calc_enum["line_spacing_per_item"]
-                                              + cfg_calc_enum["spacing_after_section"])
+                first_block_content_height = (cfg_calc_enum["line_spacing_after_title"] + cfg_calc_enum["line_spacing_per_item"] + cfg_calc_enum["spacing_after_section"])
             elif current_day_story_problems:  # Estimation pour "Petits Problèmes"
                 # Title + space + problem + space + answer + space
                 first_block_content_height = 10 + 6 + 9 + 4 + 9 + 13
@@ -500,11 +470,9 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
             if enumerate_exercises and len(enumerate_exercises) >= day and enumerate_exercises[day-1]:
                 pdf.setFont(cfg_calc_enum["title_font_name"],
                             cfg_calc_enum["title_font_size"])
-                pdf.drawString(exercise_content_x_start, y_position,
-                               "Écris chaque nombre en toutes lettres :")
+                pdf.drawString(exercise_content_x_start, y_position, "Écris chaque nombre en toutes lettres :")
                 y_position -= cfg_calc_enum["line_spacing_after_title"]
-                pdf.setFont(cfg_calc_enum["content_font_name"],
-                            cfg_calc_enum["content_font_size"])
+                pdf.setFont(cfg_calc_enum["content_font_name"], cfg_calc_enum["content_font_size"])
                 for n in enumerate_exercises[day-1]:
                     pdf.drawString(exercise_content_x_start, y_position,
                                    f"{n} = _____________________________________________")
@@ -572,8 +540,7 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                 pdf.setFont(original_font_calc, original_size_calc)
                 pdf.setFillColor(original_fill_color_obj)
 
-            box_actual_bottom_y = (y_position
-                                   - PDF_STYLE_CONFIG["section_frame"]["content_bottom_padding"])
+            box_actual_bottom_y = (y_position - PDF_STYLE_CONFIG["section_frame"]["content_bottom_padding"])
             draw_rounded_box_with_color(pdf,
                                         margin, box_actual_bottom_y,
                                         width - 2 * margin, current_frame_segment_top_y - box_actual_bottom_y,
