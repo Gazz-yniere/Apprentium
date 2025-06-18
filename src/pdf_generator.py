@@ -205,7 +205,7 @@ def draw_canvas_story_problems(pdf, y_position, problems_for_day, exercise_conte
         pdf.showPage()
         y_position = page_height - margin
         current_frame_segment_top_y_ref[0] = y_position
-        draw_section_image_in_frame( pdf, section_data_for_image, current_frame_segment_top_y_ref[0], page_width, margin)
+        draw_section_image_in_frame(pdf, section_data_for_image, current_frame_segment_top_y_ref[0], page_width, margin)
 
     pdf.setFont(cfg_sp["title_font_name"], title_font_size)
     pdf.drawString(exercise_content_x_start, y_position, title_text)
@@ -887,8 +887,7 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                                y_position, f"Phrase :")
                 pdf.setFont(cfg_gram["content_font_name"], # noqa E501
                             cfg_gram["content_font_size"]) # noqa E501
-                pdf.drawString(exercise_content_x_start +
-                               55, y_position, phrase)
+                pdf.drawString(exercise_content_x_start + 55, y_position, phrase)
                 y_position -= cfg_gram["line_spacing_per_line"]
                 if y_position < margin:
                     draw_rounded_box_with_color(pdf, margin, margin, width - 2 * margin,
@@ -903,10 +902,8 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
 
                 pdf.setFont(cfg_gram["title_font_name"],
                             cfg_gram["title_font_size"])
-                pdf.drawString(exercise_content_x_start,
-                               y_position, f"Transformation demandée :")
-                pdf.setFont(cfg_gram["content_font_name"], # noqa E501
-                            cfg_gram["content_font_size"]) # noqa E501
+                pdf.drawString(exercise_content_x_start, y_position, f"Transformation demandée :")
+                pdf.setFont(cfg_gram["content_font_name"], cfg_gram["content_font_size"]) 
                 pdf.drawString(exercise_content_x_start + 130,
                                y_position, transformation)
                 y_position -= cfg_gram["line_spacing_per_line"]
@@ -981,13 +978,11 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                                    y_position, f"{ex['homophone']} :")
                     pdf.setFont(cfg_ortho["content_font_name"], # noqa E501
                                 cfg_ortho["content_font_size"]) # noqa E501
-                    pdf.drawString(exercise_content_x_start +
-                                   60, y_position, ex['content'])
+                    pdf.drawString(exercise_content_x_start + 60, y_position, ex['content'])
                     y_position -= cfg_ortho["line_spacing_per_item"]
                     y_position -= cfg_ortho["spacing_after_item"]
                 if y_position < margin:  # Check after each exercise item
-                    draw_rounded_box_with_color(pdf, margin, margin, width - 2 * margin,
-                                                current_frame_segment_top_y - margin, stroke_rgb_color=section_color_rgb)
+                    draw_rounded_box_with_color(pdf, margin, margin, width - 2 * margin, current_frame_segment_top_y - margin, stroke_rgb_color=section_color_rgb)
                     pdf.showPage()
                     y_position = height - margin
                     current_frame_segment_top_y = y_position
