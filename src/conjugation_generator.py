@@ -1,13 +1,15 @@
 import random
-import sys
-import os
 import json
+import os
+
 
 def get_resource_path(filename):
-    import sys, os
+    import sys
+    import os
     if hasattr(sys, '_MEIPASS'):
         return os.path.join(sys._MEIPASS, "json", filename)
     return os.path.join(os.path.dirname(__file__), "json", filename)
+
 
 # Chargement dynamique des verbes depuis un fichier JSON
 VERBS_PATH = get_resource_path('verbes.json')
@@ -42,6 +44,7 @@ TENSES = [
     "impératif présent"
 ]
 
+
 def get_random_verb(group, used_verbs):
     if group not in VERBS:
         raise ValueError("Le groupe spécifié est invalide. Veuillez choisir 1, 2 ou 3.")
@@ -55,4 +58,4 @@ def get_random_verb(group, used_verbs):
     used_verbs.add(verb)
     return verb
 
-# Note : Pour PyInstaller, verbes.json doit être à côté de l'exe pour édition après compilation.
+# Note : Pour PyInstaller, verbes.json doit être à côté de l'exe pour édition après compilation.  # noqa: E501

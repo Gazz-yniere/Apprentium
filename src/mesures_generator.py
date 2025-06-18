@@ -3,6 +3,7 @@ import os
 import json
 import sys
 
+
 def get_resource_path(filename):
     # Utility to get resource path, useful if CONVERSION_DATA is in a JSON file
     if hasattr(sys, '_MEIPASS'):
@@ -11,6 +12,7 @@ def get_resource_path(filename):
     # For script execution, assumes 'json' folder is in the same directory as this script
     return os.path.join(os.path.dirname(__file__), "json", filename)
 
+
 CONVERSION_DATA = {}
 try:
     # Assuming your conversion configuration is in 'conversions_config.json'
@@ -18,11 +20,14 @@ try:
     with open(get_resource_path('conversions_config.json'), 'r', encoding='utf-8') as f:
         CONVERSION_DATA = json.load(f)
 except FileNotFoundError:
-    print(f"ERREUR: Fichier conversions_config.json introuvable. Les exercices de conversion ne seront pas disponibles.")
+    print("ERREUR: Fichier conversions_config.json introuvable. "
+          "Les exercices de conversion ne seront pas disponibles.")
 except json.JSONDecodeError as e:
-    print(f"ERREUR: Erreur de décodage JSON dans 'conversions_config.json': {e}. Les exercices de conversion ne seront pas disponibles.")
+    print(f"ERREUR: Erreur de décodage JSON dans 'conversions_config.json': {e}. "
+          "Les exercices de conversion ne seront pas disponibles.")
 except Exception as e:
-    print(f"ERREUR: Impossible de charger les données de conversion: {e}. Les exercices de conversion ne seront pas disponibles.")
+    print(f"ERREUR: Impossible de charger les données de conversion: {e}. "
+          "Les exercices de conversion ne seront pas disponibles.")
 
 
 def generate_conversion_exercises(types_selectionnes, n, senses, current_level):
@@ -53,25 +58,25 @@ def generate_conversion_exercises(types_selectionnes, n, senses, current_level):
                             "range": conv_details["range_from"],
                             "sense": "direct"
                         })
-                    if "inverse" in senses and conv_details["multiplier"] != 0 :
-                         possible_conversions.append({
+                    if "inverse" in senses and conv_details["multiplier"] != 0:
+                        possible_conversions.append({
                             "type": type_conv,
-                            "from_unit": conv_details["to"], 
+                            "from_unit": conv_details["to"],
                             "to_unit": conv_details["from"],
-                            "multiplier": 1 / conv_details["multiplier"], 
+                            "multiplier": 1 / conv_details["multiplier"],
                             "range": [round(v * conv_details["multiplier"]) for v in conv_details["range_from"]],
                             "sense": "inverse"
                         })
-    
+
     if not possible_conversions:
         return exercices
 
     for _ in range(n):
         chosen_conv = random.choice(possible_conversions)
-        
+
         val_from = random.randint(chosen_conv["range"][0], chosen_conv["range"][1])
         exercices.append(f"{val_from} {chosen_conv['from_unit']} = ......... {chosen_conv['to_unit']}")
-        
+
     return exercices
 
 def generate_sort_exercises(params, days):
@@ -85,36 +90,37 @@ def generate_sort_exercises(params, days):
 
     if sort_count > 0 and sort_digits > 0 and sort_n_numbers > 0 and \
        (sort_type_croissant_param or sort_type_decroissant_param):
-        
+
         needs_daily_random_sort = sort_type_croissant_param and sort_type_decroissant_param
-        
+
         for _ in range(days):
             daily_sort_ex = []
-            actual_sort_type_for_day = 'croissant' 
+            actual_sort_type_for_day = 'croissant'
             if needs_daily_random_sort:
                 actual_sort_type_for_day = random.choice(['croissant', 'decroissant'])
             elif sort_type_decroissant_param:
                 actual_sort_type_for_day = 'decroissant'
-            
+
             for _ in range(sort_count):
                 min_val = 0
-                if sort_digits == 1: max_val = 9
+                if sort_digits == 1:
+                    max_val = 9
                 elif sort_digits > 1:
                     min_val = 10**(sort_digits-1)
                     max_val = 10**sort_digits - 1
-                else: 
-                    max_val = 0 
-                
+                else:
+                    max_val = 0
+
                 numbers = [random.randint(min_val, max_val) for _ in range(sort_n_numbers)]
                 daily_sort_ex.append({
                     'numbers': numbers,
                     'type': actual_sort_type_for_day
                 })
             all_sort_exercises.append(daily_sort_ex)
-    else: 
+    else:
         for _ in range(days):
             all_sort_exercises.append([])
-            
+
     return all_sort_exercises
 
 def generate_daily_encadrement_exercises(count, digits, types):
@@ -122,21 +128,23 @@ def generate_daily_encadrement_exercises(count, digits, types):
     generated_lines = []
     if count > 0 and digits > 0 and types:
         min_n = 0
-        if digits == 1: max_n = 9
+        if digits == 1:
+            max_n = 9
         elif digits > 1:
             min_n = 10**(digits - 1)
             max_n = (10**digits - 1)
-        else: 
+        else:
             max_n = 0
-        
+
         for _ in range(count):
             t = random.choice(types)
-            if min_n > max_n: 
-                n = min_n 
+            if min_n > max_n:
+                n = min_n
             else:
                 n = random.randint(min_n, max_n)
             generated_lines.append({'number': n, 'type': t})
     return generated_lines
+
 
 def generate_compare_numbers_exercises(params, days):
     """ Génère des exercices de comparaison de nombres pour plusieurs jours. """
@@ -146,14 +154,15 @@ def generate_compare_numbers_exercises(params, days):
 
     if compare_count > 0 and compare_digits > 0:
         min_val = 0
-        if compare_digits == 1: max_val = 9
+        if compare_digits == 1:
+            max_val = 9
         elif compare_digits > 1:
             min_val = 10**(compare_digits - 1) if compare_digits > 1 else 0  # Pour éviter 0 si digits=1
             max_val = 10**compare_digits - 1
         else:  # digits == 0 or invalid
             max_val = 9  # fallback
             min_val = 0
-        if min_val > max_val : min_val = max_val  # Sanity check
+        if min_val > max_val: min_val = max_val  # Sanity check
 
         for _ in range(days):
             daily_compare_ex = []
@@ -168,22 +177,24 @@ def generate_compare_numbers_exercises(params, days):
     else:
         for _ in range(days):
             all_compare_exercises.append([])
-            
+
     return all_compare_exercises
+
 
 MIN_VALID_SEQUENCE_LENGTH = 3  # Une suite doit avoir au moins 3 éléments pour être valide.
 MAX_GENERATION_ATTEMPTS_PER_EXERCISE = 10  # Max tentatives pour générer une suite valide par slot d'exercice.
+
 
 def generate_logical_sequences_exercises(params, days, current_level):
     """ Génère des exercices de suites logiques pour plusieurs jours. """
     sequences_count = params.get('count', 0)
     # sequence_length est le nombre total d'éléments souhaités dans la suite. Min 3.
-    sequence_length = max(3, params.get('length', 5)) 
+    sequence_length = max(MIN_VALID_SEQUENCE_LENGTH, params.get('length', 5))
     selected_types = params.get('types', [])
     all_sequences_exercises = []
 
     # Adapter la complexité en fonction du niveau (longueur de la suite, valeur du pas)
-    num_blanks = 1      # Nombre de trous dans la suite
+    # num_blanks = 1      # Nombre de trous dans la suite (currently fixed to 1)
 
     if sequences_count > 0 and selected_types:
         for _ in range(days):
@@ -191,7 +202,7 @@ def generate_logical_sequences_exercises(params, days, current_level):
             for _ in range(sequences_count):  # Pour chaque slot d'exercice demandé pour la journée
                 generated_valid_sequence_for_slot = False
                 for attempt in range(MAX_GENERATION_ATTEMPTS_PER_EXERCISE):
-                    if not selected_types: break  # Aucun type sélectionné, on saute cet exercice
+                    if not selected_types: break  # Aucun type sélectionné
                     chosen_type = random.choice(selected_types)
 
                     step, start_value = 0, 0
@@ -202,14 +213,14 @@ def generate_logical_sequences_exercises(params, days, current_level):
                         if chosen_type == 'arithmetic_minus' and sequence_length > 4:
                             start_value = random.randint(step * (sequence_length // 2) + 5, 60 + step * (sequence_length // 2))
                     elif chosen_type == 'arithmetic_multiply':
-                        step = random.randint(2, 10) 
+                        step = random.randint(2, 10)
                         start_value = random.randint(1, 100)
                     elif chosen_type == 'arithmetic_divide':
-                        step = random.randint(2, 5) # Diviseur
+                        step = random.randint(2, 5)  # Diviseur
                         # Générer la suite "à l'envers" en partant d'un petit nombre
                         # et en multipliant, puis inverser la suite.
-                        last_term = random.randint(1, 10)  # Le plus petit nombre de la suite de division
-                        
+                        last_term = random.randint(1, 10)  # Le plus petit nombre de la suite
+
                         temp_sequence_for_division = [last_term]
                         current_val_for_multi = last_term
                         possible_to_generate = True
@@ -225,38 +236,38 @@ def generate_logical_sequences_exercises(params, days, current_level):
                                 possible_to_generate = False
                                 break
                         if not possible_to_generate or len(temp_sequence_for_division) != sequence_length:
-                            continue  # Impossible de générer la suite avec ces paramètres, essayer une autre tentative
-                        
+                            continue  # Impossible de générer, essayer une autre tentative
+
                         temp_sequence_for_division.reverse()  # Inverser pour obtenir la suite de division
                         sequence = temp_sequence_for_division
                         start_value = sequence[0]  # Le premier terme de la suite de division
                         # current_val sera initialisé à start_value plus bas
-                    
-                    if chosen_type != 'arithmetic_divide': # Pour les autres types, initialiser comme avant
+
+                    if chosen_type != 'arithmetic_divide':  # Pour les autres types, initialiser comme avant
                         sequence = [start_value]
                     current_val = start_value
 
-                    for i in range(1, sequence_length): # Essayer de construire jusqu'à la longueur désirée
+                    for i in range(1, sequence_length):  # Essayer de construire jusqu'à la longueur désirée
                         prev_val = current_val
                         if chosen_type == 'arithmetic_plus':
                             current_val += step
                         elif chosen_type == 'arithmetic_minus':
-                            if current_val == 0: break 
+                            if current_val == 0: break
                             current_val -= step
-                            if current_val < 0: current_val = 0 
+                            if current_val < 0: current_val = 0
                         elif chosen_type == 'arithmetic_multiply':
                             # Suppression de la limite de 10000
-                            if prev_val > (10**12) / step :  # Vérifier avant multiplication pour éviter Overflow
-                                break 
+                            if prev_val > (10**12) / step:  # Vérifier avant multiplication
+                                break
                             current_val *= step
                             if current_val > 10**12: break  # Limite très haute pour éviter des nombres gigantesques
                         elif chosen_type == 'arithmetic_divide':
-                            if step == 0: break 
-                            if current_val < step or current_val % step != 0: 
-                                break 
+                            if step == 0: break
+                            if current_val < step or current_val % step != 0:
+                                break
                             current_val //= step
-                            if current_val == 0 and prev_val > 0 :  # Éviter de finir sur 0 si on peut s'arrêter avant
-                                if len(sequence) > 1 : sequence.pop()  # Retirer le 0 si le terme précédent était > 0
+                            if current_val == 0 and prev_val > 0:  # Éviter de finir sur 0
+                                if len(sequence) > 1: sequence.pop()  # Retirer le 0
                                 break
                             if current_val < 1 and prev_val > 0 :  # Si on obtient une fraction < 1
                                 break
@@ -270,15 +281,15 @@ def generate_logical_sequences_exercises(params, days, current_level):
                     if len(sequence) == sequence_length:
                         blank_pos = random.randint(1, len(sequence) - 2)  # Blank pas aux extrémités
                         daily_sequences_ex.append({
-                            'type': chosen_type, 
+                            'type': chosen_type,
                             'sequence_displayed': [val if idx != blank_pos else "____" for idx, val in enumerate(sequence)],
-                            'full_sequence': sequence, 
+                            'full_sequence': sequence,
                             'blank_position': blank_pos,
-                            'step': step 
+                            'step': step
                         })
                         generated_valid_sequence_for_slot = True
                         break  # Sortir de la boucle d'essais, passer au prochain slot d'exercice
-                # if not generated_valid_sequence_for_slot:
+                # if not generated_valid_sequence_for_slot:  # noqa: E114
             all_sequences_exercises.append(daily_sequences_ex)
     else:
         for _ in range(days):

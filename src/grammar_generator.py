@@ -1,13 +1,15 @@
 import random
-import sys
-import os
 import json
+import os
+
 
 def get_resource_path(filename):
-    import sys, os
+    import sys
+    import os
     if hasattr(sys, '_MEIPASS'):
         return os.path.join(sys._MEIPASS, "json", filename)
     return os.path.join(os.path.dirname(__file__), "json", filename)
+
 
 # Chargement dynamique des phrases depuis un fichier JSON
 PHRASES_PATH = get_resource_path('phrases_grammaire.json')
@@ -41,17 +43,20 @@ TRANSFORMATIONS = [
 # Complexité des phrases
 COMPLEXITIES = ["simple", "complexe"]
 
+
 def get_random_phrase(phrase_type, complexity="simple"):
     # Pour l'instant, la complexité n'est pas utilisée, mais on peut l'étendre
     return random.choice(PHRASES[phrase_type])
+
 
 def get_random_transformation(selected_transformations):
     if not selected_transformations:
         return None
     return random.choice(selected_transformations)
 
+
 def get_random_phrases(phrase_types, n):
-    """Retourne n phrases aléatoires parmi tous les types cochés, sans doublon immédiat, avec répétition possible si n > total."""
+    """Retourne n phrases aléatoires parmi tous les types cochés, sans doublon immédiat, avec répétition possible si n > total."""  # noqa: E501
     pool = []
     for t in phrase_types:
         pool.extend(PHRASES[t])
@@ -66,4 +71,4 @@ def get_random_phrases(phrase_types, n):
         last = phrase
     return result
 
-# Note : Pour PyInstaller, phrases_grammaire.json doit être à côté de l'exe pour édition après compilation.
+# Note : Pour PyInstaller, phrases_grammaire.json doit être à côté de l'exe pour édition après compilation.  # noqa: E501
