@@ -1,9 +1,7 @@
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QLabel, QLineEdit, QCheckBox, QPushButton, QFrame, QGroupBox, QSplitter, QFileDialog, QLayout, QGraphicsOpacityEffect, QScrollArea)
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QIcon
 from PyQt6.QtGui import QPalette, QColor
 from calculs_generator import generate_story_math_problems
-import os
 import json
 import sys
 

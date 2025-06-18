@@ -884,7 +884,7 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                 pdf.setFont(cfg_gram["title_font_name"],
                             cfg_gram["title_font_size"])
                 pdf.drawString(exercise_content_x_start,
-                               y_position, f"Phrase :")
+                               y_position, "Phrase :")
                 pdf.setFont(cfg_gram["content_font_name"], # noqa E501
                             cfg_gram["content_font_size"]) # noqa E501
                 pdf.drawString(exercise_content_x_start + 55, y_position, phrase)
