@@ -212,7 +212,7 @@ def generate_logical_sequences_exercises(params, days, current_level):
             # Pour chaque slot d'exercice demandé pour la journée
             for _ in range(sequences_count):
                 generated_valid_sequence_for_slot = False
-                for attempt in range(MAX_GENERATION_ATTEMPTS_PER_EXERCISE):
+                for _attempt in range(MAX_GENERATION_ATTEMPTS_PER_EXERCISE):
                     if not selected_types:
                         break  # Aucun type sélectionné
                     chosen_type = random.choice(selected_types)
@@ -313,8 +313,9 @@ def generate_logical_sequences_exercises(params, days, current_level):
                         })
                         generated_valid_sequence_for_slot = True
                         break  # Sortir de la boucle d'essais, passer au prochain slot d'exercice
-                # if not generated_valid_sequence_for_slot:  # noqa: E114
-            all_sequences_exercises.append(daily_sequences_ex)
+                if not generated_valid_sequence_for_slot: # Check if a sequence was generated for the slot
+                    pass # Optionally log or handle the case where no sequence could be generated
+            all_sequences_exercises.append(daily_sequences_ex) # This was potentially mis-indented or logic error
     else:
         for _ in range(days):
             all_sequences_exercises.append([])
