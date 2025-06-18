@@ -10,7 +10,6 @@ class InvalidFieldError(Exception):
 class ExerciseDataBuilder:
     @staticmethod
     def build(params):
-        # print(f"ExerciseDataBuilder.build: Received params. params.get('current_level_for_conversions') is {params.get('current_level_for_conversions')}") # Debug print
         try:
             days = params['days']
             relier_count = params.get('relier_count', 0)
@@ -74,7 +73,7 @@ class ExerciseDataBuilder:
                 params_list.append({
                     'operation': 'division',
                     'count': count,
-                    'num_operands': 2, # Forcé à 2 pour la division pour l'instant
+                    'num_operands': 2,  # Forcé à 2 pour la division pour l'instant
                     'digits': digits,
                     'division_reste': division_reste,
                     'division_quotient_decimal': division_quotient_decimal,
@@ -98,33 +97,33 @@ class ExerciseDataBuilder:
             
             # S'assurer qu'il y a des verbes et des temps avant de continuer
             if not verbes_possibles or not temps_choisis:
-                verbes_par_jour = 0 # Force à 0 si pas de verbes ou pas de temps
+                verbes_par_jour = 0  # Force à 0 si pas de verbes ou pas de temps
 
             if verbes_par_jour > 0 and len(verbes_possibles) < verbes_par_jour * jours:
                 print("Avertissement : Pas assez de verbes uniques pour couvrir tous les jours sans doublon. Les verbes seront répétés.")
                 # Permettre la répétition si nécessaire
                 extended_verbes_possibles = []
                 while len(extended_verbes_possibles) < verbes_par_jour * jours:
-                    random.shuffle(verbes_possibles) # Mélanger pour varier la répétition
+                    random.shuffle(verbes_possibles)  # Mélanger pour varier la répétition
                     extended_verbes_possibles.extend(verbes_possibles)
                 verbes_possibles = extended_verbes_possibles[:verbes_par_jour * jours]
 
 
             index = 0
             conjugations = []
-            if verbes_par_jour > 0: # Seulement si on doit générer des conjugaisons
+            if verbes_par_jour > 0:  # Seulement si on doit générer des conjugaisons
                 for _ in range(jours):
                     daily_conjugations = []
                     for _ in range(verbes_par_jour):
-                        if index < len(verbes_possibles): # Vérifier si on a encore des verbes
+                        if index < len(verbes_possibles):  # Vérifier si on a encore des verbes
                             verbe = verbes_possibles[index]
                             index += 1
                             temps = random.choice(temps_choisis)
                             daily_conjugations.append({"verb": verbe, "tense": temps})
-                        else: # Plus de verbes disponibles (ne devrait pas arriver avec la logique d'extension)
+                        else:  # Plus de verbes disponibles (ne devrait pas arriver avec la logique d'extension)
                             break 
                     conjugations.append(daily_conjugations)
-            else: # Pas de conjugaisons à générer
+            else:  # Pas de conjugaisons à générer
                  for _ in range(jours):
                     conjugations.append([])
 
@@ -148,10 +147,10 @@ class ExerciseDataBuilder:
             for _ in range(jours):
                 phrases_choisies = get_random_phrases(grammar_types, grammar_sentence_count)
                 daily_grammar = []
-                if phrases_choisies and grammar_transformations: # S'assurer qu'il y a des phrases ET des transformations possibles
+                if phrases_choisies and grammar_transformations:  # S'assurer qu'il y a des phrases ET des transformations possibles
                     for phrase in phrases_choisies:
                         transformation = get_random_transformation(grammar_transformations)
-                        if transformation: # S'assurer qu'une transformation a été choisie
+                        if transformation:  # S'assurer qu'une transformation a été choisie
                             daily_grammar.append({
                                 'phrase': phrase,
                                 'transformation': transformation
@@ -163,9 +162,9 @@ class ExerciseDataBuilder:
             geo_ex_count = params.get('geo_ex_count', 0)
             geo_types = params.get('geo_types', [])
             geo_senses = params.get('geo_senses', [])
-            all_geo_exercises = [] # Sera une liste de listes (une par jour)
+            all_geo_exercises = []  # Sera une liste de listes (une par jour)
             if geo_types and geo_ex_count > 0 and geo_senses and generate_conversion_exercises:
-                for _ in range(days): # Générer pour chaque jour
+                for _ in range(days):  # Générer pour chaque jour
                     # Passer le niveau actuel à la fonction de génération
                     # print(f"ExerciseDataBuilder: Calling generate_conversion_exercises with current_level={params.get('current_level_for_conversions')}") # Debug print
                     daily_geo_ex = generate_conversion_exercises(
@@ -174,7 +173,7 @@ class ExerciseDataBuilder:
                         senses=geo_senses,
                         current_level=params.get('current_level_for_conversions'))
                     all_geo_exercises.append(daily_geo_ex)
-            else: # S'il n'y a pas d'exercices de conversion, s'assurer que la structure est cohérente
+            else:  # S'il n'y a pas d'exercices de conversion, s'assurer que la structure est cohérente
                 for _ in range(days):
                     all_geo_exercises.append([])
 
@@ -183,7 +182,7 @@ class ExerciseDataBuilder:
             PHRASES_SIMPLES = params.get('PHRASES_SIMPLES', [])
             PHRASES_COMPLEXES = params.get('PHRASES_COMPLEXES', [])
             MOTS_A_RELIER = params.get('MOTS_A_RELIER', [])
-            english_ex_count = params.get('english_ex_count', 0) # Nombre de phrases à compléter
+            english_ex_count = params.get('english_ex_count', 0)  # Nombre de phrases à compléter
             # relier_count est le nombre de jeux à relier, déjà dans params
             # n_mots_reliés est le nombre de mots par jeu, déjà dans params
             
@@ -192,15 +191,15 @@ class ExerciseDataBuilder:
             # Récupérer les paramètres pour la fonction de génération anglaise
             generate_english_full_exercises_func = params.get('generate_english_full_exercises_func')
             n_complete_param = params.get('english_complete_count', 0)
-            n_relier_param = params.get('english_relier_count', 0) # Nombre de jeux
-            n_mots_relies_param = params.get('relier_count', 0) # Nombre de mots par jeu
+            n_relier_param = params.get('english_relier_count', 0)  # Nombre de jeux
+            n_mots_relies_param = params.get('relier_count', 0)  # Nombre de mots par jeu
             # print(f"DEBUG Builder: Thèmes reçus: {params.get('selected_english_themes')}") # DEBUG
             selected_english_themes = params.get('selected_english_themes', [])
             
             if generate_english_full_exercises_func:
                 for _ in range(jours):
                     daily_english_ex = generate_english_full_exercises_func(
-                        types=english_types, # ['simple', 'complexe']
+                        types=english_types,  # ['simple', 'complexe']
                         n_complete=n_complete_param,
                         n_relier=n_relier_param,
                         n_mots_reliés=n_mots_relies_param,
@@ -239,9 +238,9 @@ class ExerciseDataBuilder:
             # Enumérer un nombre
             enumerate_count = params.get('enumerate_count', 0)
             enumerate_digits = params.get('enumerate_digits', 0)
-            all_enumerate_exercises = [] # Sera une liste de listes (une par jour)
+            all_enumerate_exercises = []  # Sera une liste de listes (une par jour)
             if enumerate_count > 0 and enumerate_digits > 0:
-                for _ in range(days): # Générer pour chaque jour
+                for _ in range(days):  # Générer pour chaque jour
                     daily_enum_ex = []
                     for _ in range(enumerate_count):
                         n = random.randint(0, 10**enumerate_digits-1)
@@ -266,7 +265,7 @@ class ExerciseDataBuilder:
             # Le 'step' n'est plus dans logical_sequences_build_params depuis l'UI, il sera géré dans le générateur.
             # On passe les paramètres de direction.
             all_logical_sequences_exercises = generate_logical_sequences_exercises(
-                logical_sequences_build_params, # Contient count, types
+                logical_sequences_build_params,  # Contient count, types
                 jours, 
                 params.get('current_level_for_problems')) # Utiliser le niveau actuel
             # Encadrement de nombre
@@ -289,7 +288,7 @@ class ExerciseDataBuilder:
             math_problems_count = params.get('math_problems_count', 0)
             selected_math_problem_types = params.get('selected_math_problem_types', [])
             current_level_for_problems = params.get('current_level_for_problems')
-            all_math_problems = [] # Sera une liste de listes (une par jour)
+            all_math_problems = []  # Sera une liste de listes (une par jour)
 
             if generate_math_problems_func and math_problems_count > 0 and selected_math_problem_types:
                 for _ in range(jours):
@@ -312,20 +311,20 @@ class ExerciseDataBuilder:
                 'params_list': params_list,
                 'grammar_exercises': grammar_exercises,
                 'geo_exercises': all_geo_exercises, 
-                'english_exercises': english_exercises_data, # Utiliser les données générées ici
+                'english_exercises': english_exercises_data,  
                 'orthographe_exercises': orthographe_exercises,
                 'enumerate_exercises': all_enumerate_exercises,
                 'sort_exercises': all_sort_exercises,
-                'compare_numbers_exercises_list': all_compare_numbers_exercises, # Nouveau
-                'logical_sequences_exercises_list': all_logical_sequences_exercises, # Nouveau
-                'encadrement_exercises_list': all_encadrement_exercises_list, # Modifié pour la nouvelle structure
+                'compare_numbers_exercises_list': all_compare_numbers_exercises, 
+                'logical_sequences_exercises_list': all_logical_sequences_exercises,  
+                'encadrement_exercises_list': all_encadrement_exercises_list,
                 'math_problems': all_math_problems
             }
         except InvalidFieldError as e:
             print(f"Veuillez entrer une valeur numérique valide pour : {e.field_name} (valeur saisie : '{e.value}')")
-            return None # Retourner None en cas d'erreur de validation
+            return None  # Retourner None en cas d'erreur de validation
         except Exception as e:
             import traceback
             print(f"Une erreur s'est produite dans ExerciseDataBuilder.build : {type(e).__name__} : {e}")
             traceback.print_exc()
-            return None # Retourner None en cas d'autre erreur
+            return None  # Retourner None en cas d'autre erreur

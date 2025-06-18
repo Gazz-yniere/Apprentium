@@ -18,7 +18,7 @@ try:
     with open(get_resource_path('conversions_config.json'), 'r', encoding='utf-8') as f:
         CONVERSION_DATA = json.load(f)
 except FileNotFoundError:
-    print(f"ERREUR: Fichier 'conversions_config.json' introuvable. Les exercices de conversion ne seront pas disponibles.")
+    print(f"ERREUR: Fichier conversions_config.json introuvable. Les exercices de conversion ne seront pas disponibles.")
 except json.JSONDecodeError as e:
     print(f"ERREUR: Erreur de décodage JSON dans 'conversions_config.json': {e}. Les exercices de conversion ne seront pas disponibles.")
 except Exception as e:
@@ -148,12 +148,12 @@ def generate_compare_numbers_exercises(params, days):
         min_val = 0
         if compare_digits == 1: max_val = 9
         elif compare_digits > 1:
-            min_val = 10**(compare_digits - 1) if compare_digits > 1 else 0 # Pour éviter 0 si digits=1
+            min_val = 10**(compare_digits - 1) if compare_digits > 1 else 0  # Pour éviter 0 si digits=1
             max_val = 10**compare_digits - 1
-        else: # digits == 0 or invalid
-            max_val = 9 # fallback
+        else:  # digits == 0 or invalid
+            max_val = 9  # fallback
             min_val = 0
-        if min_val > max_val : min_val = max_val # Sanity check
+        if min_val > max_val : min_val = max_val  # Sanity check
 
         for _ in range(days):
             daily_compare_ex = []
@@ -171,8 +171,8 @@ def generate_compare_numbers_exercises(params, days):
             
     return all_compare_exercises
 
-MIN_VALID_SEQUENCE_LENGTH = 3 # Une suite doit avoir au moins 3 éléments pour être valide.
-MAX_GENERATION_ATTEMPTS_PER_EXERCISE = 10 # Max tentatives pour générer une suite valide par slot d'exercice.
+MIN_VALID_SEQUENCE_LENGTH = 3  # Une suite doit avoir au moins 3 éléments pour être valide.
+MAX_GENERATION_ATTEMPTS_PER_EXERCISE = 10  # Max tentatives pour générer une suite valide par slot d'exercice.
 
 def generate_logical_sequences_exercises(params, days, current_level):
     """ Génère des exercices de suites logiques pour plusieurs jours. """
@@ -188,10 +188,10 @@ def generate_logical_sequences_exercises(params, days, current_level):
     if sequences_count > 0 and selected_types:
         for _ in range(days):
             daily_sequences_ex = []
-            for _ in range(sequences_count): # Pour chaque slot d'exercice demandé pour la journée
+            for _ in range(sequences_count):  # Pour chaque slot d'exercice demandé pour la journée
                 generated_valid_sequence_for_slot = False
                 for attempt in range(MAX_GENERATION_ATTEMPTS_PER_EXERCISE):
-                    if not selected_types: break # Aucun type sélectionné, on saute cet exercice
+                    if not selected_types: break  # Aucun type sélectionné, on saute cet exercice
                     chosen_type = random.choice(selected_types)
 
                     step, start_value = 0, 0
@@ -208,7 +208,7 @@ def generate_logical_sequences_exercises(params, days, current_level):
                         step = random.randint(2, 5) # Diviseur
                         # Générer la suite "à l'envers" en partant d'un petit nombre
                         # et en multipliant, puis inverser la suite.
-                        last_term = random.randint(1, 10) # Le plus petit nombre de la suite de division
+                        last_term = random.randint(1, 10)  # Le plus petit nombre de la suite de division
                         
                         temp_sequence_for_division = [last_term]
                         current_val_for_multi = last_term
@@ -216,7 +216,7 @@ def generate_logical_sequences_exercises(params, days, current_level):
                         for _ in range(sequence_length - 1):
                             try:
                                 next_val = current_val_for_multi * step
-                                if next_val > 10**12: # Limite très haute pour éviter des nombres ingérables
+                                if next_val > 10**12:  # Limite très haute pour éviter des nombres ingérables
                                     possible_to_generate = False
                                     break
                                 temp_sequence_for_division.append(next_val)
@@ -225,11 +225,11 @@ def generate_logical_sequences_exercises(params, days, current_level):
                                 possible_to_generate = False
                                 break
                         if not possible_to_generate or len(temp_sequence_for_division) != sequence_length:
-                            continue # Impossible de générer la suite avec ces paramètres, essayer une autre tentative
+                            continue  # Impossible de générer la suite avec ces paramètres, essayer une autre tentative
                         
-                        temp_sequence_for_division.reverse() # Inverser pour obtenir la suite de division
+                        temp_sequence_for_division.reverse()  # Inverser pour obtenir la suite de division
                         sequence = temp_sequence_for_division
-                        start_value = sequence[0] # Le premier terme de la suite de division
+                        start_value = sequence[0]  # Le premier terme de la suite de division
                         # current_val sera initialisé à start_value plus bas
                     
                     if chosen_type != 'arithmetic_divide': # Pour les autres types, initialiser comme avant
@@ -246,19 +246,19 @@ def generate_logical_sequences_exercises(params, days, current_level):
                             if current_val < 0: current_val = 0 
                         elif chosen_type == 'arithmetic_multiply':
                             # Suppression de la limite de 10000
-                            if prev_val > (10**12) / step : # Vérifier avant multiplication pour éviter Overflow
+                            if prev_val > (10**12) / step :  # Vérifier avant multiplication pour éviter Overflow
                                 break 
                             current_val *= step
-                            if current_val > 10**12: break # Limite très haute pour éviter des nombres gigantesques
+                            if current_val > 10**12: break  # Limite très haute pour éviter des nombres gigantesques
                         elif chosen_type == 'arithmetic_divide':
                             if step == 0: break 
                             if current_val < step or current_val % step != 0: 
                                 break 
                             current_val //= step
-                            if current_val == 0 and prev_val > 0 : # Éviter de finir sur 0 si on peut s'arrêter avant
-                                if len(sequence) > 1 : sequence.pop() # Retirer le 0 si le terme précédent était > 0
+                            if current_val == 0 and prev_val > 0 :  # Éviter de finir sur 0 si on peut s'arrêter avant
+                                if len(sequence) > 1 : sequence.pop()  # Retirer le 0 si le terme précédent était > 0
                                 break
-                            if current_val < 1 and prev_val > 0 : # Si on obtient une fraction < 1
+                            if current_val < 1 and prev_val > 0 :  # Si on obtient une fraction < 1
                                 break
 
                         # Pour la division, la séquence est déjà construite.
@@ -268,7 +268,7 @@ def generate_logical_sequences_exercises(params, days, current_level):
 
                      # La suite doit avoir exactement la longueur demandée
                     if len(sequence) == sequence_length:
-                        blank_pos = random.randint(1, len(sequence) - 2) # Blank pas aux extrémités
+                        blank_pos = random.randint(1, len(sequence) - 2)  # Blank pas aux extrémités
                         daily_sequences_ex.append({
                             'type': chosen_type, 
                             'sequence_displayed': [val if idx != blank_pos else "____" for idx, val in enumerate(sequence)],
@@ -277,12 +277,11 @@ def generate_logical_sequences_exercises(params, days, current_level):
                             'step': step 
                         })
                         generated_valid_sequence_for_slot = True
-                        break # Sortir de la boucle d'essais, passer au prochain slot d'exercice
+                        break  # Sortir de la boucle d'essais, passer au prochain slot d'exercice
                 # if not generated_valid_sequence_for_slot:
-                #     print(f"Avertissement: Impossible de générer une suite valide pour un slot après {MAX_GENERATION_ATTEMPTS_PER_EXERCISE} essais.")
             all_sequences_exercises.append(daily_sequences_ex)
     else:
         for _ in range(days):
             all_sequences_exercises.append([])
-            
+
     return all_sequences_exercises

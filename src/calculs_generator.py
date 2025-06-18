@@ -30,20 +30,20 @@ def _get_variable_value(var_config, current_vars, var_name_for_debug="<inconnue>
 
     min_val, max_val_config = var_config
     max_val = max_val_config
-    if isinstance(max_val_config, str): # Gère les dépendances comme "X-1"
+    if isinstance(max_val_config, str):  # Gère les dépendances comme "X-1"
         try:
             # Tente d'évaluer l'expression. 'current_vars' fournit le contexte.
             max_val = eval(max_val_config, {}, current_vars)
         except Exception as e_eval:
             print(f"Avertissement: Impossible d'évaluer la dépendance '{max_val_config}' pour la variable '{var_name_for_debug}'. Contexte: {current_vars}. Erreur: {e_eval}. Utilisation de la valeur min ({min_val}).")
-            max_val = min_val # Fallback
+            max_val = min_val  # Fallback
     
     if min_val > max_val:
         max_val = min_val 
 
     return random.randint(min_val, max_val)
 
-MAX_RETRIES_PER_PROBLEM = 10 # Pour éviter les boucles infinies si une condition est difficile à satisfaire
+MAX_RETRIES_PER_PROBLEM = 10  # Pour éviter les boucles infinies si une condition est difficile à satisfaire
 
 def generate_story_math_problems(selected_problem_types, num_problems, target_level):
     """
@@ -127,26 +127,26 @@ def generate_arithmetic_problems(operation, params):
     division_quotient_decimal = params.get('division_quotient_decimal', False) # This was from pdf_generator, but seems it should be based on division_decimals
     division_decimals = params.get('division_decimals', 0)
 
-    if num_operands < 2: # S'assurer qu'il y a au moins 2 opérandes
+    if num_operands < 2:  # S'assurer qu'il y a au moins 2 opérandes
         num_operands = 2
 
     for _ in range(count):
         operands = []
         # Génération standard des opérandes (non nuls)
         for i_op_gen in range(num_operands):
-            min_op_val = 0.1 * (10**(-decimals)) if with_decimals else 1 # Eviter 0
+            min_op_val = 0.1 * (10**(-decimals)) if with_decimals else 1  # Eviter 0
 
             if with_decimals:
                 # Max value: 10^digits - epsilon, or 9.99... if digits=0
                 max_val_raw = (10**digits - (0.1**(decimals+2))) if digits > 0 else (10 - (0.1**(decimals+2)))
                 op_val_raw = random.uniform(min_op_val, max_val_raw)
                 op = round(op_val_raw, decimals)
-                if op == 0 : op = min_op_val # S'assurer qu'il n'est pas 0.0 après arrondi
+                if op == 0 : op = min_op_val  # S'assurer qu'il n'est pas 0.0 après arrondi
             else:
                 # Max value: 10^digits - 1, or 9 if digits=0
                 max_val_int = (10**digits - 1) if digits > 0 else 9
                 op = random.randint(min_op_val, max_val_int if max_val_int >= min_op_val else min_op_val)
-                if op == 0 : op = 1 # S'assurer qu'il n'est pas 0
+                if op == 0 : op = 1  # S'assurer qu'il n'est pas 0
             operands.append(op)
 
         if operation == "addition":
@@ -212,34 +212,34 @@ def generate_arithmetic_problems(operation, params):
                 else:
                     operands.append(random.randint(0, 10**digits-1))
 
-            dividend_base = operands[0] # Sera ajusté
+            dividend_base = operands[0]  # Sera ajusté
             
             min_divisor = 1 # Divisor can be 1
             # Max divisor should be based on digits, ensuring it's not 0 if digits is 0 or 1
-            max_divisor = (10**digits -1) if digits > 0 else 9 # if digits is 0, max_divisor is 9 (single digit)
-            if max_divisor == 0 : max_divisor = 1 # Ensure max_divisor is at least 1
+            max_divisor = (10**digits -1) if digits > 0 else 9  # if digits is 0, max_divisor is 9 (single digit)
+            if max_divisor == 0 : max_divisor = 1  # Ensure max_divisor is at least 1
             
             divisor = operands[1] if operands[1] >= min_divisor and operands[1] <= max_divisor else random.randint(min_divisor, max_divisor)
-            if divisor == 0: divisor = 1 # Avoid division by zero explicitly
+            if divisor == 0: divisor = 1  # Avoid division by zero explicitly
 
-            if division_quotient_decimal and division_decimals > 0: # Corrected from pdf_generator
+            if division_quotient_decimal and division_decimals > 0:  # Corrected from pdf_generator
                 # For decimal quotients, ensure dividend allows for it.
                 # This part needs careful implementation if we want specific decimal places in quotient.
                 # For now, let's make dividend a product that might result in decimals.
-                quotient_val = round(random.uniform(1, 10), division_decimals) # Desired quotient
-                dividend = round(divisor * quotient_val, division_decimals + 2) # Ensure precision
+                quotient_val = round(random.uniform(1, 10), division_decimals)  # Desired quotient
+                dividend = round(divisor * quotient_val, division_decimals + 2)  # Ensure precision
                 # Ensure dividend is not smaller than divisor if we want non-zero integer part
-                if dividend < divisor and digits > 0 : dividend = divisor # simple adjustment
+                if dividend < divisor and digits > 0 : dividend = divisor  # simple adjustment
                 problems.append(f"{dividend} ÷ {divisor} = ")
-            elif not division_reste: # Exact division
-                quotient = random.randint(1, 10**(digits if digits > 0 else 1)) # Quotient can also have 'digits'
-                dividend = divisor * quotient # Ensure quotient is not 0
+            elif not division_reste:  # Exact division
+                quotient = random.randint(1, 10**(digits if digits > 0 else 1))  # Quotient can also have 'digits'
+                dividend = divisor * quotient  # Ensure quotient is not 0
                 problems.append(f"{dividend} ÷ {divisor} = ")
-            else: # Division with remainder
+            else:  # Division with remainder
                 quotient = random.randint(1, 10**(digits if digits > 0 else 1))
                 # Remainder must be less than divisor. If divisor is 1, remainder is 0.
                 reste = random.randint(0, divisor - 1) if divisor > 1 else 0
-                dividend = divisor * quotient + reste # Ensure quotient is not 0
+                dividend = divisor * quotient + reste  # Ensure quotient is not 0
                 problems.append(f"{dividend} ÷ {divisor} = ")
     return problems
 
@@ -255,7 +255,7 @@ if __name__ == '__main__':
     add_params = {'count': 2, 'digits': 1, 'decimals': 0, 'num_operands': 2}
     print("Addition:", generate_arithmetic_problems("addition", add_params))
     
-    add_params_zero_digits = {'count': 1, 'digits': 0, 'decimals': 0, 'num_operands': 2} # digits=0 means single digit 1-9
+    add_params_zero_digits = {'count': 1, 'digits': 0, 'decimals': 0, 'num_operands': 2}  # digits=0 means single digit 1-9
     print("Addition (digits 0):", generate_arithmetic_problems("addition", add_params_zero_digits))
 
     sub_params = {'count': 2, 'digits': 2, 'decimals': 0, 'allow_negative': False, 'num_operands': 2}
@@ -270,7 +270,7 @@ if __name__ == '__main__':
     div_params_exact = {'count': 2, 'digits': 2, 'division_reste': False}
     print("Division (exacte):", generate_arithmetic_problems("division", div_params_exact))
 
-    div_params_reste = {'count': 2, 'digits': 1, 'division_reste': True} # digits 1 for divisor
+    div_params_reste = {'count': 2, 'digits': 1, 'division_reste': True}  # digits 1 for divisor
     print("Division (avec reste):", generate_arithmetic_problems("division", div_params_reste))
 
     # Test for division_quotient_decimal (from pdf_generator logic)
