@@ -9,6 +9,7 @@
 /src/config.json
 /dist/
 /build/
+.pytest_cache/
 *.spec
 
 # Fichiers Python compilés

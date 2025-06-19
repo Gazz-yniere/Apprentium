@@ -15,10 +15,10 @@ Apprentium/
 │   ├── word_generator.py            # Logique de génération des fichiers Word
 │   ├── grammar_generator.py         # Module pour générer les exercices de grammaire (utilise json/phrases_grammaire.json)
 │   ├── conjugation_generator.py     # Module pour générer les exercices de conjugaison (utilise json/verbes.json)
-│   ├── conversion_generator.py      # Module pour générer les exercices de conversion
+│   ├── mesures_generator.py         # Module pour générer les exercices de mesures et conversions
 │   ├── anglais_generator.py         # Module pour générer les exercices d'anglais (utilise json/phrases_anglais_*.json, json/mots_a_relier.json)
 │   ├── exercise_data_builder.py     # Assemble les données d'exercices pour les générateurs de documents
-│   ├── problemes_maths_generator.py # Module pour générer les exercices de maths (utilise json/problemes_math.json)
+│   ├── calculs_generator.py         # Module pour générer les exercices de calculs (opérations, problèmes, etc. utilise json/problemes_maths.json pour les problèmes)
 │   ├── json/                        # Dossier contenant les données JSON personnalisables
 │   │   ├── phrases_grammaire.json
 │   │   ├── homophones.json

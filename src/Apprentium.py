@@ -3,6 +3,8 @@ from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QPalette, QColor
 from calculs_generator import generate_story_math_problems
 import json
+import os # Added for path joining and os.startfile
+
 import sys
 
 
@@ -12,6 +14,8 @@ class InvalidFieldError(Exception):
             f"Champ '{field_name}' invalide : '{value}' n'est pas un nombre valide.")
         self.field_name = field_name
         self.value = value
+
+__version__ = "0.25.6e" # Version de l'application
 
 
 def get_resource_path(filename):
@@ -60,6 +64,9 @@ UI_STYLE_CONFIG = {
         "filename_label":     "font-weight: bold; font-size: 16px; color: #E0E0E0;",
         "output_path_display_default": "font-style: italic; color: #B0BEC5;",
         "output_path_display_set": "font-style: normal; color: #E0E0E0;",
+         # NOUVEAUX STYLES POUR LE FOOTER :
+        "footer_label":       "font-size: 11px; color: #B0BEC5; margin-left: 5px;",
+        "version_label":      "font-size: 11px; color: #B0BEC5; margin-right: 5px;",
     },
     "line_edits": {
         "default":            "color: black; background-color: white; font-size: 14px; border-radius: 4px; padding: 2px 6px;",
@@ -146,7 +153,6 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Apprentium")
-        import os
         # Assurez-vous que le chemin est correct
         icon_path = os.path.join(os.path.dirname(__file__), "Apprentium.ico")
         self.setWindowIcon(QIcon(icon_path))
@@ -157,6 +163,8 @@ class MainWindow(QMainWindow):
         # Récupère depuis la config
         self.LEVEL_COLORS = UI_STYLE_CONFIG["buttons"]["level_colors"]
         self.BASE_LEVEL_BUTTON_STYLE = UI_STYLE_CONFIG["buttons"]["level_button_base_style_template"]
+
+        self.GITHUB_URL = "https://github.com/Gazz-yniere/Apprentium/releases" # MODIFIEZ CECI
 
         self.current_selected_level_button = None
         self.current_level = None  # To store the string name of the level
@@ -1203,6 +1211,23 @@ class MainWindow(QMainWindow):
         bottom_controls_layout.addLayout(action_buttons_layout)
         main_layout.addLayout(bottom_controls_layout)
 
+        # --- Footer ---
+        footer_layout = QHBoxLayout()
+        footer_layout.setContentsMargins(15, 5, 10, 5) # Marges pour le pied de page
+
+        github_label_text = f"<a style='color: #90CAF9; text-decoration: none;' href='{self.GITHUB_URL}'>Code Source (GitHub)</a>"
+        self.github_label = QLabel(github_label_text)
+        self.github_label.setOpenExternalLinks(True)
+        self.github_label.setStyleSheet(UI_STYLE_CONFIG["labels"]["footer_label"])
+        footer_layout.addWidget(self.github_label)
+
+        footer_layout.addStretch(1) # Pousse le label de version vers la droite
+
+        self.version_label = QLabel(f"Apprentium v{__version__}")
+        self.version_label.setStyleSheet(UI_STYLE_CONFIG["labels"]["version_label"])
+        footer_layout.addWidget(self.version_label)
+        main_layout.addLayout(footer_layout)
+
         # Correction du style pour les QLineEdit (texte noir sur fond sombre)
         lineedit_style = UI_STYLE_CONFIG["line_edits"]["default"]
         for le in self.all_line_edits:
@@ -2176,7 +2201,6 @@ class MainWindow(QMainWindow):
 
 
 if __name__ == "__main__":
-    import os
     from PyQt6.QtGui import QIcon
     icon_path = os.path.join(os.path.dirname(__file__), "Apprentium.ico")
     app = QApplication([])
