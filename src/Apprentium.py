@@ -16,7 +16,7 @@ class InvalidFieldError(Exception):
 
 def get_resource_path(filename):
     """ Obtient le chemin absolu d'une ressource JSON, que ce soit en mode script ou compilé. """
-    # base_path = os.path.dirname(__file__) # Chemin du script EduForge.py
+    # base_path = os.path.dirname(__file__) # Chemin du script Apprentium.py
     if hasattr(sys, '_MEIPASS'):
         # Chemin pour l'exécutable PyInstaller (le dossier 'json' est au même niveau que l'exécutable)
         return os.path.join(sys._MEIPASS, "json", filename)
@@ -145,10 +145,10 @@ UI_STYLE_CONFIG = {
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("EduForge")
+        self.setWindowTitle("Apprentium")
         import os
         # Assurez-vous que le chemin est correct
-        icon_path = os.path.join(os.path.dirname(__file__), "EduForge.ico")
+        icon_path = os.path.join(os.path.dirname(__file__), "Apprentium.ico")
         self.setWindowIcon(QIcon(icon_path))
         self.setMinimumWidth(UI_STYLE_CONFIG["window"]["minimum_width"])
         self.setMinimumHeight(UI_STYLE_CONFIG["window"]["minimum_height"])
@@ -1512,7 +1512,7 @@ class MainWindow(QMainWindow):
             from grammar_generator import get_random_phrases, get_random_transformation
             from mesures_generator import generate_conversion_exercises  # Modifié
             from anglais_generator import PHRASES_SIMPLES, PHRASES_COMPLEXES, MOTS_A_RELIER
-            # print(f"EduForge.build_exercise_data: self.current_level is {self.current_level} at start.") # Debug print
+            # print(f"Apprentium.build_exercise_data: self.current_level is {self.current_level} at start.") # Debug print
 
             # Get allowed keys for the current level
             allowed_keys = self.get_exercises_for_level(self.current_level)
@@ -1545,7 +1545,7 @@ class MainWindow(QMainWindow):
 
             # Ranger les nombres - Logique améliorée
             # Thèmes anglais sélectionnés
-            # print(f"DEBUG EduForge: allowed_keys pour le niveau '{self.current_level}': {allowed_keys}")
+            # print(f"DEBUG Apprentium: allowed_keys pour le niveau '{self.current_level}': {allowed_keys}")
             selected_english_themes = []
             # Vérifier si la section "jeux à relier" est active
             if hasattr(self, 'english_relier_theme_checkboxes') and "english_relier_group" in allowed_keys:
@@ -1554,7 +1554,7 @@ class MainWindow(QMainWindow):
                     # Vérifier si la checkbox de thème elle-même est autorisée par le niveau actuel ET cochée
                     if theme_cb_key in allowed_keys and cb.isChecked():
                         selected_english_themes.append(theme_name)
-            # print(f"DEBUG EduForge: Thèmes anglais sélectionnés: {selected_english_themes}")
+            # print(f"DEBUG Apprentium: Thèmes anglais sélectionnés: {selected_english_themes}")
 
             sort_count_val = self.get_int(
                 self.sort_count, field_name="Ranger - nombre d'exercices") if "geo_sort_group" in allowed_keys else 0
@@ -1727,7 +1727,7 @@ class MainWindow(QMainWindow):
                     orthographe_homophones_list.append(ortho_cb_widget.text())
             params['orthographe_homophones'] = orthographe_homophones_list
 
-            # print(f"EduForge.build_exercise_data: Calling ExerciseDataBuilder.build with params['current_level_for_conversions'] = {params.get('current_level_for_conversions')}") # Debug print
+            # print(f"Apprentium.build_exercise_data: Calling ExerciseDataBuilder.build with params['current_level_for_conversions'] = {params.get('current_level_for_conversions')}") # Debug print
             result = ExerciseDataBuilder.build(params)
             if result is None:
                 # Si ExerciseDataBuilder.build retourne None, on ne peut pas continuer.
@@ -1836,7 +1836,7 @@ class MainWindow(QMainWindow):
             header_text = self.header_entry.text().strip()
             show_name = self.show_name_checkbox.isChecked()
             show_note = self.show_note_checkbox.isChecked()
-            filename = self.filename_entry.text().strip() or "apercu_EduForge"
+            filename = self.filename_entry.text().strip() or "Apprentium"
             # Utiliser le chemin pour l'aperçu aussi
             output_directory = self.selected_output_path
             if not filename.lower().endswith(".pdf"):
@@ -1883,7 +1883,7 @@ class MainWindow(QMainWindow):
             header_text = self.header_entry.text().strip()
             show_name = self.show_name_checkbox.isChecked()
             show_note = self.show_note_checkbox.isChecked()
-            filename = self.filename_entry.text().strip() or "apercu_EduForge"
+            filename = self.filename_entry.text().strip() or "apercu_Apprentium"
             # Utiliser le chemin pour l'aperçu aussi
             output_directory = self.selected_output_path
             if not filename.lower().endswith(".docx"):
@@ -2178,7 +2178,7 @@ class MainWindow(QMainWindow):
 if __name__ == "__main__":
     import os
     from PyQt6.QtGui import QIcon
-    icon_path = os.path.join(os.path.dirname(__file__), "EduForge.ico")
+    icon_path = os.path.join(os.path.dirname(__file__), "Apprentium.ico")
     app = QApplication([])
     app.setWindowIcon(QIcon(icon_path))
     window = MainWindow()

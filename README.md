@@ -1,16 +1,16 @@
-# EduForge
+# Apprentium 
 
 ## Description
-EduForge est une application de bureau développée en Python avec une interface graphique conviviale (basée sur PyQt6). Elle est conçue pour aider à la création de cahiers d'exercices personnalisés pour les élèves, couvrant un large éventail de matières. L'application permet de générer ces fiches d'exercices aux formats PDF et Word.
+Apprentium est une application de bureau développée en Python avec une interface graphique conviviale (basée sur PyQt6). Elle est conçue pour aider à la création de cahiers d'exercices personnalisés pour les élèves, couvrant un large éventail de matières. L'application permet de générer ces fiches d'exercices aux formats PDF et Word.
 
 Les utilisateurs peuvent finement ajuster les paramètres de chaque type d'exercice (nombre d'items, difficulté, options spécifiques) directement depuis l'interface. Ces configurations sont automatiquement sauvegardées dans un fichier `config.json` pour une réutilisation facile. Le contenu pédagogique de base, tel que les listes de verbes, les phrases pour les exercices de grammaire, les homophones, les énoncés de petits problèmes mathématiques, les phrases en anglais et les mots à relier, est stocké dans des fichiers JSON dédiés. Cela permet une personnalisation et une extension aisées du matériel pédagogique par l'utilisateur. Les matières couvertes incluent les calculs (additions, soustractions, multiplications, divisions, énumération de nombres, petits problèmes), les mesures (conversions d'unités, rangement de nombres, encadrement), la conjugaison, la grammaire (types de phrases, transformations), l'orthographe (homophones) et l'anglais (phrases à compléter, jeux de mots à relier).
 
 
 ## Structure du projet
 ```
-EduForge/
+Apprentium/
 ├── src/
-│   ├── EduForge.py                  # Point d'entrée de l'application (interface graphique)
+│   ├── Apprentium.py                  # Point d'entrée de l'application (interface graphique)
 │   ├── pdf_generator.py             # Logique de génération des fichiers PDF
 │   ├── word_generator.py            # Logique de génération des fichiers Word
 │   ├── grammar_generator.py         # Module pour générer les exercices de grammaire (utilise json/phrases_grammaire.json)
@@ -36,7 +36,7 @@ EduForge/
 │   │   ├── orthographe.png    
 │   │   └── anglais.png    
 │   ├── config.json                  # Fichier de configuration utilisateur sauvegardé (généré au premier lancement si absent)
-│   └── EduForge.ico                 # Icône de l'application
+│   └── Apprentium.ico                 # Icône de l'application
 ├── requirements.txt                 # Liste des dépendances Python nécessaires
 └── README.md                        # Ce fichier.
 ```
@@ -49,9 +49,9 @@ pip install -r requirements.txt
 ```
 
 ## Utilisation (mode Python)
-1. Exécutez `EduForge.py` pour lancer l'application :
+1. Exécutez `Apprentium.py` pour lancer l'application :
    ```
-   python src/EduForge.py
+   python src/Apprentium.py
    ```
 2. Personnalisez les paramètres (calculs, conjugaison, grammaire, etc.).
 3. Cliquez sur "Générer PDF" ou "Générer Word" pour créer la fiche.
@@ -60,11 +60,11 @@ pip install -r requirements.txt
 ## Utilisation (exécutable Windows autonome)
 1. Compilez avec PyInstaller (logo et dossier JSON à côté de l'exe) :
    ```
-   pyinstaller --onefile --noconsole --icon=src/EduForge.ico --add-data "src/json;json" --add-data "src/img;img" --add-data "src/EduForge.ico;." --add-data "src/config.json;." src/EduForge.py
+   pyinstaller --onefile --noconsole --icon=src/Apprentium.ico --add-data "src/json;json" --add-data "src/img;img" --add-data "src/Apprentium.ico;." --add-data "src/config.json;." src/Apprentium.py
    ```
-2. Dans le dossier `dist/`, copiez `EduForge.exe`, `config.json`, `EduForge.ico`, et le dossier `json`.
+2. Dans le dossier `dist/`, copiez `Apprentium.exe`, `config.json`, `Apprentium.ico`, et le dossier `json`.
 3. Copiez également le dossier `img` dans `dist/` si vous souhaitez que les images des sections PDF soient incluses.
-4. Lancez `EduForge.exe` sur n'importe quel PC Windows (aucune installation Python requise).
+4. Lancez `Apprentium.exe` sur n'importe quel PC Windows (aucune installation Python requise).
 5. Les fichiers JSON sont modifiables à côté de l'exe pour personnaliser verbes, phrases, et la configuration des niveaux.
  
 
