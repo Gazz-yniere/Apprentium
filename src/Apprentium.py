@@ -16,7 +16,7 @@ class InvalidFieldError(Exception):
         self.value = value
 
 
-__version__ = "0.25.6e"  # Version de l'application
+__version__ = "0.25.6f"  # Version de l'application
 
 
 def get_resource_path(filename):

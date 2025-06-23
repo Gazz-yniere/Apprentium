@@ -91,13 +91,7 @@ PDF_STYLE_CONFIG = {
     "measures_conversions":   {"title_font_name": "Helvetica-Bold", "title_font_size": 9, "content_font_name": "Helvetica", "content_font_size": 9, "line_spacing_after_title": 16, "line_spacing_per_item": 22, "spacing_after_section": 5, },
     "measures_sort":          {"title_font_name": "Helvetica-Bold", "title_font_size": 9, "content_font_name": "Helvetica", "content_font_size": 9, "line_spacing_after_title": 16, "line_spacing_per_item": 22, "spacing_after_section": 8, },
     "measures_encadrement":   {"title_font_name": "Helvetica-Bold", "title_font_size": 9, "content_font_name": "Helvetica", "content_font_size": 9, "line_spacing_after_title": 16, "line_spacing_per_item": 22, "spacing_after_section": 8, },
-    "conjugation":            {
-        "title_font_name": "Helvetica-Bold", "title_font_size": 9, "content_font_name": "Helvetica", "content_font_size": 9,
-        "line_spacing_after_title": 10, "line_spacing_before_pronouns": 10, "line_spacing_per_pronoun": 16,
-        "spacing_after_verb_block": 5, # Spacing between individual verb blocks
-        "spacing_after_last_verb_block": 10, # Spacing after the last verb block if no completion exercises follow
-        "spacing_between_exercise_types": 15, # Spacing between verbs and completion exercises
-    }, # noqa E501
+    "conjugation":            {"title_font_name": "Helvetica-Bold", "title_font_size": 9, "content_font_name": "Helvetica", "content_font_size": 9, "line_spacing_after_title": 10, "line_spacing_before_pronouns": 10, "line_spacing_per_pronoun": 16,"spacing_after_verb_block": 5, "spacing_after_last_verb_block": 10, "spacing_between_exercise_types": 15, }, # noqa E501
     "conj_completer":         {"title_font_name": "Helvetica-Bold", "title_font_size": 9, "content_font_name": "Helvetica", "content_font_size": 9, "line_spacing_after_title": 16, "line_spacing_per_item": 22, "spacing_after_section": 8, }, # noqa E501
     "grammar":                {"title_font_name": "Helvetica-Bold", "title_font_size": 9, "content_font_name": "Helvetica", "content_font_size": 9, "line_spacing_per_line": 13, "spacing_before_answer": 10, "line_spacing_answer": 22, "spacing_after_exercise_block": 10, }, # noqa E501
     "orthographe_homophones": {"title_font_name": "Helvetica-Bold", "title_font_size": 9, "content_font_name": "Helvetica", "content_font_size": 9, "line_spacing_after_title": 16, "line_spacing_per_item": 16, "spacing_after_item": 10, }, # noqa E501
