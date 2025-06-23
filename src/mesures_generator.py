@@ -30,43 +30,59 @@ except Exception as e:
           "Les exercices de conversion ne seront pas disponibles.")
 
 
-def generate_conversion_exercises(types_selectionnes, n, senses, current_level):
+
+def generate_conversion_exercises(types_selectionnes, n, senses, current_level, level_order=None):
     """
     Génère des exercices de conversion.
     types_selectionnes: Liste des types de conversion (ex: ["longueur", "masse"]).
     n: Nombre d'exercices à générer.
     senses: Liste des sens de conversion (ex: ["direct", "inverse"]).
     current_level: Niveau scolaire actuel (ex: "CP", "CE1").
+    level_order: Liste ordonnée des niveaux pour la collecte incrémentale des exercices.
     """
     exercices = []
-    if not types_selectionnes or not senses or not CONVERSION_DATA or n == 0:
+    if not types_selectionnes or not senses or not CONVERSION_DATA or n == 0 or not current_level:
         return exercices
 
+    # Détermine les niveaux à vérifier pour les conversions, de manière incrémentale.
+    levels_to_check = []
+    if level_order:
+        try:
+            target_index = level_order.index(current_level)
+            levels_to_check = level_order[:target_index + 1]
+        except ValueError:
+            # Si le niveau actuel n'est pas dans la liste, on l'utilise seul.
+            levels_to_check = [current_level]
+    else:
+        # Fallback si level_order n'est pas fourni.
+        levels_to_check = [current_level]
     possible_conversions = []
+    # Pour éviter les doublons si une conversion est définie dans plusieurs niveaux (ex: m->cm en CP et CE1)
+    unique_conv_tracker = set()
+
     for type_conv in types_selectionnes:
-        if type_conv in CONVERSION_DATA:
-            level_config = CONVERSION_DATA[type_conv].get(current_level)
-            if level_config:
-                for conv_details in level_config.get("conversions", []):
-                    # conv_details = {"from": "m", "to": "cm", "multiplier": 100, "range_from": [1, 10]}
-                    if "direct" in senses:
-                        possible_conversions.append({
-                            "type": type_conv,
-                            "from_unit": conv_details["from"],
-                            "to_unit": conv_details["to"],
-                            "multiplier": conv_details["multiplier"],
-                            "range": conv_details["range_from"],
-                            "sense": "direct"
-                        })
-                    if "inverse" in senses and conv_details["multiplier"] != 0:
-                        possible_conversions.append({
-                            "type": type_conv,
-                            "from_unit": conv_details["to"],
-                            "to_unit": conv_details["from"],
-                            "multiplier": 1 / conv_details["multiplier"],
-                            "range": [round(v * conv_details["multiplier"]) for v in conv_details["range_from"]],
-                            "sense": "inverse"
-                        })
+        if type_conv in CONVERSION_DATA.get("conversions", {}): # Accède à la clé "conversions" du JSON
+            for level in levels_to_check:
+                level_config = CONVERSION_DATA["conversions"][type_conv].get(level) # Accès correct au type et au niveau
+                if level_config:
+                    for conv_details in level_config: # level_config est déjà la liste des conversions
+                        if "direct" in senses and "from" in conv_details and "to" in conv_details:
+                            conv_key = (type_conv, conv_details["from"], conv_details["to"], "direct")
+                            if conv_key not in unique_conv_tracker:
+                                possible_conversions.append({
+                                    "from_unit": conv_details["from"], "to_unit": conv_details["to"],
+                                    "multiplier": conv_details["multiplier"], "range": conv_details["range_from"],
+                                })
+                                unique_conv_tracker.add(conv_key) 
+                        if "inverse" in senses and conv_details["multiplier"] != 0:
+                            conv_key = (type_conv, conv_details["to"], conv_details["from"], "inverse")
+                            if conv_key not in unique_conv_tracker:
+                                possible_conversions.append({
+                                    "from_unit": conv_details["to"], "to_unit": conv_details["from"],
+                                    "multiplier": 1 / conv_details["multiplier"],
+                                    "range": [round(v * conv_details["multiplier"]) for v in conv_details["range_from"]],
+                                })
+                                unique_conv_tracker.add(conv_key) 
 
     if not possible_conversions:
         return exercices
@@ -75,9 +91,9 @@ def generate_conversion_exercises(types_selectionnes, n, senses, current_level):
         chosen_conv = random.choice(possible_conversions)
 
         val_from = random.randint(
-            chosen_conv["range"][0], chosen_conv["range"][1])
+            chosen_conv["range"][0], chosen_conv["range"][1]) # noqa: E501
         exercices.append(
-            f"{val_from} {chosen_conv['from_unit']} = ......... {chosen_conv['to_unit']}")
+            f"{val_from} {chosen_conv['from_unit']} = ____________ {chosen_conv['to_unit']}")
 
     return exercices
 
@@ -115,8 +131,16 @@ def generate_sort_exercises(params, days):
                 else:
                     max_val = 0
 
-                numbers = [random.randint(min_val, max_val)
-                           for _ in range(sort_n_numbers)]
+                # Générer une liste de tous les nombres possibles dans la plage
+                possible_numbers_range = list(range(min_val, max_val + 1))
+
+                # S'assurer qu'il y a assez de nombres uniques disponibles
+                if len(possible_numbers_range) < sort_n_numbers:
+                    print(f"Avertissement: Pas assez de nombres uniques dans la plage [{min_val}, {max_val}] pour générer {sort_n_numbers} nombres. Le nombre d'éléments sera réduit.")
+                    sort_n_numbers = len(possible_numbers_range)
+
+                # Sélectionner des nombres uniques aléatoirement
+                numbers = random.sample(possible_numbers_range, sort_n_numbers)
                 daily_sort_ex.append({
                     'numbers': numbers,
                     'type': actual_sort_type_for_day
@@ -218,15 +242,17 @@ def generate_logical_sequences_exercises(params, days, current_level):
                     chosen_type = random.choice(selected_types)
 
                     step, start_value = 0, 0
+                    sequence = [] # Initialize sequence for each attempt
                     # Déterminer step et start_value en fonction du type
-                    if chosen_type in ['arithmetic_plus', 'arithmetic_minus']:
-                        step = random.randint(1, 9)
-                        start_value = random.randint(1, 50)
-                        if chosen_type == 'arithmetic_minus' and sequence_length > 4:
-                            start_value = random.randint(
-                                step * (sequence_length // 2) + 5, 60 + step * (sequence_length // 2))
+                    if chosen_type == 'arithmetic_plus':
+                        step = random.randint(1, 20) # Nouveau range pour le pas
+                        start_value = random.randint(1, 100) # Nouveau range pour la valeur de départ
+                        current_val = start_value
+                        for _ in range(sequence_length):
+                            sequence.append(current_val)
+                            current_val += step
                     elif chosen_type == 'arithmetic_multiply':
-                        step = random.randint(2, 10)
+                        step = random.randint(2, 10) # Pas de changement demandé
                         start_value = random.randint(1, 100)
                     elif chosen_type == 'arithmetic_divide':
                         step = random.randint(2, 5)  # Diviseur
@@ -251,54 +277,33 @@ def generate_logical_sequences_exercises(params, days, current_level):
                                 break
                         if not possible_to_generate or len(temp_sequence_for_division) != sequence_length:
                             continue  # Impossible de générer, essayer une autre tentative
-
                         # Inverser pour obtenir la suite de division
-                        temp_sequence_for_division.reverse()
-                        sequence = temp_sequence_for_division
-                        # Le premier terme de la suite de division
-                        start_value = sequence[0]
-                        # current_val sera initialisé à start_value plus bas
+                        sequence = list(reversed(temp_sequence_for_division))
 
-                    if chosen_type != 'arithmetic_divide':  # Pour les autres types, initialiser comme avant
-                        sequence = [start_value]
-                    current_val = start_value
+                    elif chosen_type == 'arithmetic_minus':
+                        step = random.randint(1, 20) # Nouveau range pour le pas
+                        # La plus petite valeur de la suite
+                        final_value = random.randint(1, 100) # Nouveau range pour la valeur finale
+                        temp_sequence_for_plus = [final_value]
+                        current_val_for_plus = final_value
+                        for _ in range(sequence_length - 1):
+                            current_val_for_plus += step
+                            temp_sequence_for_plus.append(current_val_for_plus)
+                        sequence = list(reversed(temp_sequence_for_plus)) # Inverser pour obtenir la suite soustractive
 
-                    # Essayer de construire jusqu'à la longueur désirée
-                    for i in range(1, sequence_length):
-                        prev_val = current_val
-                        if chosen_type == 'arithmetic_plus':
-                            current_val += step
-                        elif chosen_type == 'arithmetic_minus':
-                            if current_val == 0:
+                    # Pour les suites multiplicatives, la génération est similaire à avant
+                    if chosen_type == 'arithmetic_multiply':
+                        current_val = start_value
+                        for _ in range(sequence_length):
+                            # Vérifier avant multiplication pour éviter OverflowError
+                            if current_val > (10**12) / step:
+                                sequence = [] # Invalider la séquence
                                 break
-                            current_val -= step
-                            if current_val < 0:
-                                current_val = 0
-                        elif chosen_type == 'arithmetic_multiply':
-                            # Suppression de la limite de 10000
-                            # Vérifier avant multiplication
-                            if prev_val > (10**12) / step:
-                                break
-                            current_val *= step
-                            if current_val > 10**12:
-                                break  # Limite très haute pour éviter des nombres gigantesques
-                        elif chosen_type == 'arithmetic_divide':
-                            if step == 0:
-                                break
-                            if current_val < step or current_val % step != 0:
-                                break
-                            current_val //= step
-                            if current_val == 0 and prev_val > 0:  # Éviter de finir sur 0
-                                if len(sequence) > 1:
-                                    sequence.pop()  # Retirer le 0
-                                break
-                            if current_val < 1 and prev_val > 0:  # Si on obtient une fraction < 1
-                                break
-
-                        # Pour la division, la séquence est déjà construite.
-                        # Pour les autres, on ajoute le terme.
-                        if chosen_type != 'arithmetic_divide':
                             sequence.append(current_val)
+                            current_val *= step
+                            if current_val > 10**12: # Vérifier après multiplication
+                                sequence = [] # Invalider la séquence
+                                break
 
                     # La suite doit avoir exactement la longueur demandée
                     if len(sequence) == sequence_length:

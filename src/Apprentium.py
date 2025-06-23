@@ -656,24 +656,24 @@ class MainWindow(QMainWindow):
         conj_layout.setContentsMargins(5, 5, 5, 5)
         conj_layout.setSpacing(6)
         # Paramètres de conjugaison (d'abord)
-        conj_param_fields = [
-            ("Nombre de verbes par jour :", "verbs_per_day_entry", 60)]
-        self.conj_number_group, conj_param_les, conj_param_rows = self._create_generic_groupbox(  # Clé: conj_params
-            "Paramètres de conjugaison", conj_param_fields
-        )
-        self.all_line_edits.extend(conj_param_les)
-        self._all_row_widgets_for_map.update(conj_param_rows)
-        conj_layout.addWidget(self.conj_number_group)
 
         # Groupes de verbes
         self.conj_group_group = QGroupBox(
             "Groupes de verbes")  # Clé: conj_groups
         group_layout = QVBoxLayout()
+
+        # Déplacer le champ "Nombre de verbes par jour" ici
+        row_widget_verbs_per_day, self.verbs_per_day_entry = self._create_input_row(
+            "Nombre de verbes :", 60)
+        self.all_line_edits.append(self.verbs_per_day_entry)
+        self._all_row_widgets_for_map["verbs_per_day_entry_row"] = row_widget_verbs_per_day
+        group_layout.addWidget(row_widget_verbs_per_day)
+
         self.group_1_checkbox = QCheckBox("1er groupe")
         self.group_2_checkbox = QCheckBox("2ème groupe")
         self.group_3_checkbox = QCheckBox("3ème groupe")
         self.usual_verbs_checkbox = QCheckBox(
-            "Verbes usuels (à connaître par cœur)")
+            "Verbes usuels (à connaître par \u2665)")
         self.conj_group_group_checkboxes = [
             self.group_1_checkbox, self.group_2_checkbox, self.group_3_checkbox, self.usual_verbs_checkbox]
         for cb in self.conj_group_group_checkboxes:
@@ -693,8 +693,30 @@ class MainWindow(QMainWindow):
         self.conj_tense_group.setLayout(tense_layout)
         conj_layout.addWidget(self.conj_tense_group)
         # Conjugaison : vert (#81C784)
-        conj_groups = [self.conj_number_group,
-                       self.conj_group_group, self.conj_tense_group]
+        # --- Nouvelles sections pour la Conjugaison ---
+        # Section: Compléter les phrases
+        conj_complete_sentence_fields = [
+            ("Nombre de phrases :", "conj_complete_sentence_count", 60)
+        ]
+        self.conj_complete_sentence_group, conj_cs_les, conj_cs_rows = self._create_generic_groupbox(
+            "Phrases à complèter", conj_complete_sentence_fields
+        )
+        self.all_line_edits.extend(conj_cs_les)
+        self._all_row_widgets_for_map.update(conj_cs_rows)
+        conj_layout.addWidget(self.conj_complete_sentence_group)
+
+        # Section: Compléter les pronoms
+        conj_complete_pronoun_fields = [
+            ("Nombre de phrases :", "conj_complete_pronoun_count", 60)
+        ]
+        self.conj_complete_pronoun_group, conj_cp_les, conj_cp_rows = self._create_generic_groupbox(
+            "Pronoms à complèter", conj_complete_pronoun_fields
+        )
+        self.all_line_edits.extend(conj_cp_les)
+        self._all_row_widgets_for_map.update(conj_cp_rows)
+        conj_layout.addWidget(self.conj_complete_pronoun_group)
+        conj_groups = [self.conj_group_group, self.conj_tense_group,
+                       self.conj_complete_sentence_group, self.conj_complete_pronoun_group]
         conj_border_color = UI_STYLE_CONFIG["group_boxes"]["border_colors"]["conj"]
         set_groupbox_style(conj_groups, conj_border_color)
         conj_layout.addStretch()
@@ -1022,8 +1044,7 @@ class MainWindow(QMainWindow):
             "logical_sequences_type_arithmetic_divide_cb": self.logical_sequences_type_arithmetic_divide_cb,
 
             # Conjugaison
-            # Renamed for clarity from conj_number_group
-            "conj_params_group": self.conj_number_group,
+            # "conj_params_group" removed as the group is no longer needed
             "verbs_per_day_entry_input": self.verbs_per_day_entry,
             "conj_groups_group": self.conj_group_group,  # Renamed for clarity
             "group_1_cb": self.group_1_checkbox, "group_2_cb": self.group_2_checkbox, "group_3_cb": self.group_3_checkbox, "usual_verbs_cb": self.usual_verbs_checkbox,
@@ -1037,6 +1058,11 @@ class MainWindow(QMainWindow):
             "tense_plus_que_parfait_cb": self.tense_checkboxes[5] if len(self.tense_checkboxes) > 5 else None,
             "tense_conditionnel_present_cb": self.tense_checkboxes[6] if len(self.tense_checkboxes) > 6 else None,
             "tense_imperatif_present_cb": self.tense_checkboxes[7] if len(self.tense_checkboxes) > 7 else None,
+            # Nouveaux exercices de conjugaison
+            "conj_complete_sentence_group": self.conj_complete_sentence_group,
+            "conj_complete_sentence_count_input": self.conj_complete_sentence_count,
+            "conj_complete_pronoun_group": self.conj_complete_pronoun_group,
+            "conj_complete_pronoun_count_input": self.conj_complete_pronoun_count,
             # Add more if TENSES list grows, ensure TENSES order matches these keys in EXERCISES_BY_LEVEL_INCREMENTAL
 
             # Grammaire
@@ -1102,9 +1128,10 @@ class MainWindow(QMainWindow):
         self.column_section_keys = {  # Maps column key to list of its main section group keys
             # No change here
             "calc": ["enumerate_group", "addition_group", "subtraction_group", "multiplication_group", "division_group", "math_problems_group"],
-            # Added new groups
+            # Updated groups
             "geo": ["geo_conv_group", "geo_sort_group", "geo_encadrement_group", "geo_compare_numbers_group", "geo_logical_sequences_group"],
-            "conj": ["conj_params_group", "conj_groups_group", "conj_tenses_group"],
+            "conj": ["conj_groups_group", "conj_tenses_group",
+                     "conj_complete_sentence_group", "conj_complete_pronoun_group"],
             "grammar": ["grammar_params_group", "grammar_types_group", "grammar_transfo_group"],
             "ortho": ["ortho_params_group", "ortho_homophones_group"],
             # Les checkboxes de thèmes sont gérées individuellement
@@ -1193,14 +1220,14 @@ class MainWindow(QMainWindow):
         # self.generate_word_button.setFixedWidth(150) # Suppression de la largeur fixe
         action_buttons_layout.addWidget(self.generate_word_button)
 
-        self.preview_pdf_button = QPushButton("Prévisualiser PDF")
+        self.preview_pdf_button = QPushButton("Visualiser PDF")
         self.preview_pdf_button.setStyleSheet(
             get_action_button_style("preview_pdf"))
         self.preview_pdf_button.clicked.connect(self.preview_pdf)
         # self.preview_pdf_button.setFixedWidth(150) # Suppression de la largeur fixe
         action_buttons_layout.addWidget(self.preview_pdf_button)
 
-        self.preview_word_button = QPushButton("Prévisualiser Word")
+        self.preview_word_button = QPushButton("Visualiser Word")
         self.preview_word_button.setStyleSheet(
             get_action_button_style("preview_word"))
         self.preview_word_button.clicked.connect(self.preview_word)
@@ -1279,10 +1306,11 @@ class MainWindow(QMainWindow):
             ('division_digits', self.division_digits, 'text'),
             ('division_decimals', self.division_decimals, 'text'),
             ('division_reste_checkbox', self.division_reste_checkbox, 'checked'),
+            # Nouveaux exercices de conjugaison
+            ('conj_complete_sentence_count', self.conj_complete_sentence_count, 'text'),
+            ('conj_complete_pronoun_count', self.conj_complete_pronoun_count, 'text'),
             # Groupes de conjugaison
-            ('group_1_checkbox', self.group_1_checkbox, 'checked'),
-            ('group_2_checkbox', self.group_2_checkbox, 'checked'),
-            ('group_3_checkbox', self.group_3_checkbox, 'checked'),
+            # 'verbs_per_day_entry' est maintenant dans le groupe de verbes, mais la clé reste la même.
             ('verbs_per_day_entry', self.verbs_per_day_entry, 'text'),
             ('grammar_sentence_count', self.grammar_sentence_count, 'text'),
             ('intransitive_checkbox', self.intransitive_checkbox, 'checked'),
@@ -1302,7 +1330,10 @@ class MainWindow(QMainWindow):
             ('filename_entry', self.filename_entry, 'text'),
             # Nouveau mode pour variable de chemin
             ('selected_output_path', self, 'path_variable'),
-            ('usual_verbs_checkbox', self.usual_verbs_checkbox, 'checked'),
+            ('group_1_checkbox', self.group_1_checkbox, 'checked'), # Ajouté
+            ('group_2_checkbox', self.group_2_checkbox, 'checked'), # Ajouté
+            ('group_3_checkbox', self.group_3_checkbox, 'checked'), # Ajouté
+            ('usual_verbs_checkbox', self.usual_verbs_checkbox, 'checked'), # Ajouté
             ('tense_checkboxes', self.tense_checkboxes, 'checked_list'),
             ('geo_ex_count', self.geo_ex_count, 'text'),
             ('geo_conv_type_checkboxes', self.geo_conv_type_checkboxes, 'checked_list'),
@@ -1693,14 +1724,18 @@ class MainWindow(QMainWindow):
                 # Petits Problèmes
                 'math_problems_count': math_problems_count_val,
                 'selected_math_problem_types': selected_math_problem_types,
+                # Nouveaux exercices de conjugaison
+                'conj_complete_sentence_count': self.get_int(self.conj_complete_sentence_count, field_name="Compléter phrases - nombre d'exercices") if "conj_complete_sentence_group" in allowed_keys else 0,
+                'conj_complete_pronoun_count': self.get_int(self.conj_complete_pronoun_count, field_name="Compléter pronoms - nombre d'exercices") if "conj_complete_pronoun_group" in allowed_keys else 0,
                 # Pour filtrer les problèmes par niveau dans le générateur
                 'current_level_for_problems': self.current_level,
                 'selected_english_themes': selected_english_themes,
-                'current_level_for_conversions': self.current_level
+                'current_level_for_conversions': self.current_level,
+                'level_order_for_conversions': self.LEVEL_ORDER,
             }
 
             verbs_per_day_val = self.get_int(
-                self.verbs_per_day_entry, field_name="Verbes par jour") if "conj_params_group" in allowed_keys else 0
+                self.verbs_per_day_entry, field_name="Verbes par jour") if "conj_groups_group" in allowed_keys else 0
 
             # Modifié
             params['generate_math_problems_func'] = generate_story_math_problems
@@ -1797,6 +1832,9 @@ class MainWindow(QMainWindow):
                 logical_sequences_exercises_list=data.get(
                     'logical_sequences_exercises_list'),  # Nouveau
                 story_math_problems_by_day=data.get('math_problems'),
+                conj_complete_sentence_exercises=data.get(
+                    'conj_complete_sentence_exercises'),
+                conj_complete_pronoun_exercises=data.get('conj_complete_pronoun_exercises'),
                 header_text=header_text, show_name=show_name, show_note=show_note, filename=filename,
                 output_dir_override=output_directory
             )
@@ -1839,6 +1877,9 @@ class MainWindow(QMainWindow):
                 logical_sequences_exercises_list=data.get(
                     'logical_sequences_exercises_list'),  # Nouveau
                 story_math_problems_by_day=data.get('math_problems'),
+                conj_complete_sentence_exercises=data.get(
+                    'conj_complete_sentence_exercises'),
+                conj_complete_pronoun_exercises=data.get('conj_complete_pronoun_exercises'),
                 header_text=header_text, show_name=show_name, show_note=show_note, filename=filename,
                 output_dir_override=output_directory
             )
@@ -1881,6 +1922,9 @@ class MainWindow(QMainWindow):
                 logical_sequences_exercises_list=data.get(
                     'logical_sequences_exercises_list'),  # Nouveau
                 story_math_problems_by_day=data.get('math_problems'),
+                conj_complete_sentence_exercises=data.get(
+                    'conj_complete_sentence_exercises'),
+                conj_complete_pronoun_exercises=data.get('conj_complete_pronoun_exercises'),
                 header_text=header_text, show_name=show_name, show_note=show_note, filename=filename,
                 output_dir_override=output_directory
             )
@@ -1929,6 +1973,9 @@ class MainWindow(QMainWindow):
                 logical_sequences_exercises_list=data.get(
                     'logical_sequences_exercises_list'),
                 story_math_problems_by_day=data.get('math_problems'),
+                conj_complete_sentence_exercises=data.get(
+                    'conj_complete_sentence_exercises'),
+                conj_complete_pronoun_exercises=data.get('conj_complete_pronoun_exercises'),
                 header_text=header_text, show_name=show_name, show_note=show_note, filename=filename,
                 output_dir_override=output_directory)
             if output_path and os.path.exists(output_path):
@@ -2072,7 +2119,7 @@ class MainWindow(QMainWindow):
         self.conj_title_label.setVisible(is_conj_column_active)
 
         is_grammar_column_active = False
-        for section_key in self.column_section_keys.get("grammar", []):
+        for section_key in self.column_section_keys.get("grammar", []): # This line was not changed, but it's part of the context.
             if section_key in allowed_exercise_keys:
                 is_grammar_column_active = True
                 break

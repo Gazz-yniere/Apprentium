@@ -103,6 +103,12 @@ class ExerciseDataBuilder:
             if not verbes_possibles or not temps_choisis:
                 verbes_par_jour = 0  # Force à 0 si pas de verbes ou pas de temps
 
+            print(f"DEBUG Conjugaison (Initial verbs_per_day from params): {verbes_par_jour}")
+
+            print(f"DEBUG Conjugaison: verbes_par_jour={verbes_par_jour}, "
+                  f"len(verbes_possibles)={len(verbes_possibles)}, "
+                  f"len(temps_choisis)={len(temps_choisis)}")
+
             if verbes_par_jour > 0 and len(verbes_possibles) < verbes_par_jour * jours:
                 print("Avertissement : Pas assez de verbes uniques pour couvrir tous les jours sans doublon. Les verbes seront répétés.")  # noqa: E501
                 # Permettre la répétition si nécessaire
@@ -133,6 +139,87 @@ class ExerciseDataBuilder:
                 for _ in range(jours):
                     conjugations.append([])
 
+            # Compléter les phrases (Conjugaison) - Chargement des données réelles
+            phrases_path = os.path.join(os.path.dirname(
+                __file__), 'json', 'Phrases_francais.json')
+            with open(phrases_path, encoding='utf-8') as f:
+                phrases_data = json.load(f)
+
+            all_conj_complete_sentence_exercises = []
+            conj_cs_count = params.get('conj_complete_sentence_count', 0)
+            if conj_cs_count > 0:
+                possible_phrases = []
+                tenses_to_use = temps_choisis if temps_choisis else list(
+                    phrases_data.keys())
+                for tense in tenses_to_use:
+                    if tense in phrases_data:
+                        possible_phrases.extend(phrases_data[tense])
+                
+                # Store (phrase, tense) tuples for uniqueness and tense information
+                possible_phrases_with_tense = [(phrase, tense) for tense in tenses_to_use if tense in phrases_data for phrase in phrases_data[tense]]
+                if not possible_phrases_with_tense:
+                    print(
+                        f"Avertissement : Aucune phrase à compléter ne correspond aux temps sélectionnés. "
+                        f"Temps recherchés : {tenses_to_use}. "
+                        f"Temps disponibles dans Phrases_francais.json : {list(phrases_data.keys())}.")
+                    for _ in range(jours):
+                        all_conj_complete_sentence_exercises.append([])
+                else:
+                    # Shuffle to randomize order of unique items before sampling
+                    random.shuffle(possible_phrases_with_tense)
+                    for _ in range(jours):
+                        daily_ex = []
+                        # Use random.sample for unique selection. If k is larger than population, take all unique.
+                        num_to_select = min(conj_cs_count, len(possible_phrases_with_tense))
+                        selected_phrases_with_tense = random.sample(
+                            possible_phrases_with_tense, k=num_to_select)
+                        for phrase, tense_of_phrase in selected_phrases_with_tense:
+                            daily_ex.append({'content': phrase, 'tense': tense_of_phrase})
+                        all_conj_complete_sentence_exercises.append(daily_ex)
+            else:
+                for _ in range(jours):
+                    all_conj_complete_sentence_exercises.append([])
+
+            # Compléter les pronoms (Conjugaison) - Chargement des données réelles
+            pronoms_path = os.path.join(os.path.dirname(
+                __file__), 'json', 'pronoms_francais.json')
+            with open(pronoms_path, encoding='utf-8') as f:
+                pronoms_data = json.load(f)
+
+            all_conj_complete_pronoun_exercises = []
+            conj_cp_count = params.get('conj_complete_pronoun_count', 0)
+            if conj_cp_count > 0:
+                possible_pronoms = []
+                tenses_to_use = temps_choisis if temps_choisis else list(
+                    pronoms_data.keys())
+                for tense in tenses_to_use:
+                    if tense in pronoms_data:
+                        possible_pronoms.extend(pronoms_data[tense])
+                
+                # Store (pronoun, tense) tuples for uniqueness and tense information
+                possible_pronoms_with_tense = [(pronoun, tense) for tense in tenses_to_use if tense in pronoms_data for pronoun in pronoms_data[tense]]
+                if not possible_pronoms_with_tense:
+                    print(
+                        f"Avertissement : Aucun pronom à compléter ne correspond aux temps sélectionnés. "
+                        f"Temps recherchés : {tenses_to_use}. "
+                        f"Temps disponibles dans pronoms_francais.json : {list(pronoms_data.keys())}.")
+                    for _ in range(jours):
+                        all_conj_complete_pronoun_exercises.append([])
+                else:
+                    # Shuffle to randomize order of unique items before sampling
+                    random.shuffle(possible_pronoms_with_tense)
+                    for _ in range(jours):
+                        daily_ex = []
+                        # Use random.sample for unique selection. If k is larger than population, take all unique.
+                        num_to_select = min(conj_cp_count, len(possible_pronoms_with_tense))
+                        selected_pronoms_with_tense = random.sample(
+                            possible_pronoms_with_tense, k=num_to_select)
+                        for pronom_phrase, tense_of_pronoun in selected_pronoms_with_tense:
+                            daily_ex.append({'content': pronom_phrase, 'tense': tense_of_pronoun})
+                        all_conj_complete_pronoun_exercises.append(daily_ex)
+            else:
+                for _ in range(jours):
+                    all_conj_complete_pronoun_exercises.append([])
             # Construction des listes attendues par generate_workbook_pdf
             operations_list = []
             counts = []
@@ -171,6 +258,9 @@ class ExerciseDataBuilder:
             geo_ex_count = params.get('geo_ex_count', 0)
             geo_types = params.get('geo_types', [])
             geo_senses = params.get('geo_senses', [])
+            level_order = params.get('level_order_for_conversions', [])
+            # print(f"DEBUG ExerciseDataBuilder: Received for conversions: geo_ex_count={geo_ex_count}, geo_types={geo_types}, geo_senses={geo_senses}, current_level_for_conversions={params.get('current_level_for_conversions')}")
+
             all_geo_exercises = []  # Sera une liste de listes (une par jour)
             if geo_types and geo_ex_count > 0 and geo_senses and generate_conversion_exercises:
                 for _ in range(days):  # Générer pour chaque jour
@@ -181,8 +271,11 @@ class ExerciseDataBuilder:
                         types_selectionnes=geo_types,
                         n=geo_ex_count,
                         senses=geo_senses,
-                        current_level=params.get('current_level_for_conversions'))
+                        current_level=params.get('current_level_for_conversions'),
+                        level_order=level_order)
                     all_geo_exercises.append(daily_geo_ex)
+                    # print(f"DEBUG ExerciseDataBuilder: Generated daily_geo_ex for day {_}: {daily_geo_ex}")
+           
             else:  # S'il n'y a pas d'exercices de conversion, s'assurer que la structure est cohérente
                 for _ in range(days):
                     all_geo_exercises.append([])
@@ -329,6 +422,8 @@ class ExerciseDataBuilder:
                 'counts': counts,
                 'max_digits': max_digits,
                 'conjugations': conjugations,
+                'conj_complete_sentence_exercises': all_conj_complete_sentence_exercises,
+                'conj_complete_pronoun_exercises': all_conj_complete_pronoun_exercises,
                 'params_list': params_list,
                 'grammar_exercises': grammar_exercises,
                 'geo_exercises': all_geo_exercises,

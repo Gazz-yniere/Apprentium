@@ -3,87 +3,86 @@
     "conversions": {
       "longueur": {
         "CP": [
-          ["m", "cm", 100],
-          ["m", "dm", 10]
+          {"from": "m", "to": "cm", "multiplier": 100, "range_from": [1, 10]},
+          {"from": "m", "to": "dm", "multiplier": 10, "range_from": [1, 10]}
         ],
         "CE1": [
-          ["km", "m", 1000]
+          {"from": "km", "to": "m", "multiplier": 1000, "range_from": [1, 5]}
         ],
         "CE2": [
-          ["dm", "cm", 10],
-          ["cm", "mm", 10]
+          {"from": "dm", "to": "cm", "multiplier": 10, "range_from": [1, 10]},
+          {"from": "cm", "to": "mm", "multiplier": 10, "range_from": [1, 10]}
         ],
         "CM1": [
-          ["km", "cm", 100000]
+          {"from": "km", "to": "cm", "multiplier": 100000, "range_from": [1, 2]}
         ],
         "CM2": [
-          ["km", "mm", 1000000],
-          ["km", "dam",100],
-          ["km", "hm", 10],
-          ["dam", "m", 10],
-          ["hm", "m", 100]
+          {"from": "km", "to": "mm", "multiplier": 1000000, "range_from": [1, 1]},
+          {"from": "km", "to": "dam", "multiplier": 100, "range_from": [1, 10]},
+          {"from": "km", "to": "hm", "multiplier": 10, "range_from": [1, 10]},
+          {"from": "dam", "to": "m", "multiplier": 10, "range_from": [1, 10]},
+          {"from": "hm", "to": "m", "multiplier": 100, "range_from": [1, 10]}
         ]
       },
       "masse": {
         "CE1": [
-          ["kg", "g", 1000]
+          {"from": "kg", "to": "g", "multiplier": 1000, "range_from": [1, 10]}
         ],
         "CE2": [
-          ["g", "mg", 1000],
-          ["g", "dg", 10],
-          ["g", "cg", 1],
-          ["dg", "cg", 10],
-          ["cg", "mg", 10]
+          {"from": "g", "to": "mg", "multiplier": 1000, "range_from": [1, 10]},
+          {"from": "g", "to": "dg", "multiplier": 10, "range_from": [1, 10]},
+          {"from": "g", "to": "cg", "multiplier": 1, "range_from": [1, 10]},
+          {"from": "dg", "to": "cg", "multiplier": 10, "range_from": [1, 10]},
+          {"from": "cg", "to": "mg", "multiplier": 10, "range_from": [1, 10]}
         ],
         "CM1": [
-          ["t", "kg", 1000],
-          ["kg", "hg", 100],
-          ["kg", "dag", 10],
-          ["hg", "g", 100],
-          ["dag", "g", 10]
+          {"from": "t", "to": "kg", "multiplier": 1000, "range_from": [1, 5]},
+          {"from": "kg", "to": "hg", "multiplier": 100, "range_from": [1, 10]},
+          {"from": "kg", "to": "dag", "multiplier": 10, "range_from": [1, 10]},
+          {"from": "hg", "to": "g", "multiplier": 100, "range_from": [1, 10]},
+          {"from": "dag", "to": "g", "multiplier": 10, "range_from": [1, 10]}
         ],
         "CM2": [
-          ["q", "kg", 100]
+          {"from": "q", "to": "kg", "multiplier": 100, "range_from": [1, 10]}
         ]
-        
       },
       "volume": {
         "CE1": [
-          ["L", "cL", 100],
-          ["L", "dL", 10]
+          {"from": "L", "to": "cL", "multiplier": 100, "range_from": [1, 10]},
+          {"from": "L", "to": "dL", "multiplier": 10, "range_from": [1, 10]}
         ],
         "CE2": [
-          ["L", "mL", 1000]
+          {"from": "L", "to": "mL", "multiplier": 1000, "range_from": [1, 10]}
         ],
         "CM1": [
-          ["dL", "cL", 10],
-          ["dL", "mL", 100],
-          ["cL", "mL", 10]
+          {"from": "dL", "to": "cL", "multiplier": 10, "range_from": [1, 10]},
+          {"from": "dL", "to": "mL", "multiplier": 100, "range_from": [1, 10]},
+          {"from": "cL", "to": "mL", "multiplier": 10, "range_from": [1, 10]}
         ],
         "CM2":[
-          ["m3", "L", 1000],
-          ["m3", "cL", 100000],
-          ["m3", "dL", 10000],
-          ["m3", "mL", 1000000]
+          {"from": "m3", "to": "L", "multiplier": 1000, "range_from": [1, 5]},
+          {"from": "m3", "to": "cL", "multiplier": 100000, "range_from": [1, 2]},
+          {"from": "m3", "to": "dL", "multiplier": 10000, "range_from": [1, 5]},
+          {"from": "m3", "to": "mL", "multiplier": 1000000, "range_from": [1, 1]}
         ]
       },
       "temps": {
         "CE2": [
-          ["h", "min", 60],
-          ["min", "s", 60]
+          {"from": "h", "to": "min", "multiplier": 60, "range_from": [1, 10]},
+          {"from": "min", "to": "s", "multiplier": 60, "range_from": [1, 10]}
         ],
         "CM1": [
-          ["h", "s", 3600]
+          {"from": "h", "to": "s", "multiplier": 3600, "range_from": [1, 5]}
         ],
         "CM2": [
-          ["jour", "h", 24],
-          ["jour", "min", 1440],
-          ["jour", "s", 86400]
+          {"from": "jour", "to": "h", "multiplier": 24, "range_from": [1, 5]},
+          {"from": "jour", "to": "min", "multiplier": 1440, "range_from": [1, 2]},
+          {"from": "jour", "to": "s", "multiplier": 86400, "range_from": [1, 1]}
         ]
       },
       "monnaie": {
         "CP": [
-          ["€", "centimes", 100]
+          {"from": "€", "to": "centimes", "multiplier": 100, "range_from": [1, 10]}
         ]
       }
     }

@@ -287,7 +287,9 @@ def set_cell_margins(cell, top=None, bottom=None, left=None, right=None):
 def generate_workbook_docx(days, operations, counts, max_digits, conjugations, params_list, grammar_exercises,
                            orthographe_exercises=None, enumerate_exercises=None, sort_exercises=None,
                            geo_exercises=None, english_exercises=None, encadrement_exercises_list=None,  # Modifié
-                           story_math_problems_by_day=None,  # Ajout du paramètre
+                           story_math_problems_by_day=None,
+                           conj_complete_sentence_exercises=None,
+                           conj_complete_pronoun_exercises=None,
                            compare_numbers_exercises_list=None,  # Nouveau
                            logical_sequences_exercises_list=None,  # Nouveau
                            header_text=None, show_name=False, show_note=False, filename="workbook.docx", output_dir_override=None):
@@ -301,6 +303,10 @@ def generate_workbook_docx(days, operations, counts, max_digits, conjugations, p
         enumerate_exercises = []
     if sort_exercises is None:
         sort_exercises = []
+    if conj_complete_sentence_exercises is None:
+        conj_complete_sentence_exercises = []
+    if conj_complete_pronoun_exercises is None:
+        conj_complete_pronoun_exercises = []
     if encadrement_exercises_list is None:
         encadrement_exercises_list = []  # Modifié
     if story_math_problems_by_day is None:  # Initialisation
@@ -369,6 +375,13 @@ def generate_workbook_docx(days, operations, counts, max_digits, conjugations, p
         current_day_story_problems = None
         if len(story_math_problems_by_day) >= day:
             current_day_story_problems = story_math_problems_by_day[day-1]
+
+        current_day_conjugations = conjugations[day-1] if conjugations and len(
+            conjugations) >= day else None
+        current_day_complete_sentence = conj_complete_sentence_exercises[day-1] if conj_complete_sentence_exercises and len(
+            conj_complete_sentence_exercises) >= day else None
+        current_day_complete_pronoun = conj_complete_pronoun_exercises[day-1] if conj_complete_pronoun_exercises and len(
+            conj_complete_pronoun_exercises) >= day else None
 
         section_num = 1  # Compteur pour la numérotation des sections
 
@@ -442,7 +455,7 @@ def generate_workbook_docx(days, operations, counts, max_digits, conjugations, p
                 # et la cellule a une marge inférieure.
             add_paragraph(doc, "")  # Espace entre les cadres de section
 
-        if conjugations and len(conjugations) >= day and conjugations[day-1]:
+        if current_day_conjugations or current_day_complete_sentence or current_day_complete_pronoun:
             section_key = "Conjugaison"
             section_frame_table = doc.add_table(rows=1, cols=1)
             section_color_data = SECTION_ASSETS.get(
@@ -473,29 +486,51 @@ def generate_workbook_docx(days, operations, counts, max_digits, conjugations, p
                 except ValueError:
                     pass
 
-            from conjugation_generator import PRONOUNS, VERBS
-            for conjugation_item in conjugations[day-1]:
-                verb = conjugation_item["verb"]
-                tense = conjugation_item["tense"]
-                groupe = None
-                for g in (1, 2, 3):
-                    if verb in VERBS.get(g, []):
-                        groupe = f"{g}er groupe"
-                        break
-                if not groupe and "usuels" in VERBS and verb in VERBS["usuels"]:
-                    groupe = "usuel"
-                if not groupe:
-                    groupe = "inconnu"  # Fallback
+            if current_day_conjugations:
+                from conjugation_generator import PRONOUNS, VERBS
+                for conjugation_item in current_day_conjugations:
+                    verb = conjugation_item["verb"]
+                    tense = conjugation_item["tense"]
+                    groupe = None
+                    for g in (1, 2, 3):
+                        if verb in VERBS.get(g, []):
+                            groupe = f"{g}er groupe"
+                            break
+                    if not groupe and "usuels" in VERBS and verb in VERBS["usuels"]:
+                        groupe = "usuel"
+                    if not groupe:
+                        groupe = "inconnu"  # Fallback
 
-                p_conj_details = add_paragraph(section_cell, indent=True)
-                run = p_conj_details.add_run(
-                    f"Verbe : {verb}  |  Groupe : {groupe}  |  Temps : {tense}")
-                run.bold = True
-                for pronoun in PRONOUNS:
-                    add_paragraph(
-                        section_cell, f"{pronoun} ____________________", indent=True)
+                    p_conj_details = add_paragraph(section_cell, indent=True)
+                    run = p_conj_details.add_run(
+                        f"Verbe : {verb}  |  Groupe : {groupe}  |  Temps : {tense}")
+                    run.bold = True
+                    for pronoun in PRONOUNS:
+                        add_paragraph(
+                            section_cell, f"{pronoun} ____________________", indent=True)
+
+            if current_day_complete_sentence:
+                p_title = add_paragraph(section_cell, indent=True)
+                if len(current_day_complete_sentence) == 1:
+                    title_text = "Complète la phrase en conjuguant le verbe :"
+                else:
+                    title_text = "Complète les phrases en conjuguant les verbes :"
+                run_title = p_title.add_run(title_text)
+                run_title.bold = True
+                for ex in current_day_complete_sentence:
+                    add_paragraph(section_cell, ex['content'] + " (Temps: " + ex['tense'].capitalize() + ")", indent=True)
+
+            if current_day_complete_pronoun:
+                p_title = add_paragraph(section_cell, indent=True)
+                if len(current_day_complete_pronoun) == 1:
+                    title_text = "Complète la phrase avec le pronom qui convient :"
+                else:
+                    title_text = "Complète les phrases avec le pronom qui convient :"
+                run_title = p_title.add_run(title_text)
+                run_title.bold = True
+                for ex in current_day_complete_pronoun:
+                    add_paragraph(section_cell, ex['content'], indent=True)
             add_paragraph(doc, "")  # Espace entre les cadres de section
-
         if grammar_exercises and len(grammar_exercises) >= day and grammar_exercises[day-1]:
             section_key = "Grammaire"
             section_frame_table = doc.add_table(rows=1, cols=1)
@@ -645,7 +680,7 @@ def generate_workbook_docx(days, operations, counts, max_digits, conjugations, p
             if current_day_compare_numbers:
                 para_compare_title = add_paragraph(section_cell, indent=True)
                 run_compare_title = para_compare_title.add_run(
-                    "Comparer les nombres (<, >, =) :")
+                    "Compare les nombres (<, >, =) :")
                 run_compare_title.bold = True
                 for ex_compare in current_day_compare_numbers:
                     add_paragraph(
@@ -662,7 +697,7 @@ def generate_workbook_docx(days, operations, counts, max_digits, conjugations, p
                 run_seq_title = para_seq_title.add_run(title_text_seq)
                 run_seq_title.bold = True
                 for ex_seq in current_day_logical_sequences:
-                    sequence_str = " ".join(
+                    sequence_str = ", ".join(
                         map(str, ex_seq['sequence_displayed']))
                     # type_desc = ""
                     # if ex_seq['type'] == 'arithmetic_plus':
@@ -706,13 +741,19 @@ def generate_workbook_docx(days, operations, counts, max_digits, conjugations, p
             completer_subtitle_shown = False
             # relier_subtitle_shown = False  # F841 local variable 'relier_subtitle_shown' is assigned to but never used
 
+            # Count completer exercises to set the title correctly
+            completer_exercises_for_day = [ex for ex in english_exercises[day-1] if ex['type'] in ('simple', 'complexe')]
+
             for ex in english_exercises[day-1]:
                 if ex['type'] in ('simple', 'complexe'):
                     if not completer_subtitle_shown:
                         para_complete_title = add_paragraph(
                             section_cell, indent=True)
-                        run_complete_title = para_complete_title.add_run(
-                            "Compléter :")
+                        if len(completer_exercises_for_day) == 1:
+                            title_text = "Complète la phrase :"
+                        else:
+                            title_text = "Complète les phrases :"
+                        run_complete_title = para_complete_title.add_run(title_text)
                         run_complete_title.bold = True
                         completer_subtitle_shown = True
                     add_paragraph(section_cell, ex['content'], indent=True)
@@ -836,6 +877,17 @@ def generate_workbook_docx(days, operations, counts, max_digits, conjugations, p
                             children[table_index + 1], section_cell)
                 except ValueError:
                     pass
+
+            # Filter homophone exercises to add a title only once
+            homophone_exercises_for_day = [ex for ex in orthographe_exercises[day-1] if ex['type'] == 'homophone']
+            if homophone_exercises_for_day:
+                if len(homophone_exercises_for_day) == 1:
+                    title_text = "Complète l'homophone :"
+                else:
+                    title_text = "Complète les homophones :"
+                para_title = add_paragraph(section_cell, indent=True)
+                run_title = para_title.add_run(title_text)
+                run_title.bold = True
 
             for ex_ortho in orthographe_exercises[day-1]:
                 if ex_ortho['type'] == 'homophone':
