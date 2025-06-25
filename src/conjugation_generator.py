@@ -21,7 +21,7 @@ with open(VERBS_PATH, encoding='utf-8') as f:
         else:
             VERBS[k] = v
 
-PRONOUNS = ["je", "tu", "il/elle/on", "nous", "vous", "ils/elles"]
+PRONOUNS = ["je/j'", "tu", "il/elle/on", "nous", "vous", "ils/elles"]
 
 # Liste des temps de conjugaison utilisables (adaptée à l'école primaire)
 TENSES = [

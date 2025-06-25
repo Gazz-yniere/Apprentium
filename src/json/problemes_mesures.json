@@ -1,0 +1,176 @@
+{
+  "longueur": [
+    {
+      "enonce": "Un ruban mesure {L1} cm. On en coupe {L2} cm. Quelle longueur de ruban reste-t-il ?",
+      "variables": { "L1": [50, 450], "L2": [10, 290] },
+      "condition": "L1 > L2",
+      "levels": ["CE1", "CE2"]
+    },
+    {
+      "enonce": "Pour aller à l'école, Léo parcourt {D1} m. Pour rentrer, il parcourt la même distance. Quelle distance totale parcourt-il chaque jour ?",
+      "variables": { "D1": [200, 10500] },
+      "levels": ["CE2", "CM1"]
+    },
+    {
+      "enonce": "Un mur mesure {M1} m de long. On veut le peindre en {C} couleurs. Chaque section colorée doit avoir la même longueur. Quelle sera la longueur de chaque section ?",
+      "variables": { "M1": [10, 90], "C": [2, 10] },
+      "condition": "M1 % C == 0",
+      "levels": ["CM1", "CM2"]
+    },
+    {
+      "enonce": "Une course à pied a une longueur de {C1} km. Après {C2} km, combien de kilomètres restent-il à parcourir ?",
+      "variables": { "C1": [5, 150], "C2": [1, 70] },
+      "condition": "C1 > C2",
+      "levels": ["CM1", "CM2"]
+    },
+    {
+      "enonce": "Un éléphant mesure {T1} cm de haut. Une girafe mesure {T2} cm de plus que l'éléphant. Quelle est la taille de la girafe ?",
+      "variables": { "T1": [250, 560], "T2": [50, 350] },
+      "levels": ["CE2", "CM1"]
+    },
+    {
+      "enonce": "Combien de sections de {S1} cm peut-on faire dans un câble de {S2} cm de long ?",
+      "variables": { "S1": [5, 50], "S2": [100, 2100] },
+      "condition": "S2 % S1 == 0",
+      "levels": ["CM1", "CM2"]
+    }
+  ],
+  "masse": [
+    {
+      "enonce": "Maman achète {P1} kg de pommes et {P2} kg de poires. Quelle est la masse totale des fruits ?",
+      "variables": { "P1": [1, 30], "P2": [1, 30] },
+      "levels": ["CE2", "CM1"]
+    },
+    {
+      "enonce": "Un sac de farine pèse {F1} kg. On utilise {F2} kg pour faire un gâteau. Quelle quantité de farine reste-t-il ?",
+      "variables": { "F1": [5, 40], "F2": [1, 30] },
+      "condition": "F1 > F2",
+      "levels": ["CE2", "CM1"]
+    },
+    {
+      "enonce": "Un camion peut transporter {C1} kg de marchandises. Si chaque carton pèse {C2} kg, combien de cartons peut-il transporter ?",
+      "variables": { "C1": [100, 9000], "C2": [10, 270] },
+      "condition": "C1 % C2 == 0",
+      "levels": ["CM1", "CM2"]
+    },
+    {
+      "enonce": "Combien pèsent {N} sacs de riz si chaque sac pèse {P} kg ?",
+      "variables": { "N": [2, 31], "P": [5,  31] },
+      "levels": ["CM1", "CM2"]
+    },
+    {
+      "enonce": "Un bébé pèse {B1} kg à la naissance. Après un mois, il a pris {B2} g. Quel est son poids en g après un mois ?",
+      "variables": { "B1": [3, 6.5], "B2": [500, 3400] },
+      "levels": ["CM1", "CM2"]
+    },
+    {
+      "enonce": "Un colis contient {C1} paquets de {C2} g chacun. Quel est le poids total du colis en g ?",
+      "variables": { "C1": [5, 140], "C2": [100, 1600] },
+      "levels": ["CM1", "CM2"]
+    }
+  ],
+  "monnaie": [
+    {
+      "enonce": "J'ai {E} euros. J'achète un livre qui coûte {C} euros. Combien d'argent me reste-t-il ?",
+      "variables": { "E": [10,  210], "C": [5, 105] },
+      "condition": "E > C",
+      "levels": ["CE1", "CE2"]
+    },
+    {
+      "enonce": "Lucas a {A1} euros dans sa tirelire. Ses grands-parents lui donnent {A2} euros. Combien a-t-il en tout ?",
+      "variables": { "A1": [10,  150], "A2": [5, 105] },
+      "levels": ["CE1", "CE2"]
+    },
+    {
+      "enonce": "Un paquet de bonbons coûte {B} euros. Combien coûtent {N} paquets de bonbons ?",
+      "variables": { "B": [2,  31], "N": [2, 31] },
+      "levels": ["CE2", "CM1"]
+    },
+    {
+      "enonce": "Avec {M} euros, combien de stylos à {P} euros l'unité peut-on acheter ?",
+      "variables": { "M": [20, 310], "P": [2, 10] },
+      "condition": "M % P == 0",
+      "levels": ["CM1", "CM2"]
+    },
+    {
+      "enonce": "J'ai {J1} pièces de {V1} centimes et {J2} pièces de {V2} centimes. Combien ai-je en tout ?",
+      "variables": { "J1": [5,  140], "V1": [5,  50], "J2": [3, 145], "V2": [5, 50] },
+      "levels": ["CM1", "CM2"]
+    },
+    {
+      "enonce": "Un jouet coûte {J} euros. Je paie avec un billet de {B} euros. Quelle est la monnaie rendue ?",
+      "variables": { "J": [12, 220], "B": [20, 500] },
+      "condition": "B > J",
+      "levels": ["CE2", "CM1"]
+    }
+  ],
+  "temps": [
+    {
+      "enonce": "Il est {H1}h {M1}. Dans {D} minutes, quelle heure sera-t-il ?",
+      "variables": { "H1": [8, 23], "M1": [0, 55], "D": [10, 720] },
+      "levels": ["CE2", "CM1"]
+    },
+    {
+      "enonce": "Un train part à {H1}h {M1} et arrive à {H2}h {M2}. Combien de temps le trajet a-t-il duré ?",
+      "variables": { "H1": [8, 18], "M1": [0, 55], "H2": [9, 19], "M2": [0, 55] },
+      "condition": "H2*60+M2 > H1*60+M1",
+      "levels": ["CM1", "CM2"]
+    },
+    {
+      "enonce": "Une émission de télévision dure {D1} minutes. Elle commence à {H1}h {M1}. À quelle heure se termine-t-elle ?",
+      "variables": { "D1": [30, 870], "H1": [18, 22], "M1": [0, 55] },
+      "levels": ["CM1", "CM2"]
+    },
+    {
+      "enonce": "Combien de jours y a-t-il dans {S} semaines ?",
+      "variables": { "S": [2, 31] },
+      "levels": ["CE1", "CE2"]
+    },
+    {
+      "enonce": "Un ouvrier travaille {H} heures par jour pendant {J} jours. Combien d'heures a-t-il travaillé en tout ?",
+      "variables": { "H": [7, 10], "J": [5, 150] },
+      "levels": ["CM1", "CM2"]
+    },
+    {
+      "enonce": "Un film dure {M} minutes. Exprime cette durée en heures et minutes.",
+      "variables": { "M": [75, 930] },
+      "levels": ["CM1", "CM2"]
+    }
+  ],
+  "volume": [
+    {
+      "enonce": "Une bouteille contient {B1} L d'eau. On en boit {B2} L. Quelle quantité d'eau reste-t-il ?",
+      "variables": { "B1": [2, 30], "B2": [0.5, 15] },
+      "condition": "B1 > B2",
+      "levels": ["CE2", "CM1"]
+    },
+    {
+      "enonce": "Une citerne contient {C1} L d'eau. On y ajoute {C2} L. Quel est le volume total d'eau dans la citerne ?",
+      "variables": { "C1": [100, 1600], "C2": [50, 775] },
+      "levels": ["CE2", "CM1"]
+    },
+    {
+      "enonce": "Un seau a une contenance de {S} L. Combien de seaux faut-il pour remplir une piscine de {P} L ?",
+      "variables": { "S": [5, 30], "P": [100, 10000] },
+      "condition": "P % S == 0",
+      "levels": ["CM1", "CM2"]
+    },
+    {
+      "enonce": "Chaque verre contient {V} cl. Combien de cl de jus faut-il pour remplir {N} verres ?",
+      "variables": { "V": [10, 155], "N": [2, 31] },
+      "levels": ["CE2", "CM1"]
+    },
+    {
+      "enonce": "Une citerne de {C} L d'eau est remplie aux trois quarts. Quel est le volume d'eau dans la citerne ?",
+      "variables": { "C": [400, 12000] },
+      "condition": "C % 4 == 0",
+      "levels": ["CM2"]
+    },
+    {
+      "enonce": "Un arrosoir contient {A} L d'eau. On arrose {N} plantes et chaque plante reçoit {Q} L. Combien de litres reste-t-il dans l'arrosoir ?",
+      "variables": { "A": [10,  82], "N": [2, 30], "Q": [0.5, 2] },
+      "condition": "A > N * Q",
+      "levels": ["CM1", "CM2"]
+    }
+  ]
+}

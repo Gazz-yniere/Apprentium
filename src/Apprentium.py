@@ -1,7 +1,11 @@
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QLabel, QLineEdit, QCheckBox, QPushButton, QFrame, QGroupBox, QSplitter, QFileDialog, QLayout, QGraphicsOpacityEffect, QScrollArea)
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QPalette, QColor
+from PyQt6.QtGui import QIcon
 from calculs_generator import generate_story_math_problems
+from gui.template import UI_STYLE_CONFIG # Import UI_STYLE_CONFIG from template.py
+from gui.header import AppHeader # Import AppHeader
+from gui.filter_widgets import create_input_row, create_generic_groupbox # NEW IMPORT
 import json
 import os  # Added for path joining and os.startfile
 
@@ -29,127 +33,6 @@ def get_resource_path(filename):
     return os.path.join(os.path.dirname(__file__), "json", filename)
 
 
-UI_STYLE_CONFIG = {
-    "palette": {
-        "window": (30, 30, 30),
-        "window_text": (255, 255, 255),
-        "base": (20, 20, 20),
-        "alternate_base": (30, 30, 30),
-        "tooltip_base": (255, 255, 255),
-        "tooltip_text": (255, 255, 255),
-        "text": (255, 255, 255),
-        "button": (45, 45, 45),
-        "button_text": (255, 255, 255),
-        "bright_text": (255, 0, 0),
-        "highlight": (0, 120, 215),
-        "highlighted_text": (0, 0, 0),
-    },
-    "window": {
-        "minimum_width": 1400,
-        "minimum_height": 900,
-    },
-    "labels": {
-        "header_label":       "font-weight: bold; font-size: 16px; color: #E0E0E0; margin-right: 10px;",
-        "days_label":         "font-weight: bold; font-size: 16px; color: #E0E0E0;",
-        "level_selection":    "font-weight: bold; font-size: 16px; color: #E0E0E0; margin-right: 10px;",
-        "column_title_base":  "font-weight: bold; font-size: 20px; margin-bottom: 8px; margin-top: 0px;",
-        "column_title_colors": {
-            # Bleu clair, Violet clair, Vert clair
-            "calc":      "#4FC3F7", "geo":       "#BA68C8", "conj":      "#81C784",
-            # Jaune/Or, Orange, Sarcelle (Teal)
-            "grammar":   "#FFD54F", "ortho":     "#FFB300", "english":   "#4DB6AC",
-        },
-        # Style pour la plupart des labels de champ
-        "field_label":        "color: #e0e0e0; font-size: 14px; font-weight: normal;",
-        # Harmonisé avec field_label
-        "filename_label":     "font-weight: bold; font-size: 16px; color: #E0E0E0;",
-        "output_path_display_default": "font-style: italic; color: #B0BEC5;",
-        "output_path_display_set": "font-style: normal; color: #E0E0E0;",
-        # NOUVEAUX STYLES POUR LE FOOTER :
-        "footer_label":       "font-size: 11px; color: #B0BEC5; margin-left: 5px;",
-        "version_label":      "font-size: 11px; color: #B0BEC5; margin-right: 5px;",
-    },
-    "line_edits": {
-        "default":            "color: black; background-color: white; font-size: 14px; border-radius: 4px; padding: 2px 6px;",
-        "days_invalid_border": "border: 2px solid red;",
-        "header_placeholder": "Optionnel",
-    },
-    "group_boxes": {
-        "base_style_template": "QGroupBox {{ margin-top: 2px; margin-bottom: 2px; padding: 5px 6px 5px 6px; border: 3px solid {border_color}; border-radius: 15px; }} QGroupBox:title {{ font-size: 15px; color: {border_color}; background: #232323; subcontrol-origin: margin; subcontrol-position: top left; left: 15px; top: -4px; padding: 0 12px; font-weight: bold; }}",
-        "border_colors": {  # Mêmes clés que column_title_colors pour la cohérence
-            # Bleu clair, Violet clair, Vert clair
-            "calc":      "#4FC3F7", "geo":       "#BA68C8", "conj":      "#81C784",
-            # Jaune/Or, Orange, Sarcelle (Teal)
-            "grammar":   "#FFD54F", "ortho":     "#FFB300", "english":   "#4DB6AC",
-        }
-    },
-    "buttons": {
-        "level_button_base_style_template": """
-            QPushButton {{
-                color: {text_color}; font-weight: bold; font-size: 14px;
-                padding: 6px 15px; border-radius: 8px; border: none;
-                background-color: {bg_color};
-            }}
-            QPushButton:hover {{ background-color: {hover_bg_color}; }}
-            QPushButton:pressed {{ background-color: {pressed_bg_color}; }}
-            QPushButton[selected="true"] {{ padding: 6px 15px; }}
-        """,
-        "level_button_text_color": "black",
-        "level_colors": {  # Couleurs de fond pour les boutons de niveau
-            "CP":  "#EF9A9A",  # Rouge clair (était CM2)
-            "CE1": "#FFCC80",  # Orange clair (était CE2)
-            "CE2": "#FFFACD",  # Jaune clair (LemonChiffon)
-            "CM1": "#A5D6A7",  # Vert clair (était CP)
-            "CM2": "#90CAF9"   # Bleu clair (était CE1)
-        },
-        "action_button_base_style_template": """
-            QPushButton {{
-                background-color: {bg_color}; color: white; font-weight: bold;
-                font-size: 16px; padding: 8px 20px; border-radius: 8px;
-            }}
-            QPushButton:disabled {{ background-color: {disabled_bg_color}; color: {disabled_text_color}; }}
-            QPushButton:pressed {{ background-color: {pressed_bg_color}; }}
-        """,  # Garder la virgule ici si d'autres clés suivent au même niveau
-        "pdf":            {"bg_color": "#FF7043", "pressed_bg_color": "#d84315"},  # Orange/Rouge
-        # Bleu
-        "word":           {"bg_color": "#1976D2", "pressed_bg_color": "#0d47a1"},
-        # Vert pour "Choisir dossier"
-        "select_folder":  {"bg_color": "#66BB6A", "pressed_bg_color": "#388E3C"},
-        # Pastel Orange/Rouge
-        "preview_pdf":    {"bg_color": "#FFAB91", "pressed_bg_color": "#FF8A65"},
-        # Pastel Bleu
-        "preview_word":   {"bg_color": "#90CAF9", "pressed_bg_color": "#64B5F6"},
-        # Conservé au cas où, mais moins utilisé
-        "preview_path":   {"bg_color": "#78909C", "pressed_bg_color": "#546E7A"},
-        "disabled":     {"bg_color": "#cccccc", "text_color": "#888888"},
-    },
-    "separators": {
-        "style": "border-top: 3px solid #505050;"
-    },
-    "scroll_bar": {
-        "style_template": """
-            QScrollBar:vertical {{
-                border: none; background: {background_color}; width: {width}px; margin: 0px 0px 0px 0px;
-            }}
-            QScrollBar::handle:vertical {{
-                background: {handle_background_color}; min-height: {handle_min_height}px;
-                border-radius: {handle_border_radius}px;
-            }}
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
-                border: none; background: none; height: 0px;
-                subcontrol-position: top; subcontrol-origin: margin;
-            }}
-            QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical {{ background: none; }}
-            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{ background: none; }}
-        """,
-        "values": {
-            "background_color": "#2E2E2E", "width": 12,
-            "handle_background_color": "#555555", "handle_min_height": 20, "handle_border_radius": 6,
-        }
-    }
-}
-
-
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -160,11 +43,6 @@ class MainWindow(QMainWindow):
         self.setMinimumWidth(UI_STYLE_CONFIG["window"]["minimum_width"])
         self.setMinimumHeight(UI_STYLE_CONFIG["window"]["minimum_height"])
 
-        # --- Constants for Level Selection ---
-        # Récupère depuis la config
-        self.LEVEL_COLORS = UI_STYLE_CONFIG["buttons"]["level_colors"]
-        self.BASE_LEVEL_BUTTON_STYLE = UI_STYLE_CONFIG["buttons"]["level_button_base_style_template"]
-
         self.GITHUB_URL = "https://github.com/Gazz-yniere/Apprentium/releases"  # MODIFIEZ CECI
 
         self.current_selected_level_button = None
@@ -172,7 +50,11 @@ class MainWindow(QMainWindow):
 
         self._all_row_widgets_for_map = {}  # Pour accumuler les widgets de ligne
         self.selected_output_path = None  # Pour stocker le chemin choisi par l'utilisateur
-        self.all_line_edits = []  # Liste pour stocker tous les QLineEdit à styler
+        self.all_line_edits = [] # Liste pour stocker tous les QLineEdit à styler
+
+        # --- Constants for Level Selection ---
+        # Récupère depuis la config
+        self.LEVEL_COLORS = UI_STYLE_CONFIG["buttons"]["level_colors"]
 
         # --- Chargement de la configuration des niveaux ---
         self.level_configuration_data = {}
@@ -252,101 +134,15 @@ class MainWindow(QMainWindow):
         main_layout = QVBoxLayout()
         central_widget.setLayout(main_layout)
 
-        # Partie supérieure : En-tête et Nombre de jours
-        top_layout = QHBoxLayout()  # Layout principal pour cette ligne
-        # Harmonisation avec level_selection_layout
-        top_layout.setContentsMargins(10, 5, 10, 5)
+        # --- Header Component ---
+        # AppHeader will manage its own UI elements and internal state
+        self.header_component = AppHeader(self, UI_STYLE_CONFIG, self.LEVEL_COLORS, self.LEVEL_ORDER)
+        main_layout.addWidget(self.header_component)
+        # Connect the days_entry from the header component to MainWindow's validation
 
-        # Section En-tête (à gauche)
-        header_section_layout = QHBoxLayout()
-        self.header_label = QLabel("Titre :")
-        self.header_label.setStyleSheet(
-            UI_STYLE_CONFIG["labels"]["header_label"])
-        self.header_entry = QLineEdit()
-        self.all_line_edits.append(self.header_entry)
-        self.header_entry.setPlaceholderText(
-            UI_STYLE_CONFIG["line_edits"]["header_placeholder"])
-        # Style appliqué globalement plus tard
-        # Donner une largeur minimale pour la visibilité
-        self.header_entry.setMinimumWidth(250)
-        self.show_name_checkbox = QCheckBox("Afficher Nom")
-        self.show_note_checkbox = QCheckBox("Afficher Note")
-
-        header_section_layout.addWidget(self.header_label)
-        header_section_layout.addWidget(self.header_entry)
-        header_section_layout.addWidget(self.show_name_checkbox)
-        header_section_layout.addWidget(self.show_note_checkbox)
-        header_section_layout.setSpacing(10)
-
-        top_layout.addLayout(header_section_layout)
-        top_layout.addStretch()  # Pousse la section "jours" vers la droite
-
-        # Section Nombre de jours (à droite)
-        days_section_layout = QHBoxLayout()
-        self.days_label = QLabel("Nombre de jours :")
-        self.days_label.setStyleSheet(UI_STYLE_CONFIG["labels"]["days_label"])
-        self.days_entry = QLineEdit()
-        self.all_line_edits.append(self.days_entry)
-        self.days_entry.setMaximumWidth(60)
-
-        days_section_layout.addWidget(self.days_label)
-        days_section_layout.addWidget(self.days_entry)
-        # Ajouter un stretch *après* les widgets pour les garder compacts à gauche de ce layout
-        days_section_layout.addStretch(1)
-        days_section_layout.setSpacing(5)
-
-        top_layout.addLayout(days_section_layout)
-        main_layout.addLayout(top_layout)
-
-        # Séparateur
-        sep1 = QFrame()
-        sep1.setFrameShape(QFrame.Shape.HLine)
-        sep1.setFrameShadow(QFrame.Shadow.Sunken)
-        sep1.setStyleSheet(UI_STYLE_CONFIG["separators"]["style"])
-        main_layout.addWidget(sep1)
-
-        # --- Level Selection ---
-        level_selection_layout = QHBoxLayout()
-        level_selection_layout.setContentsMargins(10, 5, 10, 5)
-        level_selection_label = QLabel("Niveau :")
-        level_selection_label.setStyleSheet(
-            UI_STYLE_CONFIG["labels"]["level_selection"])
-        level_selection_layout.addWidget(level_selection_label)
-
-        self.level_buttons = {}
-        # Utilise self.LEVEL_ORDER chargé depuis le JSON (ou la valeur par défaut)
-        for level_name in self.LEVEL_ORDER:
-            color_hex = self.LEVEL_COLORS[level_name]
-            button = QPushButton(level_name)
-            # Lighter hover for dark theme
-            hover_color = self.darken_color(color_hex, 0.95)
-            pressed_color = self.darken_color(color_hex, 0.85)
-            # border_c = self.darken_color(color_hex, 0.7)
-
-            button.setStyleSheet(self.BASE_LEVEL_BUTTON_STYLE.format(
-                text_color=UI_STYLE_CONFIG["buttons"]["level_button_text_color"],
-                bg_color=color_hex,
-                hover_bg_color=hover_color,
-                pressed_bg_color=pressed_color,
-                # border_color=border_c # Plus utilisé car border: none
-            ))
-            button.setProperty("selected", False)
-            button.clicked.connect(
-                lambda checked, b=button, ln=level_name: self.select_level(ln, b))
-            # Largeur fixe pour les boutons de niveau
-            button.setFixedWidth(150)
-            self.level_buttons[level_name] = button
-            level_selection_layout.addWidget(button)
-
-        level_selection_layout.addStretch()
-        main_layout.addLayout(level_selection_layout)
-
-        # Séparateur
-        sep2 = QFrame()
-        sep2.setFrameShape(QFrame.Shape.HLine)
-        sep2.setFrameShadow(QFrame.Shadow.Sunken)
-        sep2.setStyleSheet(UI_STYLE_CONFIG["separators"]["style"])
-        main_layout.addWidget(sep2)
+        self.header_component.days_entry.textChanged.connect(self.validate_days_entry)
+        # Expose level_buttons for load_config
+        self.level_buttons = self.header_component.level_buttons
 
         # self.EXERCISES_BY_LEVEL_INCREMENTAL est maintenant chargé depuis le JSON
         # --- Colonne Calculs ---
@@ -364,7 +160,7 @@ class MainWindow(QMainWindow):
             ("Nombre d'exercices :", "enumerate_count", 60),
             ("Chiffres par nombre :", "enumerate_digits", 60)
         ]
-        self.enumerate_group, enumerate_les, enum_rows = self._create_generic_groupbox(
+        self.enumerate_group, enumerate_les, enum_rows = create_generic_groupbox(self,
             "Enumérer un nombre", enumerate_fields)
         self.all_line_edits.extend(enumerate_les)
         self._all_row_widgets_for_map.update(enum_rows)
@@ -377,7 +173,7 @@ class MainWindow(QMainWindow):
             ("Nb décimales :", "addition_decimals", 60),
             ("Nombre d'opérandes :", "addition_num_operands", 60)  # Nouveau champ
         ]
-        self.addition_group, addition_les, add_rows = self._create_generic_groupbox(
+        self.addition_group, addition_les, add_rows = create_generic_groupbox(self,
             "Addition", addition_fields)
         self.all_line_edits.extend(addition_les)
         self._all_row_widgets_for_map.update(add_rows)
@@ -394,7 +190,7 @@ class MainWindow(QMainWindow):
             ("Nb décimales :", "subtraction_decimals", 60),
             ("Nombre d'opérandes :", "subtraction_num_operands", 60)  # Nouveau champ
         ]
-        self.subtraction_group, subtraction_les, sub_rows = self._create_generic_groupbox(
+        self.subtraction_group, subtraction_les, sub_rows = create_generic_groupbox(self,
             "Soustraction", subtraction_fields, extra_items=[self.subtraction_negative_checkbox]
         )
         self.all_line_edits.extend(subtraction_les)
@@ -410,7 +206,7 @@ class MainWindow(QMainWindow):
             ("Nb décimales :", "multiplication_decimals", 60),
             ("Nombre d'opérandes :", "multiplication_num_operands", 60)  # Nouveau champ
         ]
-        self.multiplication_group, multiplication_les, mult_rows = self._create_generic_groupbox(
+        self.multiplication_group, multiplication_les, mult_rows = create_generic_groupbox(self,
             "Multiplication", multiplication_fields)
         self.all_line_edits.extend(multiplication_les)
         self._all_row_widgets_for_map.update(mult_rows)
@@ -426,7 +222,7 @@ class MainWindow(QMainWindow):
             ("Chiffres par opérande :", "division_digits", 60),
             ("Nb décimales :", "division_decimals", 60)
         ]
-        self.division_group, division_les, div_rows = self._create_generic_groupbox(
+        self.division_group, division_les, div_rows = create_generic_groupbox(self,
             "Division", division_fields, extra_items=[self.division_reste_checkbox]
         )
         self.all_line_edits.extend(division_les)
@@ -436,8 +232,8 @@ class MainWindow(QMainWindow):
         self.math_problems_group = QGroupBox(
             "Petits Problèmes")  # Clé: math_problems_group
         math_problems_layout = QVBoxLayout()
-
-        row_math_pb_count, self.math_problems_count = self._create_input_row(
+        
+        row_math_pb_count, self.math_problems_count = create_input_row( # MODIFIED
             "Nombre de problèmes :", 60)
         self.all_line_edits.append(self.math_problems_count)
         self._all_row_widgets_for_map["math_problems_count_row"] = row_math_pb_count
@@ -499,7 +295,7 @@ class MainWindow(QMainWindow):
         self.geo_conv_group = QGroupBox("Conversions")  # Clé: geo_conversion
         geo_conv_layout = QVBoxLayout()
 
-        row_widget_geo_count, self.geo_ex_count = self._create_input_row(
+        row_widget_geo_count, self.geo_ex_count = create_input_row( # MODIFIED
             "Nombre d'exercices :", 60)
         self.all_line_edits.append(self.geo_ex_count)
         # Ajout manuel car pas via _create_generic_groupbox
@@ -549,11 +345,11 @@ class MainWindow(QMainWindow):
             ("Chiffres par nombre :", "sort_digits", 60),
             ("Nombres à ranger :", "sort_n_numbers", 60)
         ]
-        self.sort_group, sort_les, sort_rows = self._create_generic_groupbox(
+        self.sort_group, sort_les, sort_rows = create_generic_groupbox(self,
             # Utiliser le layout en grille
             "Ranger les nombres", sort_fields, extra_items=[sort_grid_type_layout]
         )
-        self.all_line_edits.extend(sort_les)
+
         self._all_row_widgets_for_map.update(sort_rows)
         geo_layout.addWidget(self.sort_group)
 
@@ -587,9 +383,9 @@ class MainWindow(QMainWindow):
             col = (col + 1) % 2
             if col == 0:
                 row += 1
-        encadrement_grid_type_layout.setColumnStretch(2, 1)  # Pousse à gauche
+        encadrement_grid_type_layout.setColumnStretch(2, 1) # Pousse à gauche
 
-        self.encadrement_group, encadrement_les, enc_rows = self._create_generic_groupbox(
+        self.encadrement_group, encadrement_les, enc_rows = create_generic_groupbox(self,
             # Utiliser le layout en grille
             "Encadrer un nombre", encadrement_fields, extra_items=[encadrement_grid_type_layout]
         )
@@ -602,7 +398,7 @@ class MainWindow(QMainWindow):
             ("Nombre d'exercices :", "compare_numbers_count", 60),
             ("Chiffres par nombre :", "compare_numbers_digits", 60)
         ]
-        self.compare_numbers_group, compare_numbers_les, cn_rows = self._create_generic_groupbox(
+        self.compare_numbers_group, compare_numbers_les, cn_rows = create_generic_groupbox(self,
             "Comparer des nombres", compare_numbers_fields
         )
         self.all_line_edits.extend(compare_numbers_les)
@@ -625,7 +421,7 @@ class MainWindow(QMainWindow):
         self.logical_sequences_type_arithmetic_divide_cb = QCheckBox(
             "Suite arithmétique (÷)")
 
-        self.logical_sequences_group, logical_sequences_les, ls_rows = self._create_generic_groupbox(
+        self.logical_sequences_group, logical_sequences_les, ls_rows = create_generic_groupbox(self,
             "Suites Logiques", logical_sequences_fields,
             extra_items=[QLabel("Types de suites :"), self.logical_sequences_type_arithmetic_plus_cb,
                          self.logical_sequences_type_arithmetic_minus_cb,
@@ -663,7 +459,7 @@ class MainWindow(QMainWindow):
         group_layout = QVBoxLayout()
 
         # Déplacer le champ "Nombre de verbes par jour" ici
-        row_widget_verbs_per_day, self.verbs_per_day_entry = self._create_input_row(
+        row_widget_verbs_per_day, self.verbs_per_day_entry = create_input_row( # MODIFIED
             "Nombre de verbes :", 60)
         self.all_line_edits.append(self.verbs_per_day_entry)
         self._all_row_widgets_for_map["verbs_per_day_entry_row"] = row_widget_verbs_per_day
@@ -698,7 +494,7 @@ class MainWindow(QMainWindow):
         conj_complete_sentence_fields = [
             ("Nombre de phrases :", "conj_complete_sentence_count", 60)
         ]
-        self.conj_complete_sentence_group, conj_cs_les, conj_cs_rows = self._create_generic_groupbox(
+        self.conj_complete_sentence_group, conj_cs_les, conj_cs_rows = create_generic_groupbox(self,
             "Phrases à complèter", conj_complete_sentence_fields
         )
         self.all_line_edits.extend(conj_cs_les)
@@ -709,7 +505,7 @@ class MainWindow(QMainWindow):
         conj_complete_pronoun_fields = [
             ("Nombre de phrases :", "conj_complete_pronoun_count", 60)
         ]
-        self.conj_complete_pronoun_group, conj_cp_les, conj_cp_rows = self._create_generic_groupbox(
+        self.conj_complete_pronoun_group, conj_cp_les, conj_cp_rows = create_generic_groupbox(self,
             "Pronoms à complèter", conj_complete_pronoun_fields
         )
         self.all_line_edits.extend(conj_cp_les)
@@ -733,7 +529,7 @@ class MainWindow(QMainWindow):
 
         grammar_param_fields = [
             ("Nombre de phrases :", "grammar_sentence_count", 60)]
-        grammar_number_group, grammar_param_les, grammar_param_rows = self._create_generic_groupbox(
+        grammar_number_group, grammar_param_les, grammar_param_rows = create_generic_groupbox(self,
             "Paramètres de grammaire", grammar_param_fields
         )  # Clé: grammar_params (sera self.grammar_number_group)
         self.grammar_number_group = grammar_number_group  # Assign to self
@@ -788,7 +584,7 @@ class MainWindow(QMainWindow):
         # Paramètres orthographe
         ortho_param_fields = [
             ("Nombre d'exercices :", "orthographe_ex_count", 60)]
-        self.orthographe_number_group, ortho_param_les, ortho_param_rows = self._create_generic_groupbox(  # Clé: ortho_params
+        self.orthographe_number_group, ortho_param_les, ortho_param_rows = create_generic_groupbox(self,  # Clé: ortho_params
             "Paramètres d'orthographe", ortho_param_fields
         )
         self.all_line_edits.extend(ortho_param_les)
@@ -839,7 +635,7 @@ class MainWindow(QMainWindow):
             ("Nombre d'exercices :", "english_complete_count", 60)]
         self.english_type_simple = QCheckBox("Phrase à compléter simple")
         self.english_type_complexe = QCheckBox("Phrase à compléter complexe")
-        self.english_complete_group, english_complete_les, eng_comp_rows = self._create_generic_groupbox(  # Clé: english_complete
+        self.english_complete_group, english_complete_les, eng_comp_rows = create_generic_groupbox(self,  # Clé: english_complete
             "Phrases à compléter",
             english_complete_fields,
             extra_items=[self.english_type_simple, self.english_type_complexe]
@@ -853,7 +649,7 @@ class MainWindow(QMainWindow):
             ("Nombre de jeux à relier :", "english_relier_count", 60),
             ("Nombre de mots par jeu :", "relier_count", 60)
         ]
-        self.english_relier_group, english_relier_les, eng_rel_rows = self._create_generic_groupbox(  # Clé: english_relier
+        self.english_relier_group, english_relier_les, eng_rel_rows = create_generic_groupbox(self,  # Clé: english_relier
             "Jeux à relier", english_relier_fields
         )
         # Récupérer le layout existant du groupe "Jeux à relier"
@@ -985,15 +781,23 @@ class MainWindow(QMainWindow):
         self.main_scroll_area.setHorizontalScrollBarPolicy(
             Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.main_scroll_area.setFrameShape(QFrame.Shape.NoFrame)
+       
+        # Ajoute le scroll area principal au layout
+        main_layout.addWidget(self.main_scroll_area)
+        self.splitter = splitter  # Garder une référence au splitter
 
+        # --- Footer Component ---
+        from gui.footer import AppFooter # Import AppFooter
+        self.footer_component = AppFooter(self, UI_STYLE_CONFIG, __version__, self.GITHUB_URL)
+        main_layout.addWidget(self.footer_component)
+
+        # Collect all line edits from components and apply styling
+        self.all_line_edits.extend(self.header_component.all_line_edits)
+        self.all_line_edits.extend(self.footer_component.all_line_edits)
         # Style pour la barre de défilement du QScrollArea principal (depuis la config)
         scrollbar_style = UI_STYLE_CONFIG["scroll_bar"]["style_template"].format(
             **UI_STYLE_CONFIG["scroll_bar"]["values"])
         self.main_scroll_area.setStyleSheet(scrollbar_style)
-
-        # Ajoute le scroll area principal au layout
-        main_layout.addWidget(self.main_scroll_area)
-        self.splitter = splitter  # Garder une référence au splitter
 
         # --- Initialize exercise_widgets_map ---
         # This map will store all controllable widgets with unique keys.
@@ -1044,7 +848,7 @@ class MainWindow(QMainWindow):
             "logical_sequences_type_arithmetic_divide_cb": self.logical_sequences_type_arithmetic_divide_cb,
 
             # Conjugaison
-            # "conj_params_group" removed as the group is no longer needed
+            # "conj_params_group" removed as the group is no longer needed, verbs_per_day_entry is now directly mapped
             "verbs_per_day_entry_input": self.verbs_per_day_entry,
             "conj_groups_group": self.conj_group_group,  # Renamed for clarity
             "group_1_cb": self.group_1_checkbox, "group_2_cb": self.group_2_checkbox, "group_3_cb": self.group_3_checkbox, "usual_verbs_cb": self.usual_verbs_checkbox,
@@ -1098,17 +902,24 @@ class MainWindow(QMainWindow):
             "english_relier_group": self.english_relier_group,
             "english_relier_count_input": self.english_relier_count, "relier_count_input": self.relier_count,
             # "english_relier_themes_group": self.english_relier_themes_group, # Supprimé car plus de groupe dédié
+            # Header components (for config saving/loading)
+            "header_entry_input": self.header_component.header_entry,
+            "show_name_checkbox_cb": self.header_component.show_name_checkbox,
+            "show_note_checkbox_cb": self.header_component.show_note_checkbox,
+            "days_entry_input": self.header_component.days_entry,
+            # Footer components (for config saving/loading)
+            "filename_entry_input": self.footer_component.filename_entry,
         }
         # Remove None values from map (if checkboxes lists were shorter than expected)
         self.exercise_widgets_map = {
             k: v for k, v in self.exercise_widgets_map.items() if v is not None}
         # Ajouter les row_widgets stockés
         self.exercise_widgets_map.update(self._all_row_widgets_for_map)
-        del self._all_row_widgets_for_map  # Nettoyer le dictionnaire temporaire
+        del self._all_row_widgets_for_map # Nettoyer le dictionnaire temporaire
 
         # Ajouter dynamiquement les checkboxes de thèmes anglais à exercise_widgets_map
-        if hasattr(self, 'english_relier_theme_checkboxes'):
-            for theme_name, cb_widget in self.english_relier_theme_checkboxes.items():
+        if hasattr(self.header_component, 'english_relier_theme_checkboxes'): # Access via header_component
+            for theme_name, cb_widget in self.header_component.english_relier_theme_checkboxes.items():
                 self.exercise_widgets_map[f"english_theme_{theme_name}_cb"] = cb_widget
 
         # Ajouter dynamiquement les checkboxes de types de problèmes mathématiques
@@ -1137,133 +948,11 @@ class MainWindow(QMainWindow):
             # Les checkboxes de thèmes sont gérées individuellement
             "english": ["english_complete_group", "english_relier_group"],
         }
-
-        # Séparateur avant les contrôles de fichier/génération
-        sep_bottom = QFrame()
-        sep_bottom.setFrameShape(QFrame.Shape.HLine)
-        sep_bottom.setFrameShadow(QFrame.Shadow.Sunken)
-        sep_bottom.setStyleSheet(UI_STYLE_CONFIG["separators"]["style"])
-        main_layout.addWidget(sep_bottom)
-
-        # Bandeau bas : boutons générer + nom du fichier sur la même ligne
-        bottom_controls_layout = QHBoxLayout()  # Layout principal pour le bas
-        bottom_controls_layout.setContentsMargins(
-            10, 5, 10, 5)  # Mêmes marges que top_layout
-
-        # Partie gauche pour chemin et nom de fichier
-        left_file_controls_layout = QGridLayout()
-        self.output_path_button = QPushButton("Choisir dossier...")
-        # Style sera appliqué plus bas avec les autres boutons
-        self.output_path_button.clicked.connect(self.select_output_directory)
-        # Le texte sera défini par _update_output_path_display
-        self.output_path_display_label = QLabel()
-        self.output_path_display_label.setWordWrap(True)
-        self.output_path_display_label.setMinimumWidth(
-            200)  # Réduit un peu pour faire de la place
-        # Style initial sera défini dans _update_output_path_display
-
-        self.filename_label = QLabel("Nom du fichier :")
-        self.filename_label.setStyleSheet(
-            UI_STYLE_CONFIG["labels"]["filename_label"])
-        self.filename_entry = QLineEdit()
-        self.filename_entry.setMinimumWidth(150)  # Donne une largeur minimale
-        self.filename_entry.setMaximumWidth(200)
-        # Ajouter à la liste pour stylage
-        self.all_line_edits.append(self.filename_entry)
-        self.filename_entry.setText("workbook")
-
-        # Initialiser l'affichage du chemin de sortie
-        self._update_output_path_display(self.selected_output_path)
-
-        # Layout horizontal pour tous les contrôles de fichier
-        file_controls_line_layout = QHBoxLayout()
-        file_controls_line_layout.addWidget(self.output_path_button)
-        file_controls_line_layout.addWidget(self.output_path_display_label)
-        file_controls_line_layout.addWidget(self.filename_label)
-        file_controls_line_layout.addWidget(self.filename_entry)
-        # Ajoute un peu d'espace extensible si nécessaire avant le stretch principal
-        file_controls_line_layout.addStretch(0)
-
-        bottom_controls_layout.addLayout(left_file_controls_layout)
-        # Espace flexible pour pousser les boutons à droite
-        bottom_controls_layout.addStretch(1)
-
-        # Styles pour les boutons d'action (depuis la config)
-        btn_cfg = UI_STYLE_CONFIG["buttons"]
-
-        def get_action_button_style(type_key):
-            return btn_cfg["action_button_base_style_template"].format(
-                bg_color=btn_cfg[type_key]["bg_color"],
-                disabled_bg_color=btn_cfg["disabled"]["bg_color"],
-                disabled_text_color=btn_cfg["disabled"]["text_color"],
-                pressed_bg_color=btn_cfg[type_key]["pressed_bg_color"]
-            )
-
-        self.output_path_button.setStyleSheet(
-            get_action_button_style("select_folder"))
-        # self.output_path_button.setFixedWidth(150) # Suppression de la largeur fixe
-
-        left_file_controls_layout.addLayout(
-            file_controls_line_layout, 0, 0, 1, 2)  # Ajout du layout de ligne
-        # Partie droite pour les boutons
-        action_buttons_layout = QHBoxLayout()
-        self.generate_pdf_button = QPushButton("Générer PDF")
-        self.generate_pdf_button.setStyleSheet(get_action_button_style("pdf"))
-        self.generate_pdf_button.clicked.connect(self.generate_pdf)
-        # self.generate_pdf_button.setFixedWidth(150) # Suppression de la largeur fixe
-        action_buttons_layout.addWidget(self.generate_pdf_button)
-
-        self.generate_word_button = QPushButton("Générer Word")
-        self.generate_word_button.setStyleSheet(
-            get_action_button_style("word"))
-        self.generate_word_button.clicked.connect(self.generate_word)
-        # self.generate_word_button.setFixedWidth(150) # Suppression de la largeur fixe
-        action_buttons_layout.addWidget(self.generate_word_button)
-
-        self.preview_pdf_button = QPushButton("Visualiser PDF")
-        self.preview_pdf_button.setStyleSheet(
-            get_action_button_style("preview_pdf"))
-        self.preview_pdf_button.clicked.connect(self.preview_pdf)
-        # self.preview_pdf_button.setFixedWidth(150) # Suppression de la largeur fixe
-        action_buttons_layout.addWidget(self.preview_pdf_button)
-
-        self.preview_word_button = QPushButton("Visualiser Word")
-        self.preview_word_button.setStyleSheet(
-            get_action_button_style("preview_word"))
-        self.preview_word_button.clicked.connect(self.preview_word)
-        # self.preview_word_button.setFixedWidth(150) # Suppression de la largeur fixe
-        action_buttons_layout.addWidget(self.preview_word_button)
-
-        action_buttons_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
-
-        bottom_controls_layout.addLayout(action_buttons_layout)
-        main_layout.addLayout(bottom_controls_layout)
-
-        # --- Footer ---
-        footer_layout = QHBoxLayout()
-        footer_layout.setContentsMargins(15, 5, 10, 5)  # Marges pour le pied de page
-
-        github_label_text = f"<a style='color: #90CAF9; text-decoration: none;' href='{self.GITHUB_URL}'>Code Source (GitHub)</a>"
-        self.github_label = QLabel(github_label_text)
-        self.github_label.setOpenExternalLinks(True)
-        self.github_label.setStyleSheet(UI_STYLE_CONFIG["labels"]["footer_label"])
-        footer_layout.addWidget(self.github_label)
-
-        footer_layout.addStretch(1)  # Pousse le label de version vers la droite
-
-        self.version_label = QLabel(f"Apprentium v{__version__}")
-        self.version_label.setStyleSheet(UI_STYLE_CONFIG["labels"]["version_label"])
-        footer_layout.addWidget(self.version_label)
-        main_layout.addLayout(footer_layout)
-
-        # Correction du style pour les QLineEdit (texte noir sur fond sombre)
+        
         lineedit_style = UI_STYLE_CONFIG["line_edits"]["default"]
         for le in self.all_line_edits:
             if le:  # S'assurer que le widget existe
                 le.setStyleSheet(lineedit_style)
-
-        # Le style des labels est maintenant appliqué dans _create_input_row
-        # La boucle de style pour les labels est donc supprimée.
 
         # Chargement de la configuration si elle existe
         def get_config_path():
@@ -1277,19 +966,17 @@ class MainWindow(QMainWindow):
 
         # Centralisation des champs pour la config (nom, widget, mode)
         self.config_fields = [
-            ('days_entry', self.days_entry, 'text'),
+            ('days_entry', self.header_component.days_entry, 'text'),
+            ('header_entry', self.header_component.header_entry, 'text'), # Access via component
             # Enumérer un nombre
             ('enumerate_count', self.enumerate_count, 'text'),
             ('enumerate_digits', self.enumerate_digits, 'text'),
-            # Ranger les nombres
             ('sort_count', self.sort_count, 'text'),
             ('sort_digits', self.sort_digits, 'text'),
             ('sort_n_numbers', self.sort_n_numbers, 'text'),
             ('sort_type_croissant', self.sort_type_croissant, 'checked'),
             ('sort_type_decroissant', self.sort_type_decroissant, 'checked'),
-            ('header_entry', self.header_entry, 'text'),
             ('addition_count', self.addition_count, 'text'),
-            ('addition_digits', self.addition_digits, 'text'),
             ('addition_num_operands', self.addition_num_operands, 'text'),
             ('addition_decimals', self.addition_decimals, 'text'),
             ('subtraction_count', self.subtraction_count, 'text'),
@@ -1308,10 +995,10 @@ class MainWindow(QMainWindow):
             ('division_reste_checkbox', self.division_reste_checkbox, 'checked'),
             # Nouveaux exercices de conjugaison
             ('conj_complete_sentence_count', self.conj_complete_sentence_count, 'text'),
-            ('conj_complete_pronoun_count', self.conj_complete_pronoun_count, 'text'),
+            ('conj_complete_pronoun_count', self.conj_complete_pronoun_count, 'text'), # Access via component
             # Groupes de conjugaison
             # 'verbs_per_day_entry' est maintenant dans le groupe de verbes, mais la clé reste la même.
-            ('verbs_per_day_entry', self.verbs_per_day_entry, 'text'),
+            ('verbs_per_day_entry', self.verbs_per_day_entry, 'text'), # Access via component
             ('grammar_sentence_count', self.grammar_sentence_count, 'text'),
             ('intransitive_checkbox', self.intransitive_checkbox, 'checked'),
             ('transitive_direct_checkbox',
@@ -1324,10 +1011,10 @@ class MainWindow(QMainWindow):
             ('orthographe_ex_count', self.orthographe_ex_count, 'text'),
             ('orthographe_homophone_checkboxes',
              self.orthographe_homophone_checkboxes, 'checked_list'),
-            #
-            ('show_name_checkbox', self.show_name_checkbox, 'checked'),
-            ('show_note_checkbox', self.show_note_checkbox, 'checked'),
-            ('filename_entry', self.filename_entry, 'text'),
+            # Header checkboxes
+            ('show_name_checkbox', self.header_component.show_name_checkbox, 'checked'), # Access via component
+            ('show_note_checkbox', self.header_component.show_note_checkbox, 'checked'), # Access via component
+            ('filename_entry', self.footer_component.filename_entry, 'text'), # Access via component
             # Nouveau mode pour variable de chemin
             ('selected_output_path', self, 'path_variable'),
             ('group_1_checkbox', self.group_1_checkbox, 'checked'), # Ajouté
@@ -1373,16 +1060,13 @@ class MainWindow(QMainWindow):
             # Les checkboxes de types de problèmes seront ajoutées dynamiquement
             # Ajout pour sauvegarder le niveau
             ('current_level', self, 'level_variable'),
-        ]
-        # Ajouter dynamiquement les checkboxes de thèmes anglais à config_fields
-        if hasattr(self, 'english_relier_theme_checkboxes'):
-            for theme_name, cb_widget in self.english_relier_theme_checkboxes.items():
-                # La clé de config doit correspondre à celle dans exercise_widgets_map
-                self.config_fields.append(
-                    (f"english_theme_{theme_name}_cb", cb_widget, 'checked'))
+        ] # End of config_fields
 
-        # Ajouter dynamiquement les checkboxes de types de problèmes mathématiques à config_fields
-        if hasattr(self, 'math_problem_type_checkboxes'):
+        # Dynamically add checkboxes from components to config_fields
+        if hasattr(self, 'english_relier_theme_checkboxes'): # Access via self
+            for theme_name, cb_widget in self.english_relier_theme_checkboxes.items():
+                self.config_fields.append((f"english_theme_{theme_name}_cb", cb_widget, 'checked'))
+        if hasattr(self, 'math_problem_type_checkboxes'): # Access via self
             for type_key, cb_widget in self.math_problem_type_checkboxes.items():
                 self.config_fields.append(
                     (f"math_problem_type_{type_key}_cb", cb_widget, 'checked'))
@@ -1404,163 +1088,45 @@ class MainWindow(QMainWindow):
             print(
                 f"Erreur lors du chargement initial des données de conversion: {e}")
 
-        self.days_entry.textChanged.connect(self.validate_days_entry)
-
-    @staticmethod
-    def darken_color(hex_color, factor=0.8):
-        color = QColor(hex_color)
-        r = max(0, min(255, int(color.red() * factor)))
-        g = max(0, min(255, int(color.green() * factor)))
-        b = max(0, min(255, int(color.blue() * factor)))
-        return QColor(r, g, b).name()
-
-        # --- Début des méthodes ---
-
-    def _create_input_row(self, label_text, max_width=60):
-        """Crée une ligne QHBoxLayout avec un QLabel et un QLineEdit."""
-        # Le widget conteneur pour la ligne entière
-        row_widget = QWidget()
-        row_layout = QHBoxLayout(row_widget)
-        # Pas de marges internes pour le layout de la ligne
-        row_layout.setContentsMargins(0, 0, 0, 0)
-        row_layout.setSpacing(5)  # Espacement entre label et line_edit
-
-        label = QLabel(label_text)
-        # Utilise la config
-        label.setStyleSheet(UI_STYLE_CONFIG["labels"]["field_label"])
-        row_layout.addWidget(label)
-
-        line_edit = QLineEdit()
-        # max_width est toujours un int ici
-        line_edit.setMaximumWidth(max_width)
-        # Le style des QLineEdit sera appliqué globalement via self.all_line_edits
-        row_layout.addWidget(line_edit)
-        return row_widget, line_edit  # Retourner le widget conteneur et le line_edit
-
-    def _create_generic_groupbox(self, title, fields_config, extra_items=None):
+    def set_current_level(self, level_name):
         """
-        Crée un QGroupBox avec des champs de saisie et des éléments supplémentaires optionnels.
-        fields_config: liste de tuples (label_text, line_edit_attr_name, max_width)
-        extra_items: liste de QWidget ou QLayout à ajouter à la fin.
-        Retourne le QGroupBox, une liste des QLineEdit créés, et un dict des row_widgets créés.
+        Called by AppHeader to update the main window's current level.
         """
-        group_box = QGroupBox(title)
-        group_layout = QVBoxLayout()
-        line_edits_created = []
-        row_widgets_for_map_part = {}  # Spécifique à cet appel
-
-        for label_text, line_edit_attr_name, max_width_val in fields_config:
-            row_widget, line_edit = self._create_input_row(
-                label_text, max_width_val)  # row_widget est le QWidget de la ligne
-            group_layout.addWidget(row_widget)
-            setattr(self, line_edit_attr_name, line_edit)
-            line_edits_created.append(line_edit)
-            # Stocker le row_widget pour l'ajouter plus tard à exercise_widgets_map
-            # Clé pour le QLineEdit dans exercise_widgets_map: "{line_edit_attr_name}_input"
-            # Clé pour le row_widget dans exercise_widgets_map: "{line_edit_attr_name}_row"
-            row_widgets_for_map_part[f"{line_edit_attr_name}_row"] = row_widget
-
-        if extra_items:
-            for item in extra_items:
-                if isinstance(item, QLayout):
-                    group_layout.addLayout(item)
-                elif isinstance(item, QWidget):
-                    group_layout.addWidget(item)
-        group_box.setLayout(group_layout)
-        return group_box, line_edits_created, row_widgets_for_map_part
-
-    def select_output_directory(self):
-        directory = QFileDialog.getExistingDirectory(
-            self, "Choisir le dossier de sortie", self.selected_output_path or os.getcwd())
-        if directory:
-            self.selected_output_path = os.path.normpath(
-                directory)  # Normaliser le chemin
-        self._update_output_path_display(self.selected_output_path)
-
-    def select_level(self, level_name, clicked_button):
-        # 1. Gérer la sélection/désélection de self.current_level et self.current_selected_level_button
-        if self.current_level == level_name:  # Clicked on already selected level
-            self.current_level = None  # Deselect
-            self.current_selected_level_button = None
-        else:
-            self.current_level = level_name
-            self.current_selected_level_button = clicked_button
-
-        # 2. Mettre à jour les styles et l'opacité de TOUS les boutons de niveau
-        for ln_iter, btn_iter in self.level_buttons.items():
-            original_color_hex = self.LEVEL_COLORS[ln_iter]
-            hover_color = self.darken_color(original_color_hex, 0.95)
-            pressed_color = self.darken_color(original_color_hex, 0.85)
-            border_c = self.darken_color(original_color_hex, 0.7)
-
-            is_currently_iter_selected_button = (
-                btn_iter == self.current_selected_level_button)
-            # Propriété pour le style
-            btn_iter.setProperty("selected", is_currently_iter_selected_button)
-
-            # Appliquer le style de base (qui réagit à la propriété "selected")
-            style_str = self.BASE_LEVEL_BUTTON_STYLE.format(
-                text_color=UI_STYLE_CONFIG["buttons"]["level_button_text_color"],
-                bg_color=original_color_hex,
-                hover_bg_color=hover_color,
-                pressed_bg_color=pressed_color,
-                border_color=border_c
-            )
-            btn_iter.setStyleSheet(style_str)
-            # Forcer la réévaluation du style pour que la propriété "selected" soit prise en compte
-            btn_iter.style().unpolish(btn_iter)
-            btn_iter.style().polish(btn_iter)
-            btn_iter.update()  # Forcer un rafraîchissement visuel immédiat
-
-            # Gérer l'opacité
-            opacity_effect = btn_iter.graphicsEffect()
-            # S'il n'y a pas d'effet ou si ce n'est pas le bon type
-            if not isinstance(opacity_effect, QGraphicsOpacityEffect):
-                if opacity_effect:  # Supprimer un ancien effet d'un autre type si existant
-                    opacity_effect.deleteLater()
-                opacity_effect = QGraphicsOpacityEffect(btn_iter)
-                btn_iter.setGraphicsEffect(opacity_effect)
-
-            if is_currently_iter_selected_button or not self.current_selected_level_button:
-                # Si c'est le bouton sélectionné OU si aucun bouton n'est sélectionné (tout est actif)
-                opacity_effect.setOpacity(1.0)  # Pleinement opaque
-            else:
-                # Ce n'est pas le bouton sélectionné, ET un autre bouton EST sélectionné -> griser celui-ci
-                opacity_effect.setOpacity(0.55)  # Valeur pour griser
-
-        # QTimer pour s'assurer que les mises à jour de style sont appliquées après le traitement des événements
-        QTimer.singleShot(0, self._refresh_level_button_styles)
-
-        # print(f"Niveau sélectionné : {self.current_level}")
+        self.current_level = level_name
+        # The AppHeader component manages its own current_selected_level_button
+        # and its visual state.
         self.update_exercise_visibility()
 
-    def _refresh_level_button_styles(self):
-        for btn_iter in self.level_buttons.values():
-            btn_iter.style().unpolish(btn_iter)
-            btn_iter.style().polish(btn_iter)
-            btn_iter.update()
+    def set_selected_output_path(self, path):
+        """
+        Called by AppFooter to update the main window's selected output path.
+        """
+        self.selected_output_path = path
 
     def get_int(self, lineedit, default=0, field_name=None):
         value = lineedit.text().strip()
         if value == '':
             return default
         if value.isdigit():
-            return int(value)
+            # Ensure positive integer for days_entry
+            if lineedit == self.header_component.days_entry and int(value) <= 0:
+                raise InvalidFieldError(field_name or lineedit.objectName(), value)
+            return int(value) 
         else:
             raise InvalidFieldError(field_name or lineedit.objectName(), value)
 
     def validate_days_entry(self):
-        value = self.days_entry.text().strip()
+        value = self.header_component.days_entry.text().strip()
         is_valid = value.isdigit() and int(value) > 0
         style = UI_STYLE_CONFIG["line_edits"]["default"]
         if not is_valid:
             # Ajouter la bordure rouge spécifique pour l'invalidité
             style += UI_STYLE_CONFIG["line_edits"]["days_invalid_border"]
-        self.days_entry.setStyleSheet(style)
-        self.generate_pdf_button.setEnabled(is_valid)
-        self.generate_word_button.setEnabled(is_valid)
-        self.preview_pdf_button.setEnabled(is_valid)
-        self.preview_word_button.setEnabled(is_valid)
+        self.header_component.days_entry.setStyleSheet(style)
+        self.footer_component.generate_pdf_button.setEnabled(is_valid)
+        self.footer_component.generate_word_button.setEnabled(is_valid)
+        self.footer_component.preview_pdf_button.setEnabled(is_valid)
+        self.footer_component.preview_word_button.setEnabled(is_valid)
 
     def build_exercise_data(self):
         try:
@@ -1664,7 +1230,7 @@ class MainWindow(QMainWindow):
             if not is_croissant_selected and not is_decroissant_selected:  # Si aucun type de tri n'est sélectionné
                 sort_count_val = 0
 
-            params = {
+            params = { # All these parameters are now accessed via self.header_component or other specific widgets
                 # Enumérer un nombre
                 'enumerate_count': self.get_int(self.enumerate_count, field_name="Enumérer - nombre d'exercices") if "enumerate_group" in allowed_keys else 0,
                 'enumerate_digits': self.get_int(self.enumerate_digits, field_name="Enumérer - chiffres par nombre") if "enumerate_group" in allowed_keys else 0,
@@ -1674,7 +1240,7 @@ class MainWindow(QMainWindow):
                 'sort_n_numbers': self.get_int(self.sort_n_numbers, field_name="Ranger - nombres à ranger") if "geo_sort_group" in allowed_keys and sort_count_val > 0 else 0,
                 'sort_type_croissant': is_croissant_selected,
                 'sort_type_decroissant': is_decroissant_selected,
-                'days': self.get_int(self.days_entry, field_name="Nombre de jours"),
+                'days': self.get_int(self.header_component.days_entry, field_name="Nombre de jours"), # Access via component
                 'relier_count': n_mots_reliés,  # Already filtered based on english_relier_group
                 'addition_count': self.get_int(self.addition_count, field_name="Addition - nombre de calculs") if "addition_group" in allowed_keys else 0,
                 'addition_num_operands': self.get_int(self.addition_num_operands, default=2, field_name="Addition - nombre d'opérandes") if "addition_num_operands_input" in allowed_keys else 2,
@@ -1694,7 +1260,7 @@ class MainWindow(QMainWindow):
                 'division_decimals': self.get_int(self.division_decimals, field_name="Division - décimales") if "division_decimals_input" in allowed_keys else 0,
                 'division_reste': self.division_reste_checkbox.isChecked() if "division_reste_cb" in allowed_keys else False,
                 'TENSES': TENSES,
-                'VERBS': VERBS,
+                'VERBS': VERBS, # This is a constant, not a UI element
                 'grammar_sentence_count': self.get_int(self.grammar_sentence_count, field_name="Grammaire - nombre de phrases") if "grammar_params_group" in allowed_keys else 0,
                 'grammar_types': [t_name for t_name, cb_key, cb_widget in zip(['intransitive', 'transitive_direct', 'transitive_indirect', 'ditransitive'], ["intransitive_cb", "transitive_direct_cb", "transitive_indirect_cb", "ditransitive_cb"], [self.intransitive_checkbox, self.transitive_direct_checkbox, self.transitive_indirect_checkbox, self.ditransitive_checkbox]) if cb_key in allowed_keys and cb_widget.isChecked()],
                 'get_random_phrases': get_random_phrases,
@@ -1702,9 +1268,9 @@ class MainWindow(QMainWindow):
                 'generate_conversion_exercises': generate_conversion_exercises,
                 'geo_ex_count': self.get_int(self.geo_ex_count, field_name="Géométrie/mesures - nombre d'exercices") if "geo_conv_group" in allowed_keys else 0,
                 'geo_types': [label for cb, label, cb_key in zip(self.geo_conv_type_checkboxes, ['longueur', 'masse', 'volume', 'temps', 'monnaie'], ["conv_type_longueur_cb", "conv_type_masse_cb", "conv_type_volume_cb", "conv_type_temps_cb", "conv_type_monnaie_cb"]) if cb_key in allowed_keys and cb.isChecked()],
-                'geo_senses': [sense for sense, cb_key, cb_widget in zip(['direct', 'inverse'], ["conv_sens_direct_cb", "conv_sens_inverse_cb"], [self.conv_sens_direct, self.conv_sens_inverse]) if cb_key in allowed_keys and cb_widget.isChecked()],
+                'geo_senses': [sense for sense, cb_key, cb_widget in zip(['direct', 'inverse'], ["conv_sens_direct_cb", "conv_sens_inverse_cb"], [self.conv_sens_direct, self.conv_sens_inverse]) if cb_key in allowed_keys and cb_widget.isChecked()], # Access via component
                 'english_types': [etype for etype, cb_key, cb_widget in zip(['simple', 'complexe'], ["english_type_simple_cb", "english_type_complexe_cb"], [self.english_type_simple, self.english_type_complexe]) if cb_key in allowed_keys and cb_widget.isChecked()],
-                'PHRASES_SIMPLES': PHRASES_SIMPLES,
+                'PHRASES_SIMPLES': PHRASES_SIMPLES, # This is a constant
                 'PHRASES_COMPLEXES': PHRASES_COMPLEXES,
                 'MOTS_A_RELIER': MOTS_A_RELIER,
                 # Anglais
@@ -1734,7 +1300,7 @@ class MainWindow(QMainWindow):
                 'level_order_for_conversions': self.LEVEL_ORDER,
             }
 
-            verbs_per_day_val = self.get_int(
+            verbs_per_day_val = self.get_int( # Access via component
                 self.verbs_per_day_entry, field_name="Verbes par jour") if "conj_groups_group" in allowed_keys else 0
 
             # Modifié
@@ -1809,13 +1375,12 @@ class MainWindow(QMainWindow):
     def generate_pdf(self):
         try:
             data = self.build_exercise_data()
-            if data is None:
-                return
-            from pdf_generator import generate_workbook_pdf
-            header_text = self.header_entry.text().strip()
-            show_name = self.show_name_checkbox.isChecked()
-            show_note = self.show_note_checkbox.isChecked()
-            filename = self.filename_entry.text().strip() or "workbook"
+            if data is None: return
+            from pdf_generator import generate_workbook_pdf # Import here to avoid circular dependency if not already imported
+            header_text = self.header_component.header_entry.text().strip() # Access via component
+            show_name = self.header_component.show_name_checkbox.isChecked() # Access via component
+            show_note = self.header_component.show_note_checkbox.isChecked() # Access via component
+            filename = self.footer_component.filename_entry.text().strip() or "workbook" # Access via component
             output_directory = self.selected_output_path  # Utilise le chemin stocké
             if not filename.lower().endswith(".pdf"):
                 filename += ".pdf"
@@ -1851,13 +1416,12 @@ class MainWindow(QMainWindow):
     def generate_word(self):
         try:
             data = self.build_exercise_data()
-            if data is None:
-                return
-            from word_generator import generate_workbook_docx
-            header_text = self.header_entry.text().strip()
-            show_name = self.show_name_checkbox.isChecked()
-            show_note = self.show_note_checkbox.isChecked()
-            filename = self.filename_entry.text().strip() or "workbook"
+            if data is None: return
+            from word_generator import generate_workbook_docx # Import here to avoid circular dependency if not already imported
+            header_text = self.header_component.header_entry.text().strip() # Access via component
+            show_name = self.header_component.show_name_checkbox.isChecked() # Access via component
+            show_note = self.header_component.show_note_checkbox.isChecked() # Access via component
+            filename = self.footer_component.filename_entry.text().strip() or "workbook" # Access via component
             output_directory = self.selected_output_path  # Utilise le chemin stocké
             if not filename.lower().endswith(".docx"):
                 filename += ".docx"
@@ -1896,14 +1460,13 @@ class MainWindow(QMainWindow):
     def preview_pdf(self):
         try:
             data = self.build_exercise_data()
-            if data is None:
-                return
+            if data is None: return
 
-            from pdf_generator import generate_workbook_pdf
-            header_text = self.header_entry.text().strip()
-            show_name = self.show_name_checkbox.isChecked()
-            show_note = self.show_note_checkbox.isChecked()
-            filename = self.filename_entry.text().strip() or "Apprentium"
+            from pdf_generator import generate_workbook_pdf # Import here to avoid circular dependency if not already imported
+            header_text = self.header_component.header_entry.text().strip() # Access via component
+            show_name = self.header_component.show_name_checkbox.isChecked()
+            show_note = self.header_component.show_note_checkbox.isChecked()
+            filename = self.footer_component.filename_entry.text().strip() or "Apprentium"
             # Utiliser le chemin pour l'aperçu aussi
             output_directory = self.selected_output_path
             if not filename.lower().endswith(".pdf"):
@@ -1949,11 +1512,11 @@ class MainWindow(QMainWindow):
             data = self.build_exercise_data()
             if data is None:
                 return
-            from word_generator import generate_workbook_docx
-            header_text = self.header_entry.text().strip()
-            show_name = self.show_name_checkbox.isChecked()
-            show_note = self.show_note_checkbox.isChecked()
-            filename = self.filename_entry.text().strip() or "apercu_Apprentium"
+            from word_generator import generate_workbook_docx # Import here to avoid circular dependency if not already imported
+            header_text = self.header_component.header_entry.text().strip() # Access via component
+            show_name = self.header_component.show_name_checkbox.isChecked()
+            show_note = self.header_component.show_note_checkbox.isChecked()
+            filename = self.footer_component.filename_entry.text().strip() or "apercu_Apprentium"
             # Utiliser le chemin pour l'aperçu aussi
             output_directory = self.selected_output_path
             if not filename.lower().endswith(".docx"):
@@ -1997,11 +1560,11 @@ class MainWindow(QMainWindow):
         config = {}
         for name, widget, mode in self.config_fields:
             if mode == 'text':
-                config[name] = widget.text()
+                config[name] = widget.text() # Widget is now the actual QLineEdit instance
             elif mode == 'checked':
-                config[name] = widget.isChecked()
+                config[name] = widget.isChecked() # Widget is now the actual QCheckBox instance
             elif mode == 'checked_list':
-                config[name] = [cb.isChecked() for cb in widget]
+                config[name] = [cb.isChecked() for cb in widget] # Widget is the list of QCheckBoxes
             # 'widget' est self (MainWindow) ici
             elif mode == 'level_variable':
                 # Sauvegarde le nom du niveau actuel
@@ -2032,18 +1595,20 @@ class MainWindow(QMainWindow):
                 if name not in config:
                     continue
                 if mode == 'text':
-                    widget_ref.setText(config.get(name, ''))
+                    widget_ref.setText(config.get(name, '')) # widget_ref is the QLineEdit
                 elif mode == 'checked':
-                    widget_ref.setChecked(config.get(name, False))
+                    widget_ref.setChecked(config.get(name, False)) # widget_ref is the QCheckBox
                 elif mode == 'checked_list':
-                    states = config.get(name, [False]*len(widget_ref))
+                    states = config.get(name, [False]*len(widget_ref)) # widget_ref is the list of QCheckBoxes
                     for cb, state in zip(widget_ref, states):
                         cb.setChecked(state)
                 elif mode == 'path_variable':
                     # Pour 'path_variable', widget_ref est 'self' (MainWindow)
                     self.selected_output_path = config.get(name, None)
-                    self._update_output_path_display(
-                        self.selected_output_path)  # Mettre à jour l'affichage
+                    # Notify the footer component to update its display
+                    if self.footer_component:
+                        self.footer_component.set_output_path_from_config(self.selected_output_path)
+
                 elif mode == 'level_variable':
                     # Pour 'level_variable', widget_ref est 'self' (MainWindow)
                     # 'name' est 'current_level'
@@ -2051,9 +1616,9 @@ class MainWindow(QMainWindow):
                     if loaded_level_name and loaded_level_name in self.level_buttons:  # Accéder à self.level_buttons
                         button_to_select = self.level_buttons[loaded_level_name]
                         # Appeler select_level pour restaurer l'état du niveau
-                        # Cela mettra à jour self.current_level et l'UI
-                        self.select_level(loaded_level_name, button_to_select)
-        except FileNotFoundError:
+                        # This will call set_current_level on MainWindow
+                        self.header_component._select_level_internal(loaded_level_name, button_to_select)
+        except FileNotFoundError: # This is a common case for first run
             print(
                 f"Fichier de configuration non trouvé : {self.config_path}. Un nouveau sera créé à la fermeture si nécessaire.")
         except json.JSONDecodeError:
@@ -2068,20 +1633,32 @@ class MainWindow(QMainWindow):
         self.save_config()
         super().closeEvent(event)
 
+
     def get_exercises_for_level(self, target_level):
+        ALWAYS_VISIBLE_KEYS = {
+            "header_entry_input",
+            "show_name_checkbox_cb",
+            "show_note_checkbox_cb",
+            "days_entry_input",
+            "filename_entry_input",
+        }
         if not target_level:  # If None or empty string, show all exercises
             return list(self.exercise_widgets_map.keys())
 
         allowed_exercises = set()
         # Iterate through LEVEL_ORDER up to and including target_level
         for level_in_order in self.LEVEL_ORDER:
-            allowed_exercises.update(
-                self.EXERCISES_BY_LEVEL_INCREMENTAL.get(level_in_order, []))
+            exercises_for_this_level = self.EXERCISES_BY_LEVEL_INCREMENTAL.get(level_in_order, [])
+            allowed_exercises.update(exercises_for_this_level)
             if level_in_order == target_level:
                 break
+
+        # Ensure header and footer controls are always visible
+        allowed_exercises.update(ALWAYS_VISIBLE_KEYS)
         return list(allowed_exercises)
 
     def update_exercise_visibility(self):
+        # This method is called by set_current_level in MainWindow
         allowed_exercise_keys = self.get_exercises_for_level(
             self.current_level)
 
@@ -2189,63 +1766,10 @@ class MainWindow(QMainWindow):
             self.splitter.setSizes(sizes)
 
     def get_selected_conversion_types(self):
-        types = []
-        labels = ['longueur', 'masse', 'volume', 'temps', 'monnaie']
-        for cb, label in zip(self.geo_conv_type_checkboxes, labels):
-            if cb.isChecked():
-                types.append(label)
-        return types
+        return self.header_component.get_selected_conversion_types() # This method is no longer needed in MainWindow
 
     def get_selected_conversion_senses(self):
-        senses = []
-        if self.conv_sens_direct.isChecked():
-            senses.append('direct')
-        if self.conv_sens_inverse.isChecked():
-            senses.append('inverse')
-        return senses
-
-    def get_selected_english_types(self):
-        types = []
-        if self.english_type_simple.isChecked():
-            types.append('simple')
-        if self.english_type_complexe.isChecked():
-            types.append('complexe')
-        return types
-
-    def toggle_relier_count(self):
-        if self.english_type_relier.isChecked():
-            self.relier_count_label.show()
-            self.relier_count.show()
-        else:
-            self.relier_count_label.hide()
-            self.relier_count.hide()
-# Note : Pour PyInstaller, les fichiers JSON (phrases_grammaire.json, verbes.json, config.json) doivent être à côté de l'exe pour être modifiables après compilation.
-
-    def _update_output_path_display(self, full_path):
-        """Met à jour le label affichant le chemin de sortie, en le raccourcissant si nécessaire."""
-        prefix = "Dossier : "
-        # Ce qui est affiché si aucun chemin absolu n'est défini
-        default_relative_path = "output/"
-        # Longueur maximale approximative du chemin affiché (sans le préfixe)
-        max_display_len = 40
-
-        cfg_labels = UI_STYLE_CONFIG["labels"]
-        if not full_path:
-            self.output_path_display_label.setText(
-                prefix + default_relative_path)
-            self.output_path_display_label.setStyleSheet(
-                cfg_labels["output_path_display_default"])
-        else:
-            display_path = full_path
-            if len(full_path) > max_display_len:
-                parts = full_path.split(os.sep)
-                if len(parts) > 4:  # Assez de parties pour raccourcir (lecteur + ... + 3 dossiers)
-                    display_path = parts[0] + os.sep + "..." + os.sep + \
-                        os.path.join(parts[-3], parts[-2], parts[-1])
-
-            self.output_path_display_label.setText(prefix + display_path)
-            self.output_path_display_label.setStyleSheet(
-                cfg_labels["output_path_display_set"])
+        return self.header_component.get_selected_conversion_senses() # This method is no longer needed in MainWindow
 
 
 if __name__ == "__main__":
