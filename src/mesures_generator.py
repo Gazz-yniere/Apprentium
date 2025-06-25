@@ -29,6 +29,16 @@ except Exception as e:
     print(f"ERREUR: Impossible de charger les données de conversion: {e}. "
           "Les exercices de conversion ne seront pas disponibles.")
 
+# --- NEW ---
+MEASUREMENT_PROBLEMS_DATA = {}
+try:
+    with open(get_resource_path('problemes_mesures.json'), 'r', encoding='utf-8') as f:
+        MEASUREMENT_PROBLEMS_DATA = json.load(f)
+except Exception as e:
+    print(
+        f"ERREUR: Impossible de charger les problèmes de mesures depuis 'problemes_mesures.json': {e}")
+# --- END NEW ---
+
 
 
 def generate_conversion_exercises(types_selectionnes, n, senses, current_level, level_order=None):
@@ -97,6 +107,91 @@ def generate_conversion_exercises(types_selectionnes, n, senses, current_level, 
 
     return exercices
 
+# --- NEW ---
+def _get_variable_value(var_config, current_vars, var_name_for_debug="<inconnue>"):
+    """ Calcule la valeur d'une variable en tenant compte des dépendances. """
+    if not isinstance(var_config, (list, tuple)) or len(var_config) != 2:
+        raise TypeError(f"Config de variable invalide pour '{var_name_for_debug}': {var_config}")
+
+    min_val, max_val_config = var_config
+    max_val = max_val_config
+    if isinstance(max_val_config, str):
+        try:
+            max_val = eval(max_val_config, {}, current_vars)
+        except Exception as e:
+            print(f"Avertissement: eval a échoué pour '{max_val_config}': {e}. Utilisation de min_val.")
+            max_val = min_val
+
+    # Ensure min_val and max_val are integers before passing to random.randint
+    # This prevents ValueError: non-integer stop for randrange() if they become floats.
+    min_val_int = int(min_val)
+    max_val_int = int(max_val)
+    return random.randint(min(min_val_int, max_val_int), max(min_val_int, max_val_int))
+
+MAX_RETRIES_PER_PROBLEM = 10
+
+def generate_measurement_story_problems(selected_problem_types, num_problems, target_level):
+    """
+    Génère des problèmes de mesures.
+    selected_problem_types: Liste des types de problèmes choisis (ex: ["longueur", "masse"]).
+    num_problems: Nombre total de problèmes à générer.
+    target_level: Niveau scolaire actuel (CP, CE1, etc.) pour filtrer les problèmes.
+    """
+    generated_exercises = []
+    if not MEASUREMENT_PROBLEMS_DATA or not selected_problem_types or num_problems == 0:
+        return generated_exercises
+
+    candidate_problem_templates = []
+    for problem_type_key in selected_problem_types:
+        if problem_type_key in MEASUREMENT_PROBLEMS_DATA:
+            for template in MEASUREMENT_PROBLEMS_DATA[problem_type_key]:
+                problem_levels = template.get("levels", [])
+                if target_level is None or not problem_levels or target_level in problem_levels:
+                    candidate_problem_templates.append(template)
+
+    if not candidate_problem_templates:
+        return generated_exercises
+
+    problems_generated_count = 0
+    while problems_generated_count < num_problems:
+        if not candidate_problem_templates:
+            break
+
+        problem_successfully_generated = False
+        for _ in range(MAX_RETRIES_PER_PROBLEM):
+            template = random.choice(candidate_problem_templates)
+            enonce_template = template["enonce"]
+            variables_config = template["variables"]
+            condition_str = template.get("condition")
+
+            instance_variables = {}
+            for var_name in variables_config.keys():
+                instance_variables[var_name] = _get_variable_value(
+                    variables_config[var_name], instance_variables, var_name
+                )
+
+            condition_met = True
+            if condition_str:
+                try:
+                    if not eval(condition_str, {}, instance_variables):
+                        condition_met = False
+                except Exception as e:
+                    print(f"Avertissement: Erreur d'évaluation de condition '{condition_str}': {e}")
+                    condition_met = False
+
+            if condition_met:
+                formatted_enonce = enonce_template.format(**instance_variables)
+                generated_exercises.append(
+                    {"type": "measurement_problem", "content": formatted_enonce})
+                problems_generated_count += 1
+                problem_successfully_generated = True
+                break
+        
+        if not problem_successfully_generated:
+            problems_generated_count += 1 # Avoid infinite loop if no problem can be generated
+
+    return generated_exercises
+# --- END NEW ---
 
 def generate_sort_exercises(params, days):
     """ Génère des exercices de rangement de nombres pour plusieurs jours. """

@@ -394,7 +394,7 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                           header_text=None, filename="workbook.pdf", division_entier=False, show_name=False, show_note=False, output_dir_override=None,
                           compare_numbers_exercises_list=None, logical_sequences_exercises_list=None,
                           conj_complete_sentence_exercises=None,
-                          conj_complete_pronoun_exercises=None):
+                          conj_complete_pronoun_exercises=None, measurement_problems=None):
     if geo_exercises is None:
         geo_exercises = []
     if english_exercises is None:
@@ -405,6 +405,8 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
         conj_complete_sentence_exercises = []
     if conj_complete_pronoun_exercises is None:
         conj_complete_pronoun_exercises = []
+    if measurement_problems is None:
+        measurement_problems = []
     if story_math_problems_by_day is None:
         story_math_problems_by_day = []
 
@@ -608,6 +610,9 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
         if sort_exercises and len(sort_exercises) >= day and sort_exercises[day-1]:
             has_mesures_content_for_day = True
 
+        current_day_measurement_problems = measurement_problems[day-1] if len(measurement_problems) >= day else None
+        if current_day_measurement_problems:
+            has_mesures_content_for_day = True
         if has_mesures_content_for_day:
             cfg_mes_conv = PDF_STYLE_CONFIG["measures_conversions"]
             cfg_mes_sort = PDF_STYLE_CONFIG["measures_sort"]
@@ -632,6 +637,8 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                 first_block_content_height = 16 + 22 + 8
             elif current_day_logical_sequences:
                 first_block_content_height = 16 + 22 + 8
+            elif current_day_measurement_problems:
+                first_block_content_height = 10 + 6 + 9 + 4 + 9 + 13 # Estimate for story problems
 
             required_height_for_first_block = HEADER_HEIGHT_ESTIMATE + first_block_content_height
 
@@ -806,6 +813,17 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                             cfg_mes_enc["content_font_name"], cfg_mes_enc["content_font_size"])
                 y_position -= cfg_mes_enc["spacing_after_section"]
 
+            if current_day_measurement_problems:
+                original_font_mes, original_size_mes = pdf._fontname, pdf._fontsize
+                original_fill_color_obj_mes = pdf._fillColorObj
+                current_frame_top_y_list = [current_frame_segment_top_y] # Re-initialize for this section
+                y_position = draw_canvas_story_problems(pdf, y_position, current_day_measurement_problems,
+                                                        exercise_content_x_start, margin, width, height,
+                                                        current_frame_top_y_list,
+                                                        section_data, section_color_rgb)
+                current_frame_segment_top_y = current_frame_top_y_list[0]
+                pdf.setFont(original_font_mes, original_size_mes)
+                pdf.setFillColor(original_fill_color_obj_mes)
             box_actual_bottom_y = (y_position
                                    - PDF_STYLE_CONFIG["section_frame"]["content_bottom_padding"])
             draw_rounded_box_with_color(pdf,

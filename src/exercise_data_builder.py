@@ -1,6 +1,7 @@
 import random
 from mesures_generator import (generate_sort_exercises, generate_daily_encadrement_exercises,
-                               generate_compare_numbers_exercises, generate_logical_sequences_exercises)
+                               generate_compare_numbers_exercises, generate_logical_sequences_exercises,
+                               generate_measurement_story_problems) # NEW IMPORT
 import os
 import json
 
@@ -416,6 +417,23 @@ class ExerciseDataBuilder:
                 for _ in range(jours):
                     all_math_problems.append([])
 
+            # --- NEW: Measurement Story Problems ---
+            measurement_problems_count = params.get('measurement_problems_count', 0)
+            selected_measurement_problem_types = params.get('selected_measurement_problem_types', [])
+            all_measurement_problems = []
+            if measurement_problems_count > 0 and selected_measurement_problem_types:
+                for _ in range(jours):
+                    daily_measurement_problems = generate_measurement_story_problems(
+                        selected_problem_types=selected_measurement_problem_types,
+                        num_problems=measurement_problems_count,
+                        target_level=current_level_for_problems
+                    )
+                    all_measurement_problems.append(daily_measurement_problems)
+            else:
+                for _ in range(jours):
+                    all_measurement_problems.append([])
+            # --- END NEW ---
+
             return {
                 'days': days,
                 'operations': operations_list,
@@ -434,7 +452,8 @@ class ExerciseDataBuilder:
                 'compare_numbers_exercises_list': all_compare_numbers_exercises,
                 'logical_sequences_exercises_list': all_logical_sequences_exercises,
                 'encadrement_exercises_list': all_encadrement_exercises_list,
-                'math_problems': all_math_problems
+                'math_problems': all_math_problems,
+                'measurement_problems': all_measurement_problems, # NEW
             }
         except InvalidFieldError as e:
             print(

@@ -5,6 +5,7 @@ from PyQt6.QtGui import QIcon
 from calculs_generator import generate_story_math_problems
 from gui.template import UI_STYLE_CONFIG # Import UI_STYLE_CONFIG from template.py
 from gui.header import AppHeader # Import AppHeader
+from gui.footer import AppFooter # Import AppFooter
 from gui.filter_widgets import create_input_row, create_generic_groupbox # NEW IMPORT
 import json
 import os  # Added for path joining and os.startfile
@@ -301,7 +302,37 @@ class MainWindow(QMainWindow):
         # Ajout manuel car pas via _create_generic_groupbox
         self._all_row_widgets_for_map["geo_ex_count_row"] = row_widget_geo_count
         geo_conv_layout.addWidget(row_widget_geo_count)
+        
+        # --- NEW: Section Problèmes de Mesures ---
+        self.measurement_problems_group = QGroupBox("Problèmes de mesures")
+        measurement_problems_layout = QVBoxLayout()
 
+        row_measurement_pb_count, self.measurement_problems_count = create_input_row(
+            "Nombre de problèmes :", 60)
+        self.all_line_edits.append(self.measurement_problems_count)
+        self._all_row_widgets_for_map["measurement_problems_count_row"] = row_measurement_pb_count
+        measurement_problems_layout.addWidget(row_measurement_pb_count)
+
+        # Checkboxes for measurement problem types
+        self.measurement_problem_longueur_cb = QCheckBox("Longueur")
+        self.measurement_problem_masse_cb = QCheckBox("Masse")
+        self.measurement_problem_volume_cb = QCheckBox("Volume")
+        self.measurement_problem_temps_cb = QCheckBox("Temps")
+        self.measurement_problem_monnaie_cb = QCheckBox("Monnaie")
+        self.measurement_problem_type_checkboxes = [
+            self.measurement_problem_longueur_cb,
+            self.measurement_problem_masse_cb,
+            self.measurement_problem_volume_cb,
+            self.measurement_problem_temps_cb,
+            self.measurement_problem_monnaie_cb,
+        ]
+        for cb in self.measurement_problem_type_checkboxes:
+            measurement_problems_layout.addWidget(cb)
+
+        self.measurement_problems_group.setLayout(measurement_problems_layout)
+        geo_layout.addWidget(self.measurement_problems_group)
+        # --- END NEW ---
+        
         self.conv_type_longueur = QCheckBox("Longueur")
         self.conv_type_masse = QCheckBox("Masse")
         self.conv_type_volume = QCheckBox("Volume")
@@ -349,7 +380,7 @@ class MainWindow(QMainWindow):
             # Utiliser le layout en grille
             "Ranger les nombres", sort_fields, extra_items=[sort_grid_type_layout]
         )
-
+        self.all_line_edits.extend(sort_les) # Fix: Add missing line to include sort_les in all_line_edit
         self._all_row_widgets_for_map.update(sort_rows)
         geo_layout.addWidget(self.sort_group)
 
@@ -436,7 +467,7 @@ class MainWindow(QMainWindow):
         geo_layout.addWidget(self.logical_sequences_group)
 
         # Mesures : violet (#BA68C8) - Ajout des nouveaux groupes
-        geo_groups = [self.geo_conv_group, self.sort_group, self.encadrement_group,
+        geo_groups = [self.geo_conv_group, self.measurement_problems_group, self.sort_group, self.encadrement_group,
                       self.compare_numbers_group, self.logical_sequences_group]
         geo_border_color = UI_STYLE_CONFIG["group_boxes"]["border_colors"]["geo"]
         set_groupbox_style(geo_groups, geo_border_color)
@@ -787,7 +818,6 @@ class MainWindow(QMainWindow):
         self.splitter = splitter  # Garder une référence au splitter
 
         # --- Footer Component ---
-        from gui.footer import AppFooter # Import AppFooter
         self.footer_component = AppFooter(self, UI_STYLE_CONFIG, __version__, self.GITHUB_URL)
         main_layout.addWidget(self.footer_component)
 
@@ -827,7 +857,14 @@ class MainWindow(QMainWindow):
             "geo_ex_count_input": self.geo_ex_count,
             "conv_type_longueur_cb": self.conv_type_longueur, "conv_type_masse_cb": self.conv_type_masse, "conv_type_volume_cb": self.conv_type_volume, "conv_type_temps_cb": self.conv_type_temps, "conv_type_monnaie_cb": self.conv_type_monnaie,
             "conv_sens_direct_cb": self.conv_sens_direct, "conv_sens_inverse_cb": self.conv_sens_inverse,
-
+            # --- NEW: Problèmes de Mesures ---
+            "measurement_problems_group": self.measurement_problems_group,
+            "measurement_problems_count_input": self.measurement_problems_count,
+            "measurement_problem_longueur_cb": self.measurement_problem_longueur_cb,
+            "measurement_problem_masse_cb": self.measurement_problem_masse_cb,
+            "measurement_problem_volume_cb": self.measurement_problem_volume_cb,
+            "measurement_problem_temps_cb": self.measurement_problem_temps_cb,
+            "measurement_problem_monnaie_cb": self.measurement_problem_monnaie_cb,
             "geo_sort_group": self.sort_group,
             "sort_count_input": self.sort_count, "sort_digits_input": self.sort_digits, "sort_n_numbers_input": self.sort_n_numbers,
             "sort_type_croissant_cb": self.sort_type_croissant, "sort_type_decroissant_cb": self.sort_type_decroissant,
@@ -1040,6 +1077,13 @@ class MainWindow(QMainWindow):
             ('encadrement_dizaine', self.encadrement_dizaine, 'checked'),
             ('encadrement_centaine', self.encadrement_centaine, 'checked'),
             ('encadrement_millier', self.encadrement_millier, 'checked'),
+            # --- NEW: Problèmes de mesures ---
+            ('measurement_problems_count', self.measurement_problems_count, 'text'),
+            ('measurement_problem_longueur_cb', self.measurement_problem_longueur_cb, 'checked'),
+            ('measurement_problem_masse_cb', self.measurement_problem_masse_cb, 'checked'),
+            ('measurement_problem_volume_cb', self.measurement_problem_volume_cb, 'checked'),
+            ('measurement_problem_temps_cb', self.measurement_problem_temps_cb, 'checked'),
+            ('measurement_problem_monnaie_cb', self.measurement_problem_monnaie_cb, 'checked'),
             # Petits Problèmes
             ('math_problems_count', self.math_problems_count, 'text'),
             # Comparer des nombres
@@ -1132,6 +1176,7 @@ class MainWindow(QMainWindow):
         try:
             from exercise_data_builder import ExerciseDataBuilder
             from conjugation_generator import TENSES, VERBS  # OK
+            from mesures_generator import generate_measurement_story_problems # NEW IMPORT
             from grammar_generator import get_random_phrases, get_random_transformation
             from mesures_generator import generate_conversion_exercises  # Modifié
             from anglais_generator import PHRASES_SIMPLES, PHRASES_COMPLEXES, MOTS_A_RELIER
@@ -1197,7 +1242,20 @@ class MainWindow(QMainWindow):
                     if type_cb_key_map in allowed_keys and cb_widget.isChecked():
                         # Utiliser la clé JSON (ex: "addition_simple")
                         selected_math_problem_types.append(type_key)
-
+            
+            # --- NEW: Measurement Story Problems ---
+            measurement_problems_count_val = self.get_int(self.measurement_problems_count, field_name="Problèmes de mesures - nombre") if "measurement_problems_group" in allowed_keys else 0
+            selected_measurement_problem_types = []
+            if "measurement_problems_group" in allowed_keys:
+                for ptype, cb in zip(
+                    ['longueur', 'masse', 'volume', 'temps', 'monnaie'],
+                    self.measurement_problem_type_checkboxes
+                ):
+                    # Check if the checkbox itself is allowed by the current level AND is checked
+                    if f"measurement_problem_{ptype}_cb" in allowed_keys and cb.isChecked():
+                        selected_measurement_problem_types.append(ptype)
+            # --- END NEW ---
+            
             # Suites Logiques
             logical_sequences_count_val = self.get_int(
                 self.logical_sequences_count, field_name="Suites Logiques - nombre d'exercices") if "geo_logical_sequences_group" in allowed_keys else 0
@@ -1289,6 +1347,9 @@ class MainWindow(QMainWindow):
                 'logical_sequences_params': logical_sequences_params_for_builder,
                 # Petits Problèmes
                 'math_problems_count': math_problems_count_val,
+                # --- NEW ---
+                'measurement_problems_count': measurement_problems_count_val,
+                'selected_measurement_problem_types': selected_measurement_problem_types,
                 'selected_math_problem_types': selected_math_problem_types,
                 # Nouveaux exercices de conjugaison
                 'conj_complete_sentence_count': self.get_int(self.conj_complete_sentence_count, field_name="Compléter phrases - nombre d'exercices") if "conj_complete_sentence_group" in allowed_keys else 0,
@@ -1305,6 +1366,7 @@ class MainWindow(QMainWindow):
 
             # Modifié
             params['generate_math_problems_func'] = generate_story_math_problems
+            params['generate_measurement_story_problems_func'] = generate_measurement_story_problems # NEW
             # Construction corrigée pour conjugation_tenses
             conjugation_tenses_list = []
             for i, tense_cb_widget in enumerate(self.tense_checkboxes):
@@ -1393,7 +1455,8 @@ class MainWindow(QMainWindow):
                 encadrement_exercises_list=data.get(
                     'encadrement_exercises_list'),
                 compare_numbers_exercises_list=data.get(
-                    'compare_numbers_exercises_list'),  # Nouveau
+                    'compare_numbers_exercises_list'),
+                measurement_problems=data.get('measurement_problems'), # NEW
                 logical_sequences_exercises_list=data.get(
                     'logical_sequences_exercises_list'),  # Nouveau
                 story_math_problems_by_day=data.get('math_problems'),
@@ -1434,6 +1497,7 @@ class MainWindow(QMainWindow):
                 sort_exercises=data['sort_exercises'],
                 geo_exercises=data['geo_exercises'],
                 english_exercises=data['english_exercises'],
+                measurement_problems=data.get('measurement_problems'),
                 encadrement_exercises_list=data.get(
                     'encadrement_exercises_list'),
                 compare_numbers_exercises_list=data.get(
@@ -1477,7 +1541,7 @@ class MainWindow(QMainWindow):
                 data['conjugations'], data['params_list'], data['grammar_exercises'],
                 data['orthographe_exercises'], data['enumerate_exercises'], data['sort_exercises'],
                 # Modifié
-                geo_exercises=data['geo_exercises'], english_exercises=data['english_exercises'],
+                geo_exercises=data['geo_exercises'], english_exercises=data['english_exercises'],measurement_problems=data.get('measurement_problems'),
                 encadrement_exercises_list=data.get(
                     'encadrement_exercises_list'),
                 compare_numbers_exercises_list=data.get(
@@ -1529,6 +1593,7 @@ class MainWindow(QMainWindow):
                 sort_exercises=data['sort_exercises'],
                 geo_exercises=data['geo_exercises'],  # Modifié
                 english_exercises=data['english_exercises'],
+                measurement_problems=data.get('measurement_problems'),
                 encadrement_exercises_list=data.get(
                     'encadrement_exercises_list'),  # Nouveau
                 compare_numbers_exercises_list=data.get(

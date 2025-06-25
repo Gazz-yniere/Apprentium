@@ -96,7 +96,45 @@ def add_math_problems_to_doc(container, problems_for_day, indent_val=None):
         else:
             # Espace normal après le dernier problème
             p_answer.paragraph_format.space_after = Pt(1)
+def add_measurement_problems_to_doc(container, problems_for_day, indent_val=None):
+    if not problems_for_day:
+        return
 
+    if len(problems_for_day) == 1:
+        title_str = "Petit Problème de Mesure:"
+    else:
+        title_str = "Petits Problèmes de Mesure:"
+
+    p_heading = container.add_paragraph()
+    run_heading = p_heading.add_run(title_str)
+    run_heading.bold = True
+    if indent_val:
+        p_heading.paragraph_format.left_indent = indent_val
+    p_heading.paragraph_format.space_before = Pt(6)
+    p_heading.paragraph_format.space_after = Pt(3)
+
+    for idx, problem_data in enumerate(problems_for_day):
+        p_problem = container.add_paragraph()
+        run_number = p_problem.add_run(f"{idx + 1}. ")
+        run_number.bold = True
+        p_problem.add_run(problem_data['content'])
+
+        if indent_val:
+            p_problem.paragraph_format.left_indent = indent_val
+        p_problem.paragraph_format.space_before = Pt(0)
+        p_problem.paragraph_format.space_after = Pt(1)
+
+        p_answer = container.add_paragraph(
+            "Réponse: ______________________________")
+        if indent_val:
+            p_answer.paragraph_format.left_indent = indent_val
+        p_answer.paragraph_format.space_before = Pt(0)
+
+        if idx < len(problems_for_day) - 1:
+            p_answer.paragraph_format.space_after = Pt(
+                6)
+        else:
+            p_answer.paragraph_format.space_after = Pt(1)
 
 def set_table_borders_invisible(table):
     """Rend toutes les bordures d'un tableau invisibles."""
@@ -288,7 +326,7 @@ def generate_workbook_docx(days, operations, counts, max_digits, conjugations, p
                            orthographe_exercises=None, enumerate_exercises=None, sort_exercises=None,
                            geo_exercises=None, english_exercises=None, encadrement_exercises_list=None,  # Modifié
                            story_math_problems_by_day=None,
-                           conj_complete_sentence_exercises=None,
+                           conj_complete_sentence_exercises=None, measurement_problems=None,
                            conj_complete_pronoun_exercises=None,
                            compare_numbers_exercises_list=None,  # Nouveau
                            logical_sequences_exercises_list=None,  # Nouveau
@@ -307,6 +345,8 @@ def generate_workbook_docx(days, operations, counts, max_digits, conjugations, p
         conj_complete_sentence_exercises = []
     if conj_complete_pronoun_exercises is None:
         conj_complete_pronoun_exercises = []
+    if measurement_problems is None:
+        measurement_problems = []
     if encadrement_exercises_list is None:
         encadrement_exercises_list = []  # Modifié
     if story_math_problems_by_day is None:  # Initialisation
@@ -382,6 +422,7 @@ def generate_workbook_docx(days, operations, counts, max_digits, conjugations, p
             conj_complete_sentence_exercises) >= day else None
         current_day_complete_pronoun = conj_complete_pronoun_exercises[day-1] if conj_complete_pronoun_exercises and len(
             conj_complete_pronoun_exercises) >= day else None
+        current_day_measurement_problems = None # Initialisation pour éviter UnboundLocalError
 
         section_num = 1  # Compteur pour la numérotation des sections
 
@@ -452,6 +493,11 @@ def generate_workbook_docx(days, operations, counts, max_digits, conjugations, p
                 add_math_problems_to_doc(
                     section_cell, current_day_story_problems, indent_val=CONTENT_INDENT)
                 # Pas besoin d'un add_paragraph(section_cell, "") ici, car add_math_problems_to_doc gère l'espacement interne
+
+            # Ajout des "Petits Problèmes de Mesures" à la fin de la section Calculs
+            if current_day_measurement_problems:
+                add_measurement_problems_to_doc(
+                    section_cell, current_day_measurement_problems, indent_val=CONTENT_INDENT)
                 # et la cellule a une marge inférieure.
             add_paragraph(doc, "")  # Espace entre les cadres de section
 
@@ -594,9 +640,13 @@ def generate_workbook_docx(days, operations, counts, max_digits, conjugations, p
         current_day_compare_numbers = compare_numbers_exercises_list[day-1] if compare_numbers_exercises_list and len(
             compare_numbers_exercises_list) >= day else None
         if current_day_compare_numbers:
+            # Cette ligne était déjà présente et est correcte.
             has_mesures_content_for_day = True
         current_day_logical_sequences = logical_sequences_exercises_list[day-1] if logical_sequences_exercises_list and len(
             logical_sequences_exercises_list) >= day else None
+        current_day_measurement_problems = measurement_problems[day-1] if len(measurement_problems) >= day else None
+        if current_day_measurement_problems:
+            has_mesures_content_for_day = True
         if current_day_logical_sequences:
             has_mesures_content_for_day = True
 
@@ -706,6 +756,10 @@ def generate_workbook_docx(days, operations, counts, max_digits, conjugations, p
                     #     type_desc = f" (-{ex_seq['step']})"
                     add_paragraph(section_cell, f"{sequence_str}", indent=True)
             # L'espace après la section Mesures est géré par add_paragraph(doc, "") plus bas si d'autres sections suivent
+            # Ajout des "Petits Problèmes de Mesures" à la fin de la section Mesures
+            if current_day_measurement_problems:
+                add_measurement_problems_to_doc(
+                    section_cell, current_day_measurement_problems, indent_val=CONTENT_INDENT)
 
         if english_exercises and len(english_exercises) >= day and english_exercises[day-1]:
             section_key = "Anglais"
