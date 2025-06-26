@@ -20,14 +20,11 @@ try:
     with open(get_resource_path('conversions_config.json'), 'r', encoding='utf-8') as f:
         CONVERSION_DATA = json.load(f)
 except FileNotFoundError:
-    print("ERREUR: Fichier conversions_config.json introuvable. "
-          "Les exercices de conversion ne seront pas disponibles.")
+    print("ERREUR: Fichier conversions_config.json introuvable. " "Les exercices de conversion ne seront pas disponibles.")
 except json.JSONDecodeError as e:
-    print(f"ERREUR: Erreur de décodage JSON dans 'conversions_config.json': {e}. "
-          "Les exercices de conversion ne seront pas disponibles.")
+    print(f"ERREUR: Erreur de décodage JSON dans 'conversions_config.json': {e}. " "Les exercices de conversion ne seront pas disponibles.")
 except Exception as e:
-    print(f"ERREUR: Impossible de charger les données de conversion: {e}. "
-          "Les exercices de conversion ne seront pas disponibles.")
+    print(f"ERREUR: Impossible de charger les données de conversion: {e}. " "Les exercices de conversion ne seront pas disponibles.")
 
 # --- NEW ---
 MEASUREMENT_PROBLEMS_DATA = {}
@@ -35,8 +32,7 @@ try:
     with open(get_resource_path('problemes_mesures.json'), 'r', encoding='utf-8') as f:
         MEASUREMENT_PROBLEMS_DATA = json.load(f)
 except Exception as e:
-    print(
-        f"ERREUR: Impossible de charger les problèmes de mesures depuis 'problemes_mesures.json': {e}")
+    print(f"ERREUR: Impossible de charger les problèmes de mesures depuis 'problemes_mesures.json': {e}")
 # --- END NEW ---
 
 
@@ -79,19 +75,12 @@ def generate_conversion_exercises(types_selectionnes, n, senses, current_level, 
                         if "direct" in senses and "from" in conv_details and "to" in conv_details:
                             conv_key = (type_conv, conv_details["from"], conv_details["to"], "direct")
                             if conv_key not in unique_conv_tracker:
-                                possible_conversions.append({
-                                    "from_unit": conv_details["from"], "to_unit": conv_details["to"],
-                                    "multiplier": conv_details["multiplier"], "range": conv_details["range_from"],
-                                })
+                                possible_conversions.append({"from_unit": conv_details["from"], "to_unit": conv_details["to"],"multiplier": conv_details["multiplier"], "range": conv_details["range_from"],})
                                 unique_conv_tracker.add(conv_key) 
                         if "inverse" in senses and conv_details["multiplier"] != 0:
                             conv_key = (type_conv, conv_details["to"], conv_details["from"], "inverse")
                             if conv_key not in unique_conv_tracker:
-                                possible_conversions.append({
-                                    "from_unit": conv_details["to"], "to_unit": conv_details["from"],
-                                    "multiplier": 1 / conv_details["multiplier"],
-                                    "range": [round(v * conv_details["multiplier"]) for v in conv_details["range_from"]],
-                                })
+                                possible_conversions.append({"from_unit": conv_details["to"], "to_unit": conv_details["from"],"multiplier": 1 / conv_details["multiplier"], "range": [round(v * conv_details["multiplier"]) for v in conv_details["range_from"]],})
                                 unique_conv_tracker.add(conv_key) 
 
     if not possible_conversions:
@@ -166,9 +155,7 @@ def generate_measurement_story_problems(selected_problem_types, num_problems, ta
 
             instance_variables = {}
             for var_name in variables_config.keys():
-                instance_variables[var_name] = _get_variable_value(
-                    variables_config[var_name], instance_variables, var_name
-                )
+                instance_variables[var_name] = _get_variable_value(variables_config[var_name], instance_variables, var_name)
 
             condition_met = True
             if condition_str:
@@ -181,8 +168,7 @@ def generate_measurement_story_problems(selected_problem_types, num_problems, ta
 
             if condition_met:
                 formatted_enonce = enonce_template.format(**instance_variables)
-                generated_exercises.append(
-                    {"type": "measurement_problem", "content": formatted_enonce})
+                generated_exercises.append({"type": "measurement_problem", "content": formatted_enonce})
                 problems_generated_count += 1
                 problem_successfully_generated = True
                 break
@@ -202,8 +188,7 @@ def generate_sort_exercises(params, days):
     sort_type_decroissant_param = params.get('sort_type_decroissant', False)
     all_sort_exercises = []
 
-    if sort_count > 0 and sort_digits > 0 and sort_n_numbers > 0 and \
-       (sort_type_croissant_param or sort_type_decroissant_param):
+    if sort_count > 0 and sort_digits > 0 and sort_n_numbers > 0 and (sort_type_croissant_param or sort_type_decroissant_param):
 
         needs_daily_random_sort = sort_type_croissant_param and sort_type_decroissant_param
 
@@ -211,8 +196,7 @@ def generate_sort_exercises(params, days):
             daily_sort_ex = []
             actual_sort_type_for_day = 'croissant'
             if needs_daily_random_sort:
-                actual_sort_type_for_day = random.choice(
-                    ['croissant', 'decroissant'])
+                actual_sort_type_for_day = random.choice(['croissant', 'decroissant'])
             elif sort_type_decroissant_param:
                 actual_sort_type_for_day = 'decroissant'
 
@@ -236,10 +220,7 @@ def generate_sort_exercises(params, days):
 
                 # Sélectionner des nombres uniques aléatoirement
                 numbers = random.sample(possible_numbers_range, sort_n_numbers)
-                daily_sort_ex.append({
-                    'numbers': numbers,
-                    'type': actual_sort_type_for_day
-                })
+                daily_sort_ex.append({'numbers': numbers, 'type': actual_sort_type_for_day})
             all_sort_exercises.append(daily_sort_ex)
     else:
         for _ in range(days):

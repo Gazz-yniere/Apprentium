@@ -16,8 +16,7 @@ try:
     with open(get_resource_path('problemes_maths.json'), 'r', encoding='utf-8') as f:
         PROBLEMS_DATA = json.load(f)
 except Exception as e:
-    print(
-        f"ERREUR: Impossible de charger les problèmes mathématiques depuis 'problemes_maths.json': {e}")
+    print(f"ERREUR: Impossible de charger les problèmes mathématiques depuis 'problemes_maths.json': {e}")
 
 
 def _get_variable_value(var_config, current_vars, var_name_for_debug="<inconnue>"):
@@ -39,9 +38,7 @@ def _get_variable_value(var_config, current_vars, var_name_for_debug="<inconnue>
             # Tente d'évaluer l'expression. 'current_vars' fournit le contexte.
             max_val = eval(max_val_config, {}, current_vars)
         except Exception as e_eval:
-            print(f"Avertissement: Impossible d'évaluer la dépendance '{max_val_config}' "
-                  f"pour la variable '{var_name_for_debug}'. Contexte: {current_vars}. "
-                  f"Erreur: {e_eval}. Utilisation de la valeur min ({min_val}).")
+            print(f"Avertissement: Impossible d'évaluer la dépendance '{max_val_config}' " f"pour la variable '{var_name_for_debug}'. Contexte: {current_vars}. " f"Erreur: {e_eval}. Utilisation de la valeur min ({min_val}).")
             max_val = min_val  # Fallback
 
     if min_val > max_val:
@@ -100,9 +97,7 @@ def generate_story_math_problems(selected_problem_types, num_problems, target_le
             for var_name in sorted_var_keys:
                 if var_name == "condition":
                     continue
-                instance_variables[var_name] = _get_variable_value(
-                    variables_config[var_name], instance_variables, var_name
-                )
+                instance_variables[var_name] = _get_variable_value(variables_config[var_name], instance_variables, var_name)
 
             condition_met = True
             if condition_str:
@@ -111,23 +106,18 @@ def generate_story_math_problems(selected_problem_types, num_problems, target_le
                     if not eval(python_condition_str, {}, instance_variables):
                         condition_met = False
                 except Exception as e:
-                    print(f"Avertissement: Erreur lors de l'évaluation de la condition "
-                          f"'{python_condition_str}' pour le modèle '{enonce_template}': {e}. "
-                          "Tentative suivante.")
+                    print(f"Avertissement: Erreur lors de l'évaluation de la condition " f"'{python_condition_str}' pour le modèle '{enonce_template}': {e}. " "Tentative suivante.")
                     condition_met = False
 
             if condition_met:
                 formatted_enonce = enonce_template.format(**instance_variables)
-                generated_exercises.append(
-                    {"type": "math_problem", "content": formatted_enonce})
+                generated_exercises.append({"type": "math_problem", "content": formatted_enonce})
                 problems_generated_count += 1
                 problem_successfully_generated_for_iteration = True
                 break
 
         if not problem_successfully_generated_for_iteration:
-            print(f"Avertissement: Impossible de générer un problème satisfaisant les conditions "
-                  f"après {MAX_RETRIES_PER_PROBLEM} tentatives pour un modèle. "
-                  "Passage au problème suivant si possible.")
+            print(f"Avertissement: Impossible de générer un problème satisfaisant les conditions " f"après {MAX_RETRIES_PER_PROBLEM} tentatives pour un modèle. " "Passage au problème suivant si possible.")
     return generated_exercises
 
 
@@ -152,13 +142,11 @@ def generate_arithmetic_problems(operation, params):
         operands = []
         # Génération standard des opérandes (non nuls)
         for i_op_gen in range(num_operands):
-            min_op_val = 0.1 * \
-                (10**(-decimals)) if with_decimals else 1  # Eviter 0
+            min_op_val = 0.1 * (10**(-decimals)) if with_decimals else 1  # Eviter 0
 
             if with_decimals:
                 # Max value: 10^digits - epsilon, or 9.99... if digits=0
-                max_val_raw = (10**digits - (0.1**(decimals+2))
-                               ) if digits > 0 else (10 - (0.1**(decimals+2)))
+                max_val_raw = (10**digits - (0.1**(decimals+2))) if digits > 0 else (10 - (0.1**(decimals+2)))
                 op_val_raw = random.uniform(min_op_val, max_val_raw)
                 op = round(op_val_raw, decimals)
                 if op == 0:
@@ -166,8 +154,7 @@ def generate_arithmetic_problems(operation, params):
             else:
                 # Max value: 10^digits - 1, or 9 if digits=0
                 max_val_int = (10**digits - 1) if digits > 0 else 9
-                op = random.randint(
-                    min_op_val, max_val_int if max_val_int >= min_op_val else min_op_val)
+                op = random.randint(min_op_val, max_val_int if max_val_int >= min_op_val else min_op_val)
                 if op == 0:
                     op = 1  # S'assurer qu'il n'est pas 0
             operands.append(op)
@@ -187,19 +174,16 @@ def generate_arithmetic_problems(operation, params):
                 subtractors = []
                 # Générer les N-1 opérandes à soustraire
                 for _ in range(num_operands - 1):
-                    min_op_val = 0.1 * \
-                        (10**(-decimals)) if with_decimals else 1
+                    min_op_val = 0.1 * (10**(-decimals)) if with_decimals else 1
                     if with_decimals:
-                        max_val_raw = (10**digits - (0.1**(decimals+2))
-                                       ) if digits > 0 else (10 - (0.1**(decimals+2)))
+                        max_val_raw = (10**digits - (0.1**(decimals+2))) if digits > 0 else (10 - (0.1**(decimals+2)))
                         op_val_raw = random.uniform(min_op_val, max_val_raw)
                         op = round(op_val_raw, decimals)
                         if op == 0:
                             op = min_op_val
                     else:
                         max_val_int = (10**digits - 1) if digits > 0 else 9
-                        op = random.randint(
-                            min_op_val, max_val_int if max_val_int >= min_op_val else min_op_val)
+                        op = random.randint(min_op_val, max_val_int if max_val_int >= min_op_val else min_op_val)
                         if op == 0:
                             op = 1
                     subtractors.append(op)
@@ -263,8 +247,7 @@ def generate_arithmetic_problems(operation, params):
                 # This part needs careful implementation if we want specific decimal places in quotient.
                 # For now, let's make dividend a product that might result in decimals.
                 quotient_val = round(random.uniform(1, 10), division_decimals)  # Desired quotient  # noqa: E501
-                dividend = round(divisor * quotient_val,
-                                 division_decimals + 2)  # Ensure precision
+                dividend = round(divisor * quotient_val,division_decimals + 2)  # Ensure precision
                 # Ensure dividend is not smaller than divisor if we want non-zero integer part
                 if dividend < divisor and digits > 0:
                     dividend = divisor  # simple adjustment
@@ -285,11 +268,9 @@ def generate_arithmetic_problems(operation, params):
 
 if __name__ == '__main__':
     # Test story problems with no level
-    test_problems_cp = generate_story_math_problems(
-        ["addition_simple", "soustraction_simple"], 2, "CP")
+    test_problems_cp = generate_story_math_problems(["addition_simple", "soustraction_simple"], 2, "CP")
     print("Problèmes CP (Story):", test_problems_cp)
-    test_problems_ce1_mult = generate_story_math_problems(
-        ["multiplication_simple"], 1, "CE1")
+    test_problems_ce1_mult = generate_story_math_problems(["multiplication_simple"], 1, "CE1")
     print("Problèmes CE1 Mult (Story):", test_problems_ce1_mult)
 
     # Test arithmetic problems
@@ -298,35 +279,23 @@ if __name__ == '__main__':
     print("Addition:", generate_arithmetic_problems("addition", add_params))
 
     # digits=0 means single digit 1-9
-    add_params_zero_digits = {'count': 1,
-                              'digits': 0, 'decimals': 0, 'num_operands': 2}
-    print("Addition (digits 0):", generate_arithmetic_problems(
-        "addition", add_params_zero_digits))
+    add_params_zero_digits = {'count': 1, 'digits': 0, 'decimals': 0, 'num_operands': 2}
+    print("Addition (digits 0):", generate_arithmetic_problems("addition", add_params_zero_digits))
 
-    sub_params = {'count': 2, 'digits': 2, 'decimals': 0,
-                  'allow_negative': False, 'num_operands': 2}
-    print("Soustraction:", generate_arithmetic_problems(
-        "soustraction", sub_params))
-    sub_params_neg = {'count': 1, 'digits': 1, 'decimals': 0,
-                      'allow_negative': True, 'num_operands': 2}
-    print("Soustraction (neg ok):", generate_arithmetic_problems(
-        "soustraction", sub_params_neg))
+    sub_params = {'count': 2, 'digits': 2, 'decimals': 0, 'allow_negative': False, 'num_operands': 2}
+    print("Soustraction:", generate_arithmetic_problems("soustraction", sub_params))
+    sub_params_neg = {'count': 1, 'digits': 1, 'decimals': 0, 'allow_negative': True, 'num_operands': 2}
+    print("Soustraction (neg ok):", generate_arithmetic_problems("soustraction", sub_params_neg))
 
     mult_params = {'count': 1, 'digits': 1, 'decimals': 0, 'num_operands': 4}
-    print("Multiplication:", generate_arithmetic_problems(
-        "multiplication", mult_params))
+    print("Multiplication:", generate_arithmetic_problems("multiplication", mult_params))
 
     div_params_exact = {'count': 2, 'digits': 2, 'division_reste': False}
-    print("Division (exacte):", generate_arithmetic_problems(
-        "division", div_params_exact))
+    print("Division (exacte):", generate_arithmetic_problems("division", div_params_exact))
 
-    div_params_reste = {'count': 2, 'digits': 1,
-                        'division_reste': True}  # digits 1 for divisor
-    print("Division (avec reste):", generate_arithmetic_problems(
-        "division", div_params_reste))
+    div_params_reste = {'count': 2, 'digits': 1, 'division_reste': True}  # digits 1 for divisor
+    print("Division (avec reste):", generate_arithmetic_problems("division", div_params_reste))
 
     # Test for division_quotient_decimal (from pdf_generator logic)
-    div_params_decimal_q = {'count': 1, 'digits': 1,
-                            'division_decimals': 1, 'division_quotient_decimal': True}
-    print("Division (quotient decimal):", generate_arithmetic_problems(
-        "division", div_params_decimal_q))
+    div_params_decimal_q = {'count': 1, 'digits': 1, 'division_decimals': 1, 'division_quotient_decimal': True}
+    print("Division (quotient decimal):", generate_arithmetic_problems("division", div_params_decimal_q))

@@ -1,10 +1,9 @@
 import random
 import json
-
+import sys
+import os 
 
 def get_resource_path(filename):
-    import sys
-    import os  # os est utilisé ici
     if hasattr(sys, '_MEIPASS'):
         return os.path.join(sys._MEIPASS, "json", filename)
     return os.path.join(os.path.dirname(__file__), "json", filename)
@@ -17,26 +16,17 @@ with open(PHRASES_PATH, encoding='utf-8') as f:
 
 # Liste des transformations disponibles (restreinte et commentée)
 TRANSFORMATIONS = [
-    # Transformation des noms, adjectifs et verbes en fonction du nombre
-    "Singulier ↔ Pluriel",
-    # Transformation des noms et adjectifs en fonction du genre
-    "Masculin ↔ Féminin",
-    # Conjugaison des verbes à ces deux temps et compréhension de leur usage
-    "Présent ↔ Passé composé",
+    "Singulier ↔ Pluriel", # Transformation des noms, adjectifs et verbes en fonction du nombre
+    "Masculin ↔ Féminin", # Transformation des noms et adjectifs en fonction du genre
+    "Présent ↔ Passé composé", # Conjugaison des verbes à ces deux temps et compréhension de leur usage
     "Présent ↔ Imparfait",
     "Présent ↔ Futur simple",
-    # Utilisation du mode impératif pour donner des ordres ou des conseils
-    "Indicatif ↔ Impératif",
-    # Initiation et reconnaissance de cette transformation, surtout au cycle 3 (CM1-CM2)
-    "Voix active ↔ Voix passive",
-    # Transformation pour poser des questions (intonation, 'est-ce que', inversion sujet-verbe de base)
-    "Déclarative ↔ Interrogative",
-    # Transformation pour exprimer une émotion
-    "Déclarative ↔ Exclamative",
-    # Transformation pour donner un ordre
-    "Déclarative ↔ Impérative",
-    # Utilisation de 'ne...pas' et autres formes négatives
-    "Affirmative ↔ Négative"
+    "Indicatif ↔ Impératif", # Utilisation du mode impératif pour donner des ordres ou des conseils
+    "Voix active ↔ Voix passive", # Initiation et reconnaissance de cette transformation, surtout au cycle 3 (CM1-CM2)
+    "Déclarative ↔ Interrogative", # Transformation pour poser des questions (intonation, 'est-ce que', inversion sujet-verbe de base)
+    "Déclarative ↔ Exclamative", # Transformation pour exprimer une émotion
+    "Déclarative ↔ Impérative", # Transformation pour donner un ordre
+    "Affirmative ↔ Négative" # Utilisation de 'ne...pas' et autres formes négatives
 ]
 
 # Complexité des phrases
@@ -69,5 +59,3 @@ def get_random_phrases(phrase_types, n):
         result.append(phrase)
         last = phrase
     return result
-
-# Note : Pour PyInstaller, phrases_grammaire.json doit être à côté de l'exe pour édition après compilation.  # noqa: E501

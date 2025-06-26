@@ -30,6 +30,13 @@ def create_input_row(label_text, max_width=60):
     row_layout.addWidget(line_edit)
     return row_widget, line_edit  # Retourner le widget conteneur et le line_edit
 
+def set_groupbox_style(groups, color, UI_STYLE_CONFIG=UI_STYLE_CONFIG):
+    """Utility function to apply compact style to a list of QGroupBoxes."""
+    style_template = UI_STYLE_CONFIG["group_boxes"]["base_style_template"]
+    for group in groups:
+        group.setStyleSheet(style_template.format(border_color=color))
+
+
 def create_generic_groupbox(parent_instance, title, fields_config, extra_items=None):
     """
     Crée un QGroupBox avec des champs de saisie et des éléments supplémentaires optionnels.

@@ -1,10 +1,9 @@
 import random
 import json
-
+import sys
+import os
 
 def get_resource_path(filename):
-    import sys
-    import os  # os est utilisé ici
     if hasattr(sys, '_MEIPASS'):
         return os.path.join(sys._MEIPASS, "json", filename)
     return os.path.join(os.path.dirname(__file__), "json", filename)
@@ -21,26 +20,25 @@ with open(VERBS_PATH, encoding='utf-8') as f:
         else:
             VERBS[k] = v
 
-PRONOUNS = ["je/j'", "tu", "il/elle/on", "nous", "vous", "ils/elles"]
+PRONOUNS = [
+    "je/j'",
+    "tu",
+    "il/elle/on",
+    "nous",
+    "vous",
+    "ils/elles"
+]
 
 # Liste des temps de conjugaison utilisables (adaptée à l'école primaire)
 TENSES = [
-    # Présent de l'indicatif : action en cours ou habituelle
-    "présent",
-    # Imparfait de l'indicatif : action passée, description, habitude
-    "imparfait",
-    # Passé simple : récit, narration (principalement pour la reconnaissance)
-    "passé simple",
-    # Futur simple de l'indicatif : action à venir
-    "futur simple",
-    # Passé composé : action passée, résultat/conclusion
-    "passé composé",
-    # Plus-que-parfait de l'indicatif : action antérieure à une autre action passée
-    "plus-que-parfait",
-    # Conditionnel présent : hypothèse, souhait, politesse
-    "conditionnel présent",
-    # Impératif présent : ordre, conseil
-    "impératif présent"
+    "présent", # Présent de l'indicatif : action en cours ou habituelle
+    "imparfait", # Imparfait de l'indicatif : action passée, description, habitude
+    "passé simple", # Passé simple : récit, narration (principalement pour la reconnaissance)
+    "futur simple", # Futur simple de l'indicatif : action à venir
+    "passé composé", # Passé composé : action passée, résultat/conclusion
+    "plus-que-parfait", # Plus-que-parfait de l'indicatif : action antérieure à une autre action passée
+    "conditionnel présent", # Conditionnel présent : hypothèse, souhait, politesse
+    "impératif présent" # Impératif présent : ordre, conseil
 ]
 
 
@@ -57,5 +55,3 @@ def get_random_verb(group, used_verbs):
     verb = random.choice(available_verbs)
     used_verbs.add(verb)
     return verb
-
-# Note : Pour PyInstaller, verbes.json doit être à côté de l'exe pour édition après compilation.

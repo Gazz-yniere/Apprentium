@@ -387,14 +387,7 @@ def draw_section_image_in_frame(pdf, section_data, current_frame_top_y, page_wid
             print(f"Erreur drawImage (in-frame) pour {image_file_path}: {e}")
 
 
-def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, params_list, grammar_exercises, orthographe_exercises, enumerate_exercises, sort_exercises,
-                          story_math_problems_by_day=None,
-                          geo_exercises=None, english_exercises=None,
-                          encadrement_exercises_list=None,
-                          header_text=None, filename="workbook.pdf", division_entier=False, show_name=False, show_note=False, output_dir_override=None,
-                          compare_numbers_exercises_list=None, logical_sequences_exercises_list=None,
-                          conj_complete_sentence_exercises=None,
-                          conj_complete_pronoun_exercises=None, measurement_problems=None):
+def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, params_list, grammar_exercises, orthographe_exercises, enumerate_exercises, sort_exercises, story_math_problems_by_day=None, geo_exercises=None, english_exercises=None, encadrement_exercises_list=None, header_text=None, filename="workbook.pdf", division_entier=False, show_name=False, show_note=False, output_dir_override=None, compare_numbers_exercises_list=None, logical_sequences_exercises_list=None, conj_complete_sentence_exercises=None, conj_complete_pronoun_exercises=None, measurement_problems=None):
     if geo_exercises is None:
         geo_exercises = []
     if english_exercises is None:
@@ -426,25 +419,17 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
             box_x_header = margin
             box_width_header = width - 2 * margin
             box_y_header = y_position - box_height
-            draw_rounded_box_with_color(pdf,
-                                        box_x_header,
-                                        box_y_header,
-                                        box_width_header,
-                                        box_height,
-                                        stroke_rgb_color=cfg_gen_header["box_stroke_color_rgb"],
-                                        sides='all') # L'en-tête général est un cadre complet
+            draw_rounded_box_with_color(pdf, box_x_header, box_y_header, box_width_header, box_height, stroke_rgb_color=cfg_gen_header["box_stroke_color_rgb"], sides='all') # L'en-tête général est un cadre complet
             y_header_text = box_y_header + 10
 
-            pdf.setFont(cfg_gen_header["text_font_name"],
-                        cfg_gen_header["text_font_size"])
+            pdf.setFont(cfg_gen_header["text_font_name"], cfg_gen_header["text_font_size"])
             pdf.setFillColorRGB(*cfg_gen_header["text_color_rgb"])
 
             if show_name:
                 pdf.drawString(margin + 10, y_header_text, "Nom : _________________")
             if header_text:
                 pdf.setFont(cfg_gen_header["title_font_name"], cfg_gen_header["title_font_size"])
-                pdf.drawCentredString(
-                    width // 2, y_header_text + 1, header_text)
+                pdf.drawCentredString(width // 2, y_header_text + 1, header_text)
                 pdf.setFont(cfg_gen_header["text_font_name"], cfg_gen_header["text_font_size"])
                 pdf.setFillColorRGB(*cfg_gen_header["text_color_rgb"])
             if show_note:
@@ -459,24 +444,16 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
         pdf.setFillColorRGB(*cfg_def_font["color_rgb"])
 
         current_day_conjugations = conjugations[day-1] if conjugations and len(conjugations) >= day else None
-        current_day_complete_sentence = conj_complete_sentence_exercises[day-1] if conj_complete_sentence_exercises and len(
-            conj_complete_sentence_exercises) >= day else None
-        current_day_complete_pronoun = conj_complete_pronoun_exercises[day-1] if conj_complete_pronoun_exercises and len(
-            conj_complete_pronoun_exercises) >= day else None
+        current_day_complete_sentence = conj_complete_sentence_exercises[day-1] if conj_complete_sentence_exercises and len(conj_complete_sentence_exercises) >= day else None
+        current_day_complete_pronoun = conj_complete_pronoun_exercises[day-1] if conj_complete_pronoun_exercises and len( conj_complete_pronoun_exercises) >= day else None
 
         section_num = 1
         pdf._ortho_homophone_title_drawn = False # Reset flag for the current day's Orthographe section
 
-        current_day_story_problems = story_math_problems_by_day[day-1] if len(
-            story_math_problems_by_day) >= day else None
+        current_day_story_problems = story_math_problems_by_day[day-1] if len(story_math_problems_by_day) >= day else None
 
         # Section Calculs
-        if (
-            (enumerate_exercises and len(enumerate_exercises)
-             >= day and enumerate_exercises[day-1])
-            or any(counts)
-            or current_day_story_problems
-        ):
+        if ((enumerate_exercises and len(enumerate_exercises) >= day and enumerate_exercises[day-1]) or any(counts)or current_day_story_problems):
             cfg_calc_enum = PDF_STYLE_CONFIG["enumerate_numbers"]
             cfg_calc_ops = PDF_STYLE_CONFIG["calc_operations"]
 
@@ -503,25 +480,20 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
             # Draw top of frame
             draw_rounded_box_with_color(pdf, margin, y_position, width - 2 * margin, 0, stroke_rgb_color=section_color_rgb, sides=['top'])
 
-            y_position_for_content, exercise_content_x_start = draw_section_header(
-                pdf, current_frame_segment_top_y, section_key, section_num, margin, width
-            )
-            draw_section_image_in_frame(
-                pdf, section_data, current_frame_segment_top_y, width, margin)
+            y_position_for_content, exercise_content_x_start = draw_section_header(pdf, current_frame_segment_top_y, section_key, section_num, margin, width)
+            draw_section_image_in_frame(pdf, section_data, current_frame_segment_top_y, width, margin) 
             y_position = y_position_for_content
             section_num += 1
 
             current_frame_top_y_list = [current_frame_segment_top_y]
 
             if enumerate_exercises and len(enumerate_exercises) >= day and enumerate_exercises[day-1]:
-                pdf.setFont(cfg_calc_enum["title_font_name"],
-                            cfg_calc_enum["title_font_size"])
+                pdf.setFont(cfg_calc_enum["title_font_name"], cfg_calc_enum["title_font_size"])
                 pdf.drawString(exercise_content_x_start, y_position, "Écris chaque nombre en toutes lettres :")
                 y_position -= cfg_calc_enum["line_spacing_after_title"]
                 pdf.setFont(cfg_calc_enum["content_font_name"], cfg_calc_enum["content_font_size"])
                 for n in enumerate_exercises[day-1]:
-                    pdf.drawString(exercise_content_x_start, y_position,
-                                   f"{n} = _____________________________________________")
+                    pdf.drawString(exercise_content_x_start, y_position, f"{n} = _____________________________________________")
                     y_position -= cfg_calc_enum["line_spacing_per_item"]
                     if y_position < margin:
                         # Close previous frame segment
@@ -531,28 +503,21 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                         current_frame_segment_top_y = y_position
                         # Draw top of new frame segment
                         draw_rounded_box_with_color(pdf, margin, y_position, width - 2 * margin, 0, stroke_rgb_color=section_color_rgb, sides=['top'])
-                        draw_section_image_in_frame(
-                            pdf, section_data, current_frame_segment_top_y, width, margin)
-                        pdf.setFont(
-                            cfg_calc_enum["content_font_name"], cfg_calc_enum["content_font_size"])
+                        draw_section_image_in_frame(pdf, section_data, current_frame_segment_top_y, width, margin)
+                        pdf.setFont(cfg_calc_enum["content_font_name"], cfg_calc_enum["content_font_size"])
                 y_position -= cfg_calc_enum["spacing_after_section"]
 
             if any(counts):
-                pdf.setFont(cfg_calc_ops["title_font_name"],
-                            cfg_calc_ops["title_font_size"])
+                pdf.setFont(cfg_calc_ops["title_font_name"], cfg_calc_ops["title_font_size"])
                 for i, operation in enumerate(operations):
                     params = params_list[i]
-                    problems = generate_arithmetic_problems(
-                        operation, params)
-                    pdf.drawString(exercise_content_x_start,
-                                   y_position, f"{operation.capitalize()} :")
+                    problems = generate_arithmetic_problems(operation, params)
+                    pdf.drawString(exercise_content_x_start, y_position, f"{operation.capitalize()} :")
                     y_position -= cfg_calc_ops["line_spacing_after_title"]
-                    pdf.setFont(
-                        cfg_calc_ops["content_font_name"], cfg_calc_ops["content_font_size"])
+                    pdf.setFont( cfg_calc_ops["content_font_name"], cfg_calc_ops["content_font_size"])
                     for problem in problems:
                         calc_str = problem.strip().replace(' =', '')
-                        pdf.drawString(exercise_content_x_start, y_position,
-                                       f"{calc_str} = _____________________________________________")
+                        pdf.drawString(exercise_content_x_start, y_position, f"{calc_str} = _____________________________________________")
                         y_position -= cfg_calc_ops["line_spacing_per_item"]
                         if y_position < margin:
                             # Close previous frame segment
@@ -562,46 +527,34 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                             current_frame_segment_top_y = y_position
                             # Draw top of new frame segment
                             draw_rounded_box_with_color(pdf, margin, y_position, width - 2 * margin, 0, stroke_rgb_color=section_color_rgb, sides=['top'])
-                            draw_section_image_in_frame(
-                                pdf, section_data, current_frame_segment_top_y, width, margin)
-                            pdf.setFont(
-                                cfg_calc_ops["content_font_name"], cfg_calc_ops["content_font_size"])
-                    pdf.setFont(
-                        cfg_calc_ops["title_font_name"], cfg_calc_ops["title_font_size"])
+                            draw_section_image_in_frame(pdf, section_data, current_frame_segment_top_y, width, margin)
+                            pdf.setFont(cfg_calc_ops["content_font_name"], cfg_calc_ops["content_font_size"])
+                    pdf.setFont(cfg_calc_ops["title_font_name"], cfg_calc_ops["title_font_size"])
                 y_position -= cfg_calc_ops["spacing_after_section"]
 
             if current_day_story_problems:
                 original_font_calc, original_size_calc = pdf._fontname, pdf._fontsize
                 original_fill_color_obj = pdf._fillColorObj
                 current_frame_top_y_list[0] = current_frame_segment_top_y
-                y_position = draw_canvas_story_problems(pdf, y_position, current_day_story_problems,
-                                                        exercise_content_x_start, margin, width, height,
-                                                        current_frame_top_y_list,
-                                                        section_data, section_color_rgb)
+                y_position = draw_canvas_story_problems(pdf, y_position, current_day_story_problems, exercise_content_x_start, margin, width, height, current_frame_top_y_list, section_data, section_color_rgb)
                 current_frame_segment_top_y = current_frame_top_y_list[0]
                 pdf.setFont(original_font_calc, original_size_calc)
                 pdf.setFillColor(original_fill_color_obj)
 
             box_actual_bottom_y = (y_position - PDF_STYLE_CONFIG["section_frame"]["content_bottom_padding"])
-            draw_rounded_box_with_color(pdf,
-                                        margin, box_actual_bottom_y,
-                                        width - 2 * margin, current_frame_segment_top_y - box_actual_bottom_y,
-                                        stroke_rgb_color=section_color_rgb, sides=['bottom', 'left', 'right'])
+            draw_rounded_box_with_color(pdf, margin, box_actual_bottom_y, width - 2 * margin, current_frame_segment_top_y - box_actual_bottom_y, stroke_rgb_color=section_color_rgb, sides=['bottom', 'left', 'right'])
             y_position = box_actual_bottom_y - PDF_STYLE_CONFIG["section_frame"]["y_offset_after_box"]
 
         # Section Mesures
-        current_day_encadrement_lines = encadrement_exercises_list[day-1] if len(
-            encadrement_exercises_list) >= day else None
+        current_day_encadrement_lines = encadrement_exercises_list[day-1] if len(encadrement_exercises_list) >= day else None
 
         has_mesures_content_for_day = False
         if current_day_encadrement_lines:
             has_mesures_content_for_day = True
-        current_day_compare_numbers = compare_numbers_exercises_list[day-1] if compare_numbers_exercises_list and len(
-            compare_numbers_exercises_list) >= day else None
+        current_day_compare_numbers = compare_numbers_exercises_list[day-1] if compare_numbers_exercises_list and len(compare_numbers_exercises_list) >= day else None
         if current_day_compare_numbers:
             has_mesures_content_for_day = True
-        current_day_logical_sequences = logical_sequences_exercises_list[day-1] if logical_sequences_exercises_list and len(
-            logical_sequences_exercises_list) >= day else None
+        current_day_logical_sequences = logical_sequences_exercises_list[day-1] if logical_sequences_exercises_list and len(logical_sequences_exercises_list) >= day else None
         if current_day_logical_sequences:
             has_mesures_content_for_day = True
 
@@ -624,13 +577,9 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
 
             first_block_content_height = 0
             if geo_exercises and len(geo_exercises) >= day and geo_exercises[day-1]:
-                first_block_content_height = (cfg_mes_conv["line_spacing_after_title"]
-                                              + cfg_mes_conv["line_spacing_per_item"]
-                                              + cfg_mes_conv["spacing_after_section"])
+                first_block_content_height = (cfg_mes_conv["line_spacing_after_title"] + cfg_mes_conv["line_spacing_per_item"] + cfg_mes_conv["spacing_after_section"])
             elif sort_exercises and len(sort_exercises) >= day and sort_exercises[day-1]:
-                first_block_content_height = (cfg_mes_sort["line_spacing_after_title"]
-                                              + cfg_mes_sort["line_spacing_per_item"]
-                                              + cfg_mes_sort["spacing_after_section"])
+                first_block_content_height = (cfg_mes_sort["line_spacing_after_title"] + cfg_mes_sort["line_spacing_per_item"] + cfg_mes_sort["spacing_after_section"])
             elif current_day_encadrement_lines:
                 first_block_content_height = 16 + 22 + 8
             elif current_day_compare_numbers:
@@ -648,11 +597,8 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
             current_frame_segment_top_y = y_position
             # Draw top of frame
             draw_rounded_box_with_color(pdf, margin, y_position, width - 2 * margin, 0, stroke_rgb_color=section_color_rgb, sides=['top'])
-            y_position_for_content, exercise_content_x_start = draw_section_header(
-                pdf, current_frame_segment_top_y, section_key, section_num, margin, width
-            )
-            draw_section_image_in_frame(
-                pdf, section_data, current_frame_segment_top_y, width, margin)
+            y_position_for_content, exercise_content_x_start = draw_section_header(pdf, current_frame_segment_top_y, section_key, section_num, margin, width)
+            draw_section_image_in_frame(pdf, section_data, current_frame_segment_top_y, width, margin)
             y_position = y_position_for_content
             section_num += 1
 
@@ -660,20 +606,15 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
             if geo_exercises and len(geo_exercises) >= day and geo_exercises[day-1]:
                 current_day_geo_exercises = geo_exercises[day-1]
                 if current_day_geo_exercises:
-                    pdf.setFont(
-                        cfg_mes_conv["title_font_name"], cfg_mes_conv["title_font_size"])
+                    pdf.setFont(cfg_mes_conv["title_font_name"], cfg_mes_conv["title_font_size"])
                     if len(current_day_geo_exercises) == 1:
-                        pdf.drawString(exercise_content_x_start,
-                                       y_position, "Conversion :")
+                        pdf.drawString(exercise_content_x_start, y_position, "Conversion :")
                     else:
-                        pdf.drawString(exercise_content_x_start,
-                                       y_position, "Conversions :")
+                        pdf.drawString(exercise_content_x_start, y_position, "Conversions :")
                     y_position -= cfg_mes_conv["line_spacing_after_title"]
-                    pdf.setFont(
-                        cfg_mes_conv["content_font_name"], cfg_mes_conv["content_font_size"])
+                    pdf.setFont(cfg_mes_conv["content_font_name"], cfg_mes_conv["content_font_size"])
                     for ex_geo in current_day_geo_exercises:
-                        pdf.drawString(exercise_content_x_start,
-                                       y_position, ex_geo)
+                        pdf.drawString(exercise_content_x_start, y_position, ex_geo)
                         y_position -= cfg_mes_conv["line_spacing_per_item"]
                         if y_position < margin:
                             # Close previous frame segment
@@ -683,29 +624,22 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                             current_frame_segment_top_y = y_position
                             # Draw top of new frame segment
                             draw_rounded_box_with_color(pdf, margin, y_position, width - 2 * margin, 0, stroke_rgb_color=section_color_rgb, sides=['top'])
-                            draw_section_image_in_frame(
-                                pdf, section_data, current_frame_segment_top_y, width, margin)
-                            pdf.setFont(
-                                cfg_mes_conv["content_font_name"], cfg_mes_conv["content_font_size"])
+                            draw_section_image_in_frame(pdf, section_data, current_frame_segment_top_y, width, margin)
+                            pdf.setFont(cfg_mes_conv["content_font_name"], cfg_mes_conv["content_font_size"])
                     y_position -= cfg_mes_conv["spacing_after_section"]
 
             if sort_exercises and len(sort_exercises) >= day and sort_exercises[day-1]:
                 current_day_sort_exercises = sort_exercises[day-1]
                 if current_day_sort_exercises:
-                    pdf.setFont(
-                        cfg_mes_sort["title_font_name"], cfg_mes_sort["title_font_size"])
-                    ordre = "ordre croissant" if current_day_sort_exercises[
-                        0]['type'] == 'croissant' else "ordre décroissant"
-                    pdf.drawString(exercise_content_x_start, y_position,
-                                   f"Range les nombres suivants dans l'{ordre} :")
+                    pdf.setFont(cfg_mes_sort["title_font_name"], cfg_mes_sort["title_font_size"])
+                    ordre = "ordre croissant" if current_day_sort_exercises[0]['type'] == 'croissant' else "ordre décroissant"
+                    pdf.drawString(exercise_content_x_start, y_position, f"Range les nombres suivants dans l'{ordre} :")
                     y_position -= cfg_mes_sort["line_spacing_after_title"]
-                    pdf.setFont(
-                        cfg_mes_sort["content_font_name"], cfg_mes_sort["content_font_size"])
+                    pdf.setFont(cfg_mes_sort["content_font_name"], cfg_mes_sort["content_font_size"])
                     for ex_sort in current_day_sort_exercises:
                         numbers_str = ", ".join(str(n)
                                                 for n in ex_sort['numbers'])
-                        pdf.drawString(exercise_content_x_start, y_position,
-                                       f"{numbers_str} = _____________________________________________")
+                        pdf.drawString(exercise_content_x_start, y_position, f"{numbers_str} = _____________________________________________")
                         y_position -= cfg_mes_sort["line_spacing_per_item"]
                         if y_position < margin:
                             # Close previous frame segment
@@ -717,29 +651,22 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                             draw_rounded_box_with_color(pdf, margin, y_position, width - 2 * margin, 0, stroke_rgb_color=section_color_rgb, sides=['top'])
                             draw_section_image_in_frame(
                                 pdf, section_data, current_frame_segment_top_y, width, margin)
-                            pdf.setFont(
-                                cfg_mes_sort["content_font_name"], cfg_mes_sort["content_font_size"])
+                            pdf.setFont(cfg_mes_sort["content_font_name"], cfg_mes_sort["content_font_size"])
                     y_position -= cfg_mes_sort["spacing_after_section"]
 
             if current_day_encadrement_lines:
-                pdf.setFont(cfg_mes_enc["title_font_name"],
-                            cfg_mes_enc["title_font_size"])
+                pdf.setFont(cfg_mes_enc["title_font_name"], cfg_mes_enc["title_font_size"])
                 if len(current_day_encadrement_lines) == 1:
-                    pdf.drawString(exercise_content_x_start,
-                                   y_position, "Encadre le nombre :")
+                    pdf.drawString(exercise_content_x_start, y_position, "Encadre le nombre :")
                 else:
-                    pdf.drawString(exercise_content_x_start,
-                                   y_position, "Encadre les nombres :")
+                    pdf.drawString(exercise_content_x_start, y_position, "Encadre les nombres :")
                 y_position -= cfg_mes_enc["line_spacing_after_title"]
-                pdf.setFont(cfg_mes_enc["content_font_name"],
-                            cfg_mes_enc["content_font_size"])
+                pdf.setFont(cfg_mes_enc["content_font_name"], cfg_mes_enc["content_font_size"])
                 for ex in current_day_encadrement_lines:
                     n = ex['number']
                     t = ex['type']
-                    label = f"à l'{t}" if t == "unité" else f"à la {t}" if t in [
-                        "dizaine", "centaine"] else f"au {t}"
-                    pdf.drawString(exercise_content_x_start, y_position,
-                                   f"{n} {label} : ______  {n}  ______")
+                    label = f"à l'{t}" if t == "unité" else f"à la {t}" if t in ["dizaine", "centaine"] else f"au {t}"
+                    pdf.drawString(exercise_content_x_start, y_position, f"{n} {label} : ______  {n}  ______")
                     y_position -= 22
                     if y_position < margin:
                         # Close previous frame segment
@@ -749,23 +676,17 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                         current_frame_segment_top_y = y_position
                         # Draw top of new frame segment
                         draw_rounded_box_with_color(pdf, margin, y_position, width - 2 * margin, 0, stroke_rgb_color=section_color_rgb, sides=['top'])
-                        draw_section_image_in_frame(
-                            pdf, section_data, current_frame_segment_top_y, width, margin)
-                        pdf.setFont(
-                            cfg_mes_enc["content_font_name"], cfg_mes_enc["content_font_size"])
+                        draw_section_image_in_frame(pdf, section_data, current_frame_segment_top_y, width, margin)
+                        pdf.setFont(cfg_mes_enc["content_font_name"], cfg_mes_enc["content_font_size"])
                 y_position -= cfg_mes_enc["spacing_after_section"]
 
             if current_day_compare_numbers:
-                pdf.setFont(cfg_mes_enc["title_font_name"],
-                            cfg_mes_enc["title_font_size"])
-                pdf.drawString(exercise_content_x_start, y_position,
-                               "Compare les nombres (<, >, =) :")
+                pdf.setFont(cfg_mes_enc["title_font_name"], cfg_mes_enc["title_font_size"])
+                pdf.drawString(exercise_content_x_start, y_position,"Compare les nombres (<, >, =) :")
                 y_position -= cfg_mes_enc["line_spacing_after_title"]
-                pdf.setFont(cfg_mes_enc["content_font_name"],
-                            cfg_mes_enc["content_font_size"])
+                pdf.setFont(cfg_mes_enc["content_font_name"], cfg_mes_enc["content_font_size"])
                 for ex_compare in current_day_compare_numbers:
-                    pdf.drawString(exercise_content_x_start, y_position,
-                                   f"{ex_compare['num1']} ______ {ex_compare['num2']}")
+                    pdf.drawString(exercise_content_x_start, y_position, f"{ex_compare['num1']} ______ {ex_compare['num2']}")
                     y_position -= cfg_mes_enc["line_spacing_per_item"]
                     if y_position < margin:
                         # Close previous frame segment
@@ -775,29 +696,22 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                         current_frame_segment_top_y = y_position
                         # Draw top of new frame segment
                         draw_rounded_box_with_color(pdf, margin, y_position, width - 2 * margin, 0, stroke_rgb_color=section_color_rgb, sides=['top'])
-                        draw_section_image_in_frame(
-                            pdf, section_data, current_frame_segment_top_y, width, margin)
-                        pdf.setFont(
-                            cfg_mes_enc["content_font_name"], cfg_mes_enc["content_font_size"])
+                        draw_section_image_in_frame(pdf, section_data, current_frame_segment_top_y, width, margin)
+                        pdf.setFont(cfg_mes_enc["content_font_name"], cfg_mes_enc["content_font_size"])
                 y_position -= cfg_mes_enc["spacing_after_section"]
 
             if current_day_logical_sequences:
-                pdf.setFont(cfg_mes_enc["title_font_name"],
-                            cfg_mes_enc["title_font_size"])
+                pdf.setFont(cfg_mes_enc["title_font_name"], cfg_mes_enc["title_font_size"])
                 if len(current_day_logical_sequences) == 1:
                     title_text_seq = "Complète la suite logique :"
                 else:
                     title_text_seq = "Complète les suites logiques :"
-                pdf.drawString(exercise_content_x_start,
-                               y_position, title_text_seq)
+                pdf.drawString(exercise_content_x_start, y_position, title_text_seq)
                 y_position -= cfg_mes_enc["line_spacing_after_title"]
-                pdf.setFont(cfg_mes_enc["content_font_name"],
-                            cfg_mes_enc["content_font_size"])
+                pdf.setFont(cfg_mes_enc["content_font_name"], cfg_mes_enc["content_font_size"])
                 for ex_seq in current_day_logical_sequences:
-                    sequence_str = ", ".join(
-                        map(str, ex_seq['sequence_displayed']))
-                    pdf.drawString(exercise_content_x_start,
-                                   y_position, f"{sequence_str}")
+                    sequence_str = ", ".join( map(str, ex_seq['sequence_displayed']))
+                    pdf.drawString(exercise_content_x_start, y_position, f"{sequence_str}")
                     y_position -= cfg_mes_enc["line_spacing_per_item"]
                     if y_position < margin:
                         # Close previous frame segment
@@ -807,29 +721,20 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                         current_frame_segment_top_y = y_position
                         # Draw top of new frame segment
                         draw_rounded_box_with_color(pdf, margin, y_position, width - 2 * margin, 0, stroke_rgb_color=section_color_rgb, sides=['top'])
-                        draw_section_image_in_frame(
-                            pdf, section_data, current_frame_segment_top_y, width, margin)
-                        pdf.setFont(
-                            cfg_mes_enc["content_font_name"], cfg_mes_enc["content_font_size"])
+                        draw_section_image_in_frame( pdf, section_data, current_frame_segment_top_y, width, margin)
+                        pdf.setFont( cfg_mes_enc["content_font_name"], cfg_mes_enc["content_font_size"])
                 y_position -= cfg_mes_enc["spacing_after_section"]
 
             if current_day_measurement_problems:
                 original_font_mes, original_size_mes = pdf._fontname, pdf._fontsize
                 original_fill_color_obj_mes = pdf._fillColorObj
                 current_frame_top_y_list = [current_frame_segment_top_y] # Re-initialize for this section
-                y_position = draw_canvas_story_problems(pdf, y_position, current_day_measurement_problems,
-                                                        exercise_content_x_start, margin, width, height,
-                                                        current_frame_top_y_list,
-                                                        section_data, section_color_rgb)
+                y_position = draw_canvas_story_problems(pdf, y_position, current_day_measurement_problems, exercise_content_x_start, margin, width, height, current_frame_top_y_list, section_data, section_color_rgb)
                 current_frame_segment_top_y = current_frame_top_y_list[0]
                 pdf.setFont(original_font_mes, original_size_mes)
                 pdf.setFillColor(original_fill_color_obj_mes)
-            box_actual_bottom_y = (y_position
-                                   - PDF_STYLE_CONFIG["section_frame"]["content_bottom_padding"])
-            draw_rounded_box_with_color(pdf,
-                                        margin, box_actual_bottom_y,
-                                        width - 2 * margin, current_frame_segment_top_y - box_actual_bottom_y,
-                                        stroke_rgb_color=section_color_rgb, sides=['bottom', 'left', 'right'])
+            box_actual_bottom_y = (y_position - PDF_STYLE_CONFIG["section_frame"]["content_bottom_padding"])
+            draw_rounded_box_with_color(pdf, margin, box_actual_bottom_y, width - 2 * margin, current_frame_segment_top_y - box_actual_bottom_y, stroke_rgb_color=section_color_rgb, sides=['bottom', 'left', 'right'])
             y_position = box_actual_bottom_y - PDF_STYLE_CONFIG["section_frame"]["y_offset_after_box"]
 
         # Section Conjugaison
@@ -840,8 +745,7 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
             section_data = SECTION_ASSETS.get(section_key, {})
             section_color_rgb = section_data.get("color", (0.7, 0.3, 0.2))
 
-            first_block_content_height = (cfg_conj["line_spacing_after_title"] + cfg_conj["line_spacing_before_pronouns"]
-                                          + cfg_conj["line_spacing_per_pronoun"] + cfg_conj["spacing_after_verb_block"])
+            first_block_content_height = (cfg_conj["line_spacing_after_title"] + cfg_conj["line_spacing_before_pronouns"] + cfg_conj["line_spacing_per_pronoun"] + cfg_conj["spacing_after_verb_block"])
             required_height_for_first_block = HEADER_HEIGHT_ESTIMATE + first_block_content_height
 
             if y_position - required_height_for_first_block < margin:
@@ -851,11 +755,8 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
             current_frame_segment_top_y = y_position
             # Draw top of frame
             draw_rounded_box_with_color(pdf, margin, y_position, width - 2 * margin, 0, stroke_rgb_color=section_color_rgb, sides=['top'])
-            y_position_for_content, exercise_content_x_start = draw_section_header(
-                pdf, current_frame_segment_top_y, section_key, section_num, margin, width
-            )
-            draw_section_image_in_frame(
-                pdf, section_data, current_frame_segment_top_y, width, margin)
+            y_position_for_content, exercise_content_x_start = draw_section_header(  pdf, current_frame_segment_top_y, section_key, section_num, margin, width)
+            draw_section_image_in_frame( pdf, section_data, current_frame_segment_top_y, width, margin)
             y_position = y_position_for_content
             section_num += 1
 
@@ -875,19 +776,14 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                     if not groupe:
                         groupe = "inconnu"
 
-                    pdf.setFont(cfg_conj["title_font_name"],
-                                cfg_conj["title_font_size"])
-                    pdf.drawString(exercise_content_x_start, y_position,
-                                   f"Verbe : {verb}  |  Groupe : {groupe}  |  Temps : {tense}")
+                    pdf.setFont(cfg_conj["title_font_name"], cfg_conj["title_font_size"])
+                    pdf.drawString(exercise_content_x_start, y_position, f"Verbe : {verb}  |  Groupe : {groupe}  |  Temps : {tense}")
                     y_position -= cfg_conj["line_spacing_after_title"]
-                    pdf.setFont(cfg_conj["content_font_name"],
-                                cfg_conj["content_font_size"])
+                    pdf.setFont(cfg_conj["content_font_name"], cfg_conj["content_font_size"])
                     y_position -= cfg_conj["line_spacing_before_pronouns"]
                     for pronoun in PRONOUNS:
-                        pdf.drawString(exercise_content_x_start,
-                                       y_position, pronoun)
-                        pdf.drawString(exercise_content_x_start + 100,
-                                       y_position, "____________________")
+                        pdf.drawString(exercise_content_x_start, y_position, pronoun)
+                        pdf.drawString(exercise_content_x_start + 100, y_position, "____________________")
                         y_position -= cfg_conj["line_spacing_per_pronoun"]
                         if y_position < margin:
                             # Close previous frame segment
@@ -899,8 +795,7 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                             draw_rounded_box_with_color(pdf, margin, y_position, width - 2 * margin, 0, stroke_rgb_color=section_color_rgb, sides=['top'])
                             draw_section_image_in_frame(
                                 pdf, section_data, current_frame_segment_top_y, width, margin)
-                            pdf.setFont(cfg_conj["content_font_name"],
-                                        cfg_conj["content_font_size"])
+                            pdf.setFont(cfg_conj["content_font_name"], cfg_conj["content_font_size"])
                     y_position -= cfg_conj["spacing_after_verb_block"] # Spacing between individual verb blocks
                     y_position -= cfg_conj["spacing_after_last_verb_block"] # Spacing after the last verb block
 
@@ -949,12 +844,8 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                         draw_section_image_in_frame(pdf, section_data, current_frame_segment_top_y, width, margin)
                         pdf.setFont(cfg_conj_comp["content_font_name"], cfg_conj_comp["content_font_size"])
 
-            box_actual_bottom_y = (y_position
-                                   - PDF_STYLE_CONFIG["section_frame"]["content_bottom_padding"])
-            draw_rounded_box_with_color(pdf,
-                                        margin, box_actual_bottom_y,
-                                        width - 2 * margin, current_frame_segment_top_y - box_actual_bottom_y,
-                                        stroke_rgb_color=section_color_rgb, sides=['bottom', 'left', 'right'])
+            box_actual_bottom_y = (y_position - PDF_STYLE_CONFIG["section_frame"]["content_bottom_padding"])
+            draw_rounded_box_with_color(pdf, margin, box_actual_bottom_y, width - 2 * margin, current_frame_segment_top_y - box_actual_bottom_y, stroke_rgb_color=section_color_rgb, sides=['bottom', 'left', 'right'])
             y_position = box_actual_bottom_y - PDF_STYLE_CONFIG["section_frame"]["y_offset_after_box"]
         # Section Grammaire
         if grammar_exercises and len(grammar_exercises) >= day and grammar_exercises[day-1]:
@@ -963,8 +854,7 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
             section_data = SECTION_ASSETS.get(section_key, {})
             section_color_rgb = section_data.get("color", (0.5, 0.2, 0.7))
 
-            first_block_content_height = (cfg_gram["line_spacing_per_line"] * 2 + cfg_gram["spacing_before_answer"]
-                                          + cfg_gram["line_spacing_answer"] + cfg_gram["spacing_after_exercise_block"])
+            first_block_content_height = (cfg_gram["line_spacing_per_line"] * 2 + cfg_gram["spacing_before_answer"] + cfg_gram["line_spacing_answer"] + cfg_gram["spacing_after_exercise_block"])
             required_height_for_first_block = HEADER_HEIGHT_ESTIMATE + first_block_content_height
 
             if y_position - required_height_for_first_block < margin:
@@ -974,25 +864,18 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
             current_frame_segment_top_y = y_position
             # Draw top of frame
             draw_rounded_box_with_color(pdf, margin, y_position, width - 2 * margin, 0, stroke_rgb_color=section_color_rgb, sides=['top'])
-            y_position_for_content, exercise_content_x_start = draw_section_header(
-                pdf, current_frame_segment_top_y, section_key, section_num, margin, width
-            )
-            draw_section_image_in_frame(
-                pdf, section_data, current_frame_segment_top_y, width, margin)
+            y_position_for_content, exercise_content_x_start = draw_section_header( pdf, current_frame_segment_top_y, section_key, section_num, margin, width)
+            draw_section_image_in_frame( pdf, section_data, current_frame_segment_top_y, width, margin)
             y_position = y_position_for_content
             section_num += 1
 
-            pdf.setFont(cfg_gram["content_font_name"],
-                        cfg_gram["content_font_size"])
+            pdf.setFont(cfg_gram["content_font_name"], cfg_gram["content_font_size"])
             for ex in grammar_exercises[day-1]:
                 phrase = ex['phrase']
                 transformation = ex['transformation']
-                pdf.setFont(cfg_gram["title_font_name"],
-                            cfg_gram["title_font_size"])
-                pdf.drawString(exercise_content_x_start,
-                               y_position, "Phrase :")
-                pdf.setFont(cfg_gram["content_font_name"],
-                            cfg_gram["content_font_size"])
+                pdf.setFont(cfg_gram["title_font_name"], cfg_gram["title_font_size"])
+                pdf.drawString(exercise_content_x_start, y_position, "Phrase :")
+                pdf.setFont(cfg_gram["content_font_name"], cfg_gram["content_font_size"])
                 pdf.drawString(exercise_content_x_start + 55, y_position, phrase)
                 y_position -= cfg_gram["line_spacing_per_line"]
                 if y_position < margin:
@@ -1003,16 +886,13 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                     current_frame_segment_top_y = y_position
                     # Draw top of new frame segment
                     draw_rounded_box_with_color(pdf, margin, y_position, width - 2 * margin, 0, stroke_rgb_color=section_color_rgb, sides=['top'])
-                    draw_section_image_in_frame(
-                        pdf, section_data, current_frame_segment_top_y, width, margin)
-                    pdf.setFont(cfg_gram["content_font_name"],
-                                cfg_gram["content_font_size"])
+                    draw_section_image_in_frame(pdf, section_data, current_frame_segment_top_y, width, margin)
+                    pdf.setFont(cfg_gram["content_font_name"], cfg_gram["content_font_size"])
 
                 pdf.setFont(cfg_gram["title_font_name"], cfg_gram["title_font_size"])
                 pdf.drawString(exercise_content_x_start, y_position, "Transformation demandée :")
                 pdf.setFont(cfg_gram["content_font_name"], cfg_gram["content_font_size"])
-                pdf.drawString(exercise_content_x_start + 130,
-                               y_position, transformation)
+                pdf.drawString(exercise_content_x_start + 130, y_position, transformation)
                 y_position -= cfg_gram["line_spacing_per_line"]
                 if y_position < margin:
                     # Close previous frame segment
@@ -1022,14 +902,11 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                     current_frame_segment_top_y = y_position
                     # Draw top of new frame segment
                     draw_rounded_box_with_color(pdf, margin, y_position, width - 2 * margin, 0, stroke_rgb_color=section_color_rgb, sides=['top'])
-                    draw_section_image_in_frame(
-                        pdf, section_data, current_frame_segment_top_y, width, margin)
-                    pdf.setFont(cfg_gram["content_font_name"],
-                                cfg_gram["content_font_size"])
+                    draw_section_image_in_frame( pdf, section_data, current_frame_segment_top_y, width, margin)
+                    pdf.setFont(cfg_gram["content_font_name"], cfg_gram["content_font_size"])
 
                 y_position -= cfg_gram["spacing_before_answer"]
-                pdf.drawString(exercise_content_x_start, y_position,
-                               "Réponse : __________________________________________________________")
+                pdf.drawString(exercise_content_x_start, y_position, "Réponse : __________________________________________________________")
                 y_position -= cfg_gram["line_spacing_answer"]
                 y_position -= cfg_gram["spacing_after_exercise_block"]
                 if y_position < margin:
@@ -1040,17 +917,11 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                     current_frame_segment_top_y = y_position
                     # Draw top of new frame segment
                     draw_rounded_box_with_color(pdf, margin, y_position, width - 2 * margin, 0, stroke_rgb_color=section_color_rgb, sides=['top'])
-                    draw_section_image_in_frame(
-                        pdf, section_data, current_frame_segment_top_y, width, margin)
-                    pdf.setFont(cfg_gram["content_font_name"],
-                                cfg_gram["content_font_size"])
+                    draw_section_image_in_frame( pdf, section_data, current_frame_segment_top_y, width, margin)
+                    pdf.setFont(cfg_gram["content_font_name"], cfg_gram["content_font_size"])
 
-            box_actual_bottom_y = (y_position
-                                   - PDF_STYLE_CONFIG["section_frame"]["content_bottom_padding"])
-            draw_rounded_box_with_color(pdf,
-                                        margin, box_actual_bottom_y,
-                                        width - 2 * margin, current_frame_segment_top_y - box_actual_bottom_y,
-                                        stroke_rgb_color=section_color_rgb, sides=['bottom', 'left', 'right'])
+            box_actual_bottom_y = (y_position - PDF_STYLE_CONFIG["section_frame"]["content_bottom_padding"])
+            draw_rounded_box_with_color(pdf, margin, box_actual_bottom_y, width - 2 * margin, current_frame_segment_top_y - box_actual_bottom_y, stroke_rgb_color=section_color_rgb, sides=['bottom', 'left', 'right'])
             y_position = box_actual_bottom_y - PDF_STYLE_CONFIG["section_frame"]["y_offset_after_box"]
 
         # Section Orthographe
@@ -1060,8 +931,7 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
             section_data = SECTION_ASSETS.get(section_key, {})
             section_color_rgb = section_data.get("color", (1.0, 0.7, 0.0))
 
-            first_block_content_height = (cfg_ortho["line_spacing_per_item"]
-                                          + cfg_ortho["spacing_after_item"])
+            first_block_content_height = (cfg_ortho["line_spacing_per_item"] + cfg_ortho["spacing_after_item"])
             required_height_for_first_block = HEADER_HEIGHT_ESTIMATE + first_block_content_height
 
             if y_position - required_height_for_first_block < margin:
@@ -1070,16 +940,12 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
             current_frame_segment_top_y = y_position
             # Draw top of frame
             draw_rounded_box_with_color(pdf, margin, y_position, width - 2 * margin, 0, stroke_rgb_color=section_color_rgb, sides=['top'])
-            y_position_for_content, exercise_content_x_start = draw_section_header(
-                pdf, current_frame_segment_top_y, section_key, section_num, margin, width
-            )
-            draw_section_image_in_frame(
-                pdf, section_data, current_frame_segment_top_y, width, margin)
+            y_position_for_content, exercise_content_x_start = draw_section_header( pdf, current_frame_segment_top_y, section_key, section_num, margin, width)
+            draw_section_image_in_frame( pdf, section_data, current_frame_segment_top_y, width, margin)
             y_position = y_position_for_content
             section_num += 1
 
-            pdf.setFont(cfg_ortho["content_font_name"],
-                        cfg_ortho["content_font_size"])
+            pdf.setFont(cfg_ortho["content_font_name"], cfg_ortho["content_font_size"])
             for ex in orthographe_exercises[day-1]:
                 # Filter homophone exercises for the day
                 homophone_exercises_for_day = [e for e in orthographe_exercises[day-1] if e['type'] == 'homophone']
@@ -1100,8 +966,7 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                 if ex['type'] == 'homophone':
                     pdf.setFont(cfg_ortho["title_font_name"], cfg_ortho["title_font_size"]) # Set font for homophone
                     pdf.drawString(exercise_content_x_start, y_position, f"{ex['homophone']} :")  # Draw the homophone
-                    pdf.setFont(cfg_ortho["content_font_name"], # Back to content
-                                cfg_ortho["content_font_size"])
+                    pdf.setFont(cfg_ortho["content_font_name"], cfg_ortho["content_font_size"])
                     pdf.drawString(exercise_content_x_start + 60, y_position, ex['content'])
                     y_position -= cfg_ortho["line_spacing_per_item"]
                     y_position -= cfg_ortho["spacing_after_item"]
@@ -1113,17 +978,11 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                     current_frame_segment_top_y = y_position
                     # Draw top of new frame segment
                     draw_rounded_box_with_color(pdf, margin, y_position, width - 2 * margin, 0, stroke_rgb_color=section_color_rgb, sides=['top'])
-                    draw_section_image_in_frame(
-                        pdf, section_data, current_frame_segment_top_y, width, margin)
-                    pdf.setFont(cfg_ortho["content_font_name"],
-                                cfg_ortho["content_font_size"])
+                    draw_section_image_in_frame( pdf, section_data, current_frame_segment_top_y, width, margin)
+                    pdf.setFont(cfg_ortho["content_font_name"], cfg_ortho["content_font_size"])
 
-            box_actual_bottom_y = (y_position
-                                   - PDF_STYLE_CONFIG["section_frame"]["content_bottom_padding"])
-            draw_rounded_box_with_color(pdf,
-                                        margin, box_actual_bottom_y,
-                                        width - 2 * margin, current_frame_segment_top_y - box_actual_bottom_y,
-                                        stroke_rgb_color=section_color_rgb, sides=['bottom', 'left', 'right'])
+            box_actual_bottom_y = (y_position - PDF_STYLE_CONFIG["section_frame"]["content_bottom_padding"])
+            draw_rounded_box_with_color(pdf, margin, box_actual_bottom_y, width - 2 * margin, current_frame_segment_top_y - box_actual_bottom_y, stroke_rgb_color=section_color_rgb, sides=['bottom', 'left', 'right'])
             y_position = box_actual_bottom_y - PDF_STYLE_CONFIG["section_frame"]["y_offset_after_box"]
 
         # Section Anglais
@@ -1138,11 +997,9 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
             if english_exercises[day-1]:
                 first_ex = english_exercises[day-1][0]
                 if first_ex['type'] in ('simple', 'complexe'):
-                    first_block_content_height = (cfg_eng_comp["line_spacing_after_title"] + cfg_eng_comp["spacing_before_first_item"]
-                                                  + cfg_eng_comp["line_spacing_per_item"] + cfg_eng_comp["spacing_after_item"])
+                    first_block_content_height = (cfg_eng_comp["line_spacing_after_title"] + cfg_eng_comp["spacing_before_first_item"] + cfg_eng_comp["line_spacing_per_item"] + cfg_eng_comp["spacing_after_item"])
                 elif first_ex['type'] == 'relier':
-                    first_block_content_height = (cfg_eng_rel["line_spacing_after_title"] + cfg_eng_rel["spacing_before_first_item"]
-                                                  + cfg_eng_rel["line_spacing_per_item"] + cfg_eng_rel["spacing_after_block"])
+                    first_block_content_height = (cfg_eng_rel["line_spacing_after_title"] + cfg_eng_rel["spacing_before_first_item"] + cfg_eng_rel["line_spacing_per_item"] + cfg_eng_rel["spacing_after_block"])
             required_height_for_first_block = HEADER_HEIGHT_ESTIMATE + first_block_content_height
 
             if y_position - required_height_for_first_block < margin:
@@ -1151,11 +1008,8 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
             current_frame_segment_top_y = y_position
             # Draw top of frame
             draw_rounded_box_with_color(pdf, margin, y_position, width - 2 * margin, 0, stroke_rgb_color=section_color_rgb, sides=['top'])
-            y_position_for_content, exercise_content_x_start = draw_section_header(
-                pdf, current_frame_segment_top_y, section_key, section_num, margin, width
-            )
-            draw_section_image_in_frame(
-                pdf, section_data, current_frame_segment_top_y, width, margin)
+            y_position_for_content, exercise_content_x_start = draw_section_header( pdf, current_frame_segment_top_y, section_key, section_num, margin, width)
+            draw_section_image_in_frame( pdf, section_data, current_frame_segment_top_y, width, margin)
             y_position = y_position_for_content
             section_num += 1
 
@@ -1171,11 +1025,9 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                             completer_title_text = "Complète la phrase :"
                         else:
                             completer_title_text = "Complète les phrases :"
-                        pdf.setFont(
-                            cfg_eng_comp["title_font_name"], cfg_eng_comp["title_font_size"])
+                        pdf.setFont( cfg_eng_comp["title_font_name"], cfg_eng_comp["title_font_size"])
                         pdf.drawString(exercise_content_x_start, y_position, completer_title_text)
-                        pdf.setFont(
-                            cfg_eng_comp["content_font_name"], cfg_eng_comp["content_font_size"])
+                        pdf.setFont( cfg_eng_comp["content_font_name"], cfg_eng_comp["content_font_size"])
                         y_position -= cfg_eng_comp["line_spacing_after_title"]
                         completer_shown = True
                         y_position -= cfg_eng_comp["spacing_before_first_item"]
@@ -1187,23 +1039,17 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                             current_frame_segment_top_y = y_position
                             # Draw top of new frame segment
                             draw_rounded_box_with_color(pdf, margin, y_position, width - 2 * margin, 0, stroke_rgb_color=section_color_rgb, sides=['top'])
-                            draw_section_image_in_frame(
-                                pdf, section_data, current_frame_segment_top_y, width, margin)
-                            pdf.setFont(
-                                cfg_eng_comp["content_font_name"], cfg_eng_comp["content_font_size"])
+                            draw_section_image_in_frame( pdf, section_data, current_frame_segment_top_y, width, margin)
+                            pdf.setFont( cfg_eng_comp["content_font_name"], cfg_eng_comp["content_font_size"])
 
-                    pdf.drawString(exercise_content_x_start,
-                                   y_position, ex['content'])
+                    pdf.drawString(exercise_content_x_start, y_position, ex['content'])
                     y_position -= cfg_eng_comp["line_spacing_per_item"]
                     y_position -= cfg_eng_comp["spacing_after_item"]
                 elif ex['type'] == 'relier':
                     completer_shown = False
-                    pdf.setFont(cfg_eng_rel["title_font_name"],
-                                cfg_eng_rel["title_font_size"])
-                    pdf.drawString(exercise_content_x_start,
-                                   y_position, "Jeu de mots à relier :")
-                    pdf.setFont(
-                        cfg_eng_rel["content_font_name"], cfg_eng_rel["content_font_size"])
+                    pdf.setFont(cfg_eng_rel["title_font_name"], cfg_eng_rel["title_font_size"])
+                    pdf.drawString(exercise_content_x_start, y_position, "Jeu de mots à relier :")
+                    pdf.setFont(cfg_eng_rel["content_font_name"], cfg_eng_rel["content_font_size"])
                     y_position -= cfg_eng_rel["line_spacing_after_title"]
                     y_position -= cfg_eng_rel["spacing_before_first_item"]
                     if y_position < margin:
@@ -1214,10 +1060,8 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                         current_frame_segment_top_y = y_position
                         # Draw top of new frame segment
                         draw_rounded_box_with_color(pdf, margin, y_position, width - 2 * margin, 0, stroke_rgb_color=section_color_rgb, sides=['top'])
-                        draw_section_image_in_frame(
-                            pdf, section_data, current_frame_segment_top_y, width, margin)
-                        pdf.setFont(
-                            cfg_eng_rel["content_font_name"], cfg_eng_rel["content_font_size"])
+                        draw_section_image_in_frame( pdf, section_data, current_frame_segment_top_y, width, margin)
+                        pdf.setFont(cfg_eng_rel["content_font_name"], cfg_eng_rel["content_font_size"])
 
                     mots = ex['content']
                     anglais_words = [m['english'] for m in mots]
@@ -1225,14 +1069,10 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                     random.shuffle(anglais_words)
 
                     max_len = max(len(anglais_words), len(francais_words))
-                    x_anglais = (exercise_content_x_start
-                                 + cfg_eng_rel["x_offset_anglais"])
-                    x_bullet1 = (exercise_content_x_start
-                                 + cfg_eng_rel["x_offset_bullet1"])
-                    x_bullet2 = (x_bullet1
-                                 + cfg_eng_rel["x_offset_bullet2_from_bullet1"])
-                    x_francais = (x_bullet2
-                                  + cfg_eng_rel["x_offset_francais_from_bullet2"])
+                    x_anglais = (exercise_content_x_start + cfg_eng_rel["x_offset_anglais"])
+                    x_bullet1 = (exercise_content_x_start + cfg_eng_rel["x_offset_bullet1"])
+                    x_bullet2 = (x_bullet1 + cfg_eng_rel["x_offset_bullet2_from_bullet1"])
+                    x_francais = (x_bullet2 + cfg_eng_rel["x_offset_francais_from_bullet2"])
 
                     for i in range(max_len):
                         a = anglais_words[i] if i < len(anglais_words) else ''
@@ -1251,10 +1091,8 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                             current_frame_segment_top_y = y_position
                             # Draw top of new frame segment
                             draw_rounded_box_with_color(pdf, margin, y_position, width - 2 * margin, 0, stroke_rgb_color=section_color_rgb, sides=['top'])
-                            draw_section_image_in_frame(
-                                pdf, section_data, current_frame_segment_top_y, width, margin)
-                            pdf.setFont(
-                                cfg_eng_rel["content_font_name"], cfg_eng_rel["content_font_size"])
+                            draw_section_image_in_frame(pdf, section_data, current_frame_segment_top_y, width, margin)
+                            pdf.setFont(cfg_eng_rel["content_font_name"], cfg_eng_rel["content_font_size"])
                     y_position -= cfg_eng_rel["spacing_after_block"]
 
                 if y_position < margin and ex_idx < len(english_exercises[day-1]) - 1:
@@ -1266,16 +1104,11 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                     current_frame_segment_top_y = y_position
                     # Draw top of new frame segment
                     draw_rounded_box_with_color(pdf, margin, y_position, width - 2 * margin, 0, stroke_rgb_color=section_color_rgb, sides=['top'])
-                    draw_section_image_in_frame(
-                        pdf, section_data, current_frame_segment_top_y, width, margin)
+                    draw_section_image_in_frame(pdf, section_data, current_frame_segment_top_y, width, margin)
                     pdf.setFont(cfg_def_font["name"], cfg_def_font["size"])
 
-            box_actual_bottom_y = (y_position
-                                   - PDF_STYLE_CONFIG["section_frame"]["content_bottom_padding"])
-            draw_rounded_box_with_color(pdf,
-                                        margin, box_actual_bottom_y,
-                                        width - 2 * margin, current_frame_segment_top_y - box_actual_bottom_y,
-                                        stroke_rgb_color=section_color_rgb, sides=['bottom', 'left', 'right'])
+            box_actual_bottom_y = (y_position - PDF_STYLE_CONFIG["section_frame"]["content_bottom_padding"])
+            draw_rounded_box_with_color(pdf, margin, box_actual_bottom_y, width - 2 * margin, current_frame_segment_top_y - box_actual_bottom_y, stroke_rgb_color=section_color_rgb, sides=['bottom', 'left', 'right'])
             y_position = box_actual_bottom_y - PDF_STYLE_CONFIG["section_frame"]["y_offset_after_box"]
 
         if day < days:
