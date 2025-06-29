@@ -1,82 +1,129 @@
-# Apprentium 
+# Apprentium
+
+![Version](https://img.shields.io/badge/version-1.0-blue.svg)
+![Python](https://img.shields.io/badge/Python-3.6+-green.svg)
+![License](https://img.shields.io/badge/license-MIT-yellow.svg)
+
+## Table des matières
+- [Description](#description)
+- [Fonctionnalités](#fonctionnalités)
+- [Prérequis](#prérequis)
+- [Installation](#installation)
+- [Utilisation](#utilisation)
+  - [Mode Python](#mode-python)
+  - [Mode Exécutable Windows](#mode-exécutable-windows)
+- [Personnalisation](#personnalisation)
+- [Création de l'exécutable](#création-de-lexécutable)
+- [Contribuer](#contribuer)
 
 ## Description
 Apprentium est une application de bureau développée en Python avec une interface graphique conviviale (basée sur PyQt6). Elle est conçue pour aider à la création de cahiers d'exercices personnalisés pour les élèves, couvrant un large éventail de matières. L'application permet de générer ces fiches d'exercices aux formats PDF et Word.
 
-Les utilisateurs peuvent finement ajuster les paramètres de chaque type d'exercice (nombre d'items, difficulté, options spécifiques) directement depuis l'interface. Ces configurations sont automatiquement sauvegardées dans un fichier `config.json` pour une réutilisation facile. Le contenu pédagogique de base, tel que les listes de verbes, les phrases pour les exercices de grammaire, les homophones, les énoncés de petits problèmes mathématiques, les phrases en anglais et les mots à relier, est stocké dans des fichiers JSON dédiés. Cela permet une personnalisation et une extension aisées du matériel pédagogique par l'utilisateur. Les matières couvertes incluent les calculs (additions, soustractions, multiplications, divisions, énumération de nombres, petits problèmes), les mesures (conversions d'unités, rangement de nombres, encadrement), la conjugaison, la grammaire (types de phrases, transformations), l'orthographe (homophones) et l'anglais (phrases à compléter, jeux de mots à relier).
+Les utilisateurs peuvent finement ajuster les paramètres de chaque type d'exercice (nombre d'items, difficulté, options spécifiques) directement depuis l'interface. Ces configurations sont automatiquement sauvegardées dans un fichier `config.json` pour une réutilisation facile.
 
+## Fonctionnalités
 
-## Structure du projet
-```
-Apprentium/
-├── src/
-│   ├── Apprentium.py                  # Point d'entrée de l'application (interface graphique)
-│   ├── pdf_generator.py             # Logique de génération des fichiers PDF
-│   ├── word_generator.py            # Logique de génération des fichiers Word
-│   ├── grammar_generator.py         # Module pour générer les exercices de grammaire (utilise json/phrases_grammaire.json)
-│   ├── conjugation_generator.py     # Module pour générer les exercices de conjugaison (utilise json/verbes.json)
-│   ├── mesures_generator.py         # Module pour générer les exercices de mesures et conversions
-│   ├── anglais_generator.py         # Module pour générer les exercices d'anglais (utilise json/phrases_anglais_*.json, json/mots_a_relier.json)
-│   ├── exercise_data_builder.py     # Assemble les données d'exercices pour les générateurs de documents
-│   ├── calculs_generator.py         # Module pour générer les exercices de calculs (opérations, problèmes, etc. utilise json/problemes_maths.json pour les problèmes)
-│   ├── json/                        # Dossier contenant les données JSON personnalisables
-│   │   ├── phrases_grammaire.json
-│   │   ├── homophones.json
-│   │   ├── mots_a_relier.json
-│   │   ├── phrases_anglais_complexe.json
-│   │   ├── phrases_anglais_simple.json
-│   │   ├── verbes.json
-│   │   ├── problemes_math.json
-│   │   └── levels_config.json       # Configuration des exercices disponibles par niveau
-│   ├── img/                         # Dossier contenant les images utilisées pour les en-têtes de section dans les PDF
-│   │   ├── calculs.png    
-│   │   ├── mesures.png    
-│   │   ├── conjugaison.png    
-│   │   ├── grammaire.png    
-│   │   ├── orthographe.png    
-│   │   └── anglais.png    
-│   ├── config.json                  # Fichier de configuration utilisateur sauvegardé (généré au premier lancement si absent)
-│   └── Apprentium.ico                 # Icône de l'application
-├── requirements.txt                 # Liste des dépendances Python nécessaires
-└── README.md                        # Ce fichier.
-```
+### Matières couvertes
+- **Calculs** : additions, soustractions, multiplications, divisions, énumération de nombres, petits problèmes
+- **Mesures** : conversions d'unités, rangement de nombres, encadrement
+- **Conjugaison** : exercices adaptés par niveau
+- **Grammaire** : types de phrases, transformations
+- **Orthographe** : homophones
+- **Anglais** : phrases à compléter, jeux de mots à relier
+
+### Autres fonctionnalités
+- Interface utilisateur intuitive avec onglets par matière
+- Génération de documents aux formats PDF et Word
+- Sauvegarde automatique des paramètres
+- Personnalisation facile du contenu pédagogique via fichiers JSON
+- Adaptation des exercices par niveau scolaire (CP, CE1, etc.)
+
+## Prérequis
+- Python 3.6 ou supérieur
+- Bibliothèques requises :
+  - PyQt6 (interface graphique)
+  - PyQt6-WebEngine (composants web)
+  - reportlab (génération de PDF)
+  - python-docx (génération de documents Word)
 
 ## Installation
-Installez les dépendances nécessaires avec :
+1. Clonez ce dépôt ou téléchargez les fichiers source
+2. Installez les dépendances nécessaires avec :
 
-```
+```bash
 pip install -r requirements.txt
 ```
 
-## Utilisation (mode Python)
+## Utilisation
+
+### Mode Python
 1. Exécutez `Apprentium.py` pour lancer l'application :
-   ```
+   ```bash
    python src/Apprentium.py
    ```
-2. Personnalisez les paramètres (calculs, conjugaison, grammaire, etc.).
-3. Cliquez sur "Générer PDF" ou "Générer Word" pour créer la fiche.
-4. Le PDF ou le Word est enregistré dans le dossier output.
+2. Personnalisez les paramètres dans chaque onglet (calculs, conjugaison, grammaire, etc.)
+3. Cliquez sur "Générer PDF" ou "Générer Word" pour créer la fiche d'exercices
+4. Le document généré est automatiquement enregistré dans le dossier `output/`
 
-## Utilisation (exécutable Windows autonome)
-1. Compilez avec PyInstaller (logo et dossier JSON à côté de l'exe) :
-   ```
-   pyinstaller --onefile --noconsole --icon=src/Apprentium.ico --add-data "src/json;json" --add-data "src/img;img" --add-data "src/Apprentium.ico;." --add-data "src/config.json;." src/Apprentium.py
-   ```
-2. Dans le dossier `dist/`, copiez `Apprentium.exe`, `config.json`, `Apprentium.ico`, et le dossier `json`.
-3. Copiez également le dossier `img` dans `dist/` si vous souhaitez que les images des sections PDF soient incluses.
-4. Lancez `Apprentium.exe` sur n'importe quel PC Windows (aucune installation Python requise).
-5. Les fichiers JSON sont modifiables à côté de l'exe pour personnaliser verbes, phrases, et la configuration des niveaux.
- 
+### Mode Exécutable Windows
+1. Téléchargez la version compilée ou créez l'exécutable (voir section [Création de l'exécutable](#création-de-lexécutable))
+2. Lancez `Apprentium.exe` (aucune installation Python requise)
+3. Configurez les exercices selon vos besoins
+4. Générez les documents PDF ou Word qui seront sauvegardés dans le dossier `output/`
 
 ## Personnalisation
-- **Verbes** : éditez `verbes.json` pour ajouter/supprimer des verbes par groupe.
-- **Phrases de grammaire** : éditez `phrases_grammaire.json` pour enrichir les exercices.
-- **Phrases en anglais** : éditez `phrases_anglais_complexe.json` et `phrases_anglais_simple.json`
-- **mots à relier** : éditez `mots_a_relier.json`
-- **homophones** : éditez `homophones.json`
-- **Petits Problèmes (Maths)** : éditez `problemes_math.json` pour ajouter ou modifier les énoncés des problèmes.
-- **Configuration des Niveaux** : Éditez `levels_config.json` pour définir quels types d'exercices sont disponibles pour chaque niveau scolaire (CP, CE1, etc.). 
-- **Apparence des PDF**: Modifiez ou remplacez les images dans le dossier src/img/ (ex: calculs.png, mesures.png) pour changer les illustrations des sections dans les documents PDF générés. 
+
+Le contenu pédagogique de base est stocké dans des fichiers JSON dédiés, ce qui permet une personnalisation et une extension aisées du matériel pédagogique.
+
+### Contenu des exercices
+- **Verbes** : éditez `verbes.json` pour ajouter/supprimer des verbes par groupe
+- **Phrases de grammaire** : éditez `phrases_grammaire.json` pour enrichir les exercices
+- **Phrases en anglais** : modifiez `phrases_anglais_complexe.json` et `phrases_anglais_simple.json`
+- **Mots à relier** : personnalisez `mots_a_relier.json`
+- **Homophones** : ajustez `homophones.json`
+- **Petits problèmes (Maths)** : éditez `problemes_maths.json` pour ajouter ou modifier les énoncés
+
+### Configuration par niveau
+- Éditez `levels_config.json` pour définir quels types d'exercices sont disponibles pour chaque niveau scolaire (CP, CE1, etc.)
+
+### Apparence des documents
+- Modifiez ou remplacez les images dans le dossier `src/img/` (ex: calculs.png, mesures.png) pour changer les illustrations des sections dans les documents PDF générés
+- Personnalisez le style CSS dans `src/css/cours_style.css` pour modifier l'apparence des documents
+
+## Création de l'exécutable
+
+Pour créer un exécutable Windows autonome :
+
+1. Installez PyInstaller :
+   ```bash
+   pip install pyinstaller
+   ```
+
+2. Compilez l'application avec la commande suivante :
+   ```bash
+   pyinstaller --onefile --noconsole --icon=src/Apprentium.ico --add-data "src/json;json" --add-data "src/img;img" --add-data "src/css;css" --add-data "src/Apprentium.ico;." --add-data "src/config.json;." src/Apprentium.py
+   ```
+
+3. Dans le dossier `dist/` créé, vous trouverez :
+   - `Apprentium.exe` - l'exécutable principal
+   - Les dossiers et fichiers nécessaires au fonctionnement
+
+4. Pour une distribution complète, assurez-vous d'inclure :
+   - `Apprentium.exe`
+   - `config.json`
+   - `Apprentium.ico`
+   - Le dossier `json/` avec tous les fichiers de contenu
+   - Le dossier `img/` pour les illustrations des PDF
+   - Le dossier `css/` pour les styles
 
 ## Contribuer
-Les contributions sont les bienvenues ! N'hésitez pas à proposer des améliorations ou signaler des bugs.
+
+Les contributions sont les bienvenues ! Voici comment vous pouvez contribuer :
+
+1. Forkez le projet
+2. Créez une branche pour votre fonctionnalité (`git checkout -b nouvelle-fonctionnalite`)
+3. Committez vos changements (`git commit -m 'Ajout d'une nouvelle fonctionnalité'`)
+4. Poussez vers la branche (`git push origin nouvelle-fonctionnalite`)
+5. Ouvrez une Pull Request
+
+N'hésitez pas à proposer des améliorations ou signaler des bugs en ouvrant une issue.

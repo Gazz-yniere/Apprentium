@@ -1,4 +1,7 @@
 PyQt6
+PyQt6-WebEngine
 reportlab
+python-docx
 # Pour créer un exécutable :
 # pyinstaller
+# upx-ucl (optionnel, pour la compression via --upx-dir)

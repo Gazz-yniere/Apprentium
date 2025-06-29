@@ -6,7 +6,7 @@
     },
     {
       "title": "Les lettres majuscules et minuscules",
-      "content": "<div class=\"lesson-card \"><h3>Grande ou Petite Lettre ?</h3><p>Chaque lettre de l'alphabet peut s'écrire de deux façons : en <b>majuscule</b> (la grande) et en <b>minuscule</b> (la petite). La majuscule est utilisée en début de phrase et pour les noms propres.</p><p class=\"example\">Exemple :</p><p class=\"key-info\">La lettre 'A' peut être écrite <span class=\"highlight-green\"><b>A</b></span> (majuscule) ou <span class=\"highlight-green\"><b>a</b></span> (minuscule).</p><p class=\"key-info\">'B' et 'b', 'C' et 'c'.</p><div class=\"memo-box\"><h4>Mémo : Ce qu'il faut retenir</h4><ul><li>Chaque lettre a une forme <strong>majuscule</strong> et une forme <strong>minuscule</strong>.</li><li>La majuscule est comme le chapeau de la lettre !</li></ul></div></div>"
+      "content": "<div class=\"lesson-card\"><h3>Grande ou Petite Lettre ?</h3><p>Chaque lettre de l'alphabet peut s'écrire de deux façons : en <b>majuscule</b> (la grande) et en <b>minuscule</b> (la petite). La majuscule est utilisée en début de phrase et pour les noms propres.</p><p class=\"example\">Exemple :</p><p class=\"key-info\">La lettre 'A' peut être écrite <span class=\"highlight-green\"><b>A</b></span> (majuscule) ou <span class=\"highlight-green\"><b>a</b></span> (minuscule).</p><p class=\"key-info\">'B' et 'b', 'C' et 'c'.</p><div class=\"memo-box\"><h4>Mémo : Ce qu'il faut retenir</h4><ul><li>Chaque lettre a une forme <strong>majuscule</strong> et une forme <strong>minuscule</strong>.</li><li>La majuscule est comme le chapeau de la lettre !</li></ul></div></div>"
     },
     {
       "title": "Le nom : Personne, animal, chose",
