@@ -26,7 +26,8 @@ UI_STYLE_CONFIG = {
             # Bleu clair, Violet clair, Vert clair
             "calc":      "#4FC3F7", "geo":       "#BA68C8", "conj":      "#81C784",
             # Jaune/Or, Orange, Sarcelle (Teal)
-            "grammar":   "#FFD54F", "ortho":     "#FFB300", "english":   "#4DB6AC",
+            "grammar":   "#FFD54F", "ortho":     "#FFB300", "english":   "#4DB6AC", 
+            "blue":      "#90CAF9", # Added for generic course column
         },
         # Style pour la plupart des labels de champ
         "field_label":        "color: #e0e0e0; font-size: 14px; font-weight: normal;",
@@ -115,5 +116,56 @@ UI_STYLE_CONFIG = {
             "background_color": "#2E2E2E", "width": 12,
             "handle_background_color": "#555555", "handle_min_height": 20, "handle_border_radius": 6,
         }
+    },
+    "tab_widget": {
+        "style": """
+            QTabWidget::pane {
+                border-top: 2px solid #404040;
+                margin-top: -1px;
+            }
+            QTabWidget::tab-bar {
+                alignment: left;
+            }
+            QTabBar::tab {
+                background: #3C3C3C;
+                color: #B0BEC5;
+                border: 1px solid #2A2A2A;
+                border-bottom: none;
+                border-top-left-radius: 6px;
+                border-top-right-radius: 6px;
+                min-width: 120px;
+                padding: 8px 15px;
+                font-size: 14px;
+                font-weight: bold;
+            }
+            QTabBar::tab:hover { background: #4A4A4A; color: #E0E0E0; }
+            QTabBar::tab:selected { background: #2E2E2E; color: white; }
+        """
+    },
+    "table_widget": {
+        "style": """
+            QTableWidget {
+                background-color: #2E2E2E;
+                alternate-background-color: #3C3C3C;
+                gridline-color: #404040;
+                color: #E0E0E0;
+                font-size: 13px;
+                border: 1px solid #404040;
+            }
+            QHeaderView::section {
+                background-color: #4A4A4A;
+                color: #FFFFFF;
+                padding: 5px;
+                border: 1px solid #404040;
+                font-weight: bold;
+            }
+            QTableWidget::item {
+                padding: 5px;
+            }
+            QTableWidget::item:selected {
+                background-color: #0078D7; /* Windows blue highlight */
+                color: white;
+            }
+        """
     }
 }

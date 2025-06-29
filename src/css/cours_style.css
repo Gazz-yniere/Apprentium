@@ -1,0 +1,341 @@
+/* General Body and Container Styling (Optional, for overall app look) */
+body {
+    background-color: transparent; /* Dark background for the entire page */
+    margin: 0;
+    padding: 10px;
+    font-family: 'Open Sans', sans-serif; /* Consistent font */
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0px; /* Space between lesson cards */
+    justify-content: center;
+    align-items: flex-start;
+}
+
+/* Base Lesson Card Styling */
+.lesson-card {
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4);
+    text-align: center;
+    color: #ECF0F1; /* Light text color for dark backgrounds */
+    width: 100%; /* Use full available width */
+    box-sizing: border-box; /* Include padding in width */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Push image to bottom if content is short */
+}
+
+/* --- Dynamic Backgrounds and Title Colors based on Subject --- */
+/* Note: The background colors are dark shades of the main subject colors. */
+
+/* Calculs (Light Blue) */
+.lesson-card-bg-calc { background-color: #215470; } /* Main */
+.lesson-card-bg-calc-alt { background-color: #2C3E50; } /* Alt */
+.lesson-card-bg-calc h3, .lesson-card-bg-calc-alt h3 { color: #4FC3F7; }
+
+/* Mesures (Light Purple) */
+.lesson-card-bg-geo { background-color: #4B2A51; } /* Main */
+.lesson-card-bg-geo-alt { background-color: #512E5F; } /* Alt */
+.lesson-card-bg-geo h3, .lesson-card-bg-geo-alt h3 { color: #BA68C8; }
+
+/* Conjugaison (Light Green) */
+.lesson-card-bg-conj { background-color: #335035; } /* Main */
+.lesson-card-bg-conj-alt { background-color: #2E4033; } /* Alt */
+.lesson-card-bg-conj h3, .lesson-card-bg-conj-alt h3 { color: #81C784; }
+
+/* Grammaire (Yellow/Gold) */
+.lesson-card-bg-grammar { background-color: #594A1C; } /* Main */
+.lesson-card-bg-grammar-alt { background-color: #5E532C; } /* Alt */
+.lesson-card-bg-grammar h3, .lesson-card-bg-grammar-alt h3 { color: #FFD54F; }
+
+/* Orthographe (Orange) */
+.lesson-card-bg-ortho { background-color: #593F00; } /* Main */
+.lesson-card-bg-ortho-alt { background-color: #664200; } /* Alt */
+.lesson-card-bg-ortho h3, .lesson-card-bg-ortho-alt h3 { color: #FFB300; }
+
+/* Anglais (Teal) */
+.lesson-card-bg-english { background-color: #1B4743; } /* Main */
+.lesson-card-bg-english-alt { background-color: #215D57; } /* Alt */
+.lesson-card-bg-english h3, .lesson-card-bg-english-alt h3 { color: #4DB6AC; }
+
+/* Heading (h3) Styling */
+.lesson-card h3 {
+    font-size: 24px;
+    margin-bottom: 15px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    text-align: center;
+}
+
+/* Paragraph (p) Styling */
+.lesson-card p {
+    font-size: 16px;
+    line-height: 1.6;
+    margin-bottom: 10px;
+}
+
+.lesson-card p.example {
+    font-size: 18px;
+    font-weight: bold;
+    color: #3498DB;
+    margin-top: 20px;
+}
+
+.lesson-card p.key-info {
+    font-size: 20px;
+    color: #ECF0F1;
+    background-color: #3B536E;
+    padding: 10px 20px;
+    border-radius: 10px;
+    display: inline-block;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    margin: 10px auto; /* Center block elements */
+}
+
+.lesson-card p.italic-note {
+    font-size: 14px;
+    margin-top: 15px;
+    font-style: italic;
+    color: #BDC3C7;
+}
+
+.lesson-card .main-numbers {
+    font-size: 20px;
+    font-weight: bold;
+    line-height: 1.8;
+    letter-spacing: 1px;
+    color: #ECF0F1;
+}
+.memo-box {
+    background-color: #3B536E; /* A slightly lighter dark blue/grey for contrast */
+    border: 2px solid #F1C40F; /* A bright yellow border to make it stand out */
+    border-radius: 10px;
+    padding: 15px;
+    margin-top: 25px; /* Space above the memo box */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    text-align: left; /* Text alignment within the memo */
+}
+
+.memo-box h4 {
+    color: #F1C40F; /* Yellow color for the memo title */
+    font-size: 18px;
+    margin-top: 0;
+    margin-bottom: 10px;
+    text-align: center;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
+}
+
+.memo-box ul {
+    list-style: disc; /* Use standard bullet points */
+    padding-left: 20px;
+    margin-top: 10px;
+    color: #ECF0F1; /* Light text color */
+}
+
+.memo-box ul li {
+    margin-bottom: 8px;
+    font-size: 15px;
+    line-height: 1.5;
+    color: #ECF0F1; /* Ensure list item text is light */
+    display: list-item; /* Override flex-list-item if inherited */
+    text-align: left;
+}
+
+.memo-box strong {
+    color: #2ECC71; /* Highlight important words within memo */
+}
+
+/* Span/Strong Highlighting */
+.highlight-red {
+    color: #E74C3C;
+}
+
+.highlight-blue {
+    color: #3498DB;
+}
+
+.highlight-green {
+    color: #2ECC71;
+}
+
+.highlight-orange {
+    color: #E67E22;
+}
+
+.highlight-yellow {
+    color: #F1C40F;
+}
+
+.highlight-purple {
+    color: #9B59B6;
+}
+
+.large-sign {
+    font-size: 26px;
+    font-weight: bold;
+}
+
+/* List (ul/ol) Styling */
+.lesson-card ul, .lesson-card ol {
+    list-style: none;
+    padding: 0;
+    margin-top: 25px;
+    text-align: center;
+}
+
+.lesson-card ul.flex-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.lesson-card li {
+    font-size: 16px;
+    margin-bottom: 15px;
+    color: #ECF0F1;
+    text-align: center; /* Center content in list items */
+}
+
+.lesson-card ol li {
+    font-size: 17px;
+    margin-bottom: 8px;
+}
+
+.lesson-card ol li span { /* Counter styling for ordered lists */
+    font-weight: bold;
+    color: #9B59B6; /* Specific color for list counters */
+    margin-right: 8px;
+}
+
+/* Specific List Item Backgrounds (for pills/tags) */
+.pill-item {
+    background-color: #2C3E50;
+    border: 1px solid #F1C40F; /* Default border, overridden below */
+    padding: 8px 15px;
+    margin: 5px;
+    border-radius: 20px;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    color: #F39C12; /* Default pill text color */
+}
+
+.pill-item-green { border-color: #2ECC71; color: #1ABC9C; }
+.pill-item-blue { border-color: #3498DB; color: #2E86C1; }
+.pill-item-red { border-color: #E74C3C; color: #C0392B; }
+.pill-item-purple { border-color: #9B59B6; color: #8E44AD; }
+.pill-item-yellow { border-color: #F1C40F; color: #D35400; }
+
+/* Geometric Shapes in Lists */
+.shape-circle {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #E74C3C;
+    margin-right: 15px;
+    vertical-align: middle;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+.shape-square {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    background-color: #2ECC71;
+    margin-right: 15px;
+    vertical-align: middle;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+.shape-triangle {
+    display: inline-block;
+    width: 0;
+    height: 0;
+    border-left: 20px solid transparent;
+    border-right: 20px solid transparent;
+    border-bottom: 40px solid #3498DB;
+    margin-right: 15px;
+    vertical-align: middle;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+.shape-rectangle {
+    display: inline-block;
+    width: 50px;
+    height: 30px;
+    background-color: #9B59B6;
+    margin-right: 15px;
+    vertical-align: middle;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* Image Styling */
+.lesson-card img {
+    height: auto;
+    border-radius: 10px;
+    margin-top: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+    border: 2px solid; /* Border color set by specific class below */
+}
+
+/* Specific Image Borders */
+.img-border-green { border-color: #2ECC71; }
+.img-border-blue { border-color: #3498DB; }
+.img-border-orange { border-color: #E67E22; }
+.img-border-purple { border-color: #9B59B6; }
+.img-border-yellow { border-color: #F1C40F; }
+.img-border-gray { border-color: #7F8C8D; }
+.img-border-light-yellow { border-color: #F7DC6F; }
+
+/* Specific Image Sizes */
+.img-small { width: 150px; }
+.img-medium { width: 180px; }
+.img-large { width: 220px; }
+.img-extra-large { width: 250px; }
+
+.img-round { border-radius: 50%; object-fit: cover; } /* For circular images */
+
+
+/* Dual-Column Layout for Vivant/Non-Vivant */
+.two-column-layout {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    margin-top: 30px;
+}
+
+.column-item {
+    text-align: center;
+    margin: 10px;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    background-color: #2C3E50; /* Darker background for inner columns */
+}
+
+.column-item h4 {
+    margin-bottom: 10px;
+    font-size: 18px;
+}
+
+.column-item-green { border: 2px solid #2ECC71; }
+.column-item-green h4 { color: #2ECC71; }
+
+.column-item-red { border: 2px solid #E74C3C; }
+.column-item-red h4 { color: #E74C3C; }
+
+.column-item img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    margin-top: 0; /* Override default img margin-top */
+    box-shadow: none; /* No extra shadow on small images */
+}
+
+.column-item-green img { border: 2px solid #2ECC71; }
+.column-item-red img { border: 2px solid #E74C3C; }
+
+.column-item p {
+    font-weight: bold;
+    color: #ECF0F1;
+    margin-top: 10px;
+    font-size: 15px; /* Smaller text for column items */
+}

@@ -1,5 +1,5 @@
-from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QLabel, QLineEdit, QCheckBox, QPushButton, QFrame, QGroupBox, QSplitter, QFileDialog, QLayout, QGraphicsOpacityEffect, QScrollArea)
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QLabel, QLineEdit, QCheckBox, QPushButton, QFrame, QTabWidget, QGroupBox, QSplitter, QFileDialog, QLayout, QGraphicsOpacityEffect, QScrollArea)
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPalette, QColor
 from PyQt6.QtGui import QIcon
 import json
@@ -21,6 +21,8 @@ from gui.orthographe_widgets import OrthographeColumn
 from gui.anglais_widgets import AnglaisColumn
 from gui.conjugaison_widgets import ConjugaisonColumn
 from gui.mesures_widgets import MesuresColumn
+from gui.settings_tab import SettingsTab
+from gui.cours_widgets import CoursColumn
 
 # Imports déplacés pour une meilleure organisation
 from calculs_generator import generate_story_math_problems
@@ -91,7 +93,7 @@ class MainWindow(QMainWindow):
         except json.JSONDecodeError:
             print(
                 f"ERREUR: Fichier de configuration des niveaux '{levels_config_path}' JSON invalide. Utilisation des valeurs par défaut.")
-
+            
         self.LEVEL_ORDER = self.level_configuration_data.get(
             "level_order", default_level_order)
         self.EXERCISES_BY_LEVEL_INCREMENTAL = self.level_configuration_data.get(
@@ -118,6 +120,55 @@ class MainWindow(QMainWindow):
         except Exception as e:
             print(
                 f"ERREUR: Impossible de charger les types de problèmes mathématiques: {e}")
+
+        # --- Chargement des données de cours ---
+        self.cours_calcul_data = {}
+        try:
+            cours_calcul_path = get_resource_path('cours_calcul.json')
+            with open(cours_calcul_path, 'r', encoding='utf-8') as f:
+                self.cours_calcul_data = json.load(f)
+        except Exception as e:
+            print(f"ERREUR: Impossible de charger les cours de calcul: {e}")
+
+        self.cours_grammaire_data = {}
+        try:
+            cours_grammaire_path = get_resource_path('cours_grammaire.json')
+            with open(cours_grammaire_path, 'r', encoding='utf-8') as f:
+                self.cours_grammaire_data = json.load(f)
+        except Exception as e:
+            print(f"ERREUR: Impossible de charger les cours de grammaire: {e}")
+
+        self.cours_mesures_data = {}
+        try:
+            cours_mesures_path = get_resource_path('cours_mesures.json')
+            with open(cours_mesures_path, 'r', encoding='utf-8') as f:
+                self.cours_mesures_data = json.load(f)
+        except Exception as e:
+            print(f"ERREUR: Impossible de charger les cours de mesures: {e}")
+
+        self.cours_conjugaison_data = {}
+        try:
+            cours_conjugaison_path = get_resource_path('cours_conjugaison.json')
+            with open(cours_conjugaison_path, 'r', encoding='utf-8') as f:
+                self.cours_conjugaison_data = json.load(f)
+        except Exception as e:
+            print(f"ERREUR: Impossible de charger les cours de conjugaison: {e}")
+
+        self.cours_orthographe_data = {}
+        try:
+            cours_orthographe_path = get_resource_path('cours_orthographe.json')
+            with open(cours_orthographe_path, 'r', encoding='utf-8') as f:
+                self.cours_orthographe_data = json.load(f)
+        except Exception as e:
+            print(f"ERREUR: Impossible de charger les cours d'orthographe: {e}")
+
+        self.cours_anglais_data = {}
+        try:
+            cours_anglais_path = get_resource_path('cours_anglais.json')
+            with open(cours_anglais_path, 'r', encoding='utf-8') as f:
+                self.cours_anglais_data = json.load(f)
+        except Exception as e:
+            print(f"ERREUR: Impossible de charger les cours d'anglais: {e}")
 
         # Mode dark
         dark_palette = QPalette()
@@ -219,21 +270,52 @@ class MainWindow(QMainWindow):
         for i, config in enumerate(self.splitter_column_configs_initial_order):
             splitter.setStretchFactor(i, config['stretch'])
 
-        # --- ScrollArea principal pour le QSplitter ---
-        self.main_scroll_area = QScrollArea()
-        self.main_scroll_area.setWidgetResizable(True)
-        # Le splitter est maintenant le widget du scroll area
-        self.main_scroll_area.setWidget(splitter)
-        self.main_scroll_area.setVerticalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.main_scroll_area.setHorizontalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.main_scroll_area.setFrameShape(QFrame.Shape.NoFrame)
+        # --- Create Tab Widget ---
+        self.tab_widget = QTabWidget()
+        self.tab_widget.setStyleSheet(UI_STYLE_CONFIG["tab_widget"]["style"])
 
-        # Ajoute le scroll area principal au layout
-        main_layout.addWidget(self.main_scroll_area)
+        # --- Exercices Tab ---
+        exercices_tab = QWidget()
+        exercices_layout = QVBoxLayout(exercices_tab)
+        exercices_layout.setContentsMargins(0, 0, 0, 0)
+
+        # ScrollArea for the exercise columns splitter
+        self.exercices_scroll_area = QScrollArea()
+        self.exercices_scroll_area.setWidgetResizable(True)
+        self.exercices_scroll_area.setWidget(splitter)
+        self.exercices_scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.exercices_scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.exercices_scroll_area.setFrameShape(QFrame.Shape.NoFrame)
+        exercices_layout.addWidget(self.exercices_scroll_area)
+        self.tab_widget.addTab(exercices_tab, "Exercices")
+
+        # --- Cours Tab ---
+        # Rassembler toutes les données de cours dans un dictionnaire
+        all_cours_data = {
+            'calc': self.cours_calcul_data,
+            'grammar': self.cours_grammaire_data,
+            'geo': self.cours_mesures_data,
+            'conj': self.cours_conjugaison_data,
+            'ortho': self.cours_orthographe_data,
+            'english': self.cours_anglais_data,
+        }
+
+        # Créer le composant de l'onglet Cours
+        self.cours_tab_component = CoursColumn(self, UI_STYLE_CONFIG, "Cours", all_cours_data, "blue")
+        self.tab_widget.addTab(self.cours_tab_component, "Cours")
+
+        # --- Paramètres Tab ---
+        # (Instantiated after exercise_widgets_map is fully populated)
+        # Add the tab widget to the main layout
+        main_layout.addWidget(self.tab_widget)
+        
         self.splitter = splitter  # Garder une référence au splitter
-
+        
+        # Apply scrollbar style to the exercise scroll area
+        scrollbar_style = UI_STYLE_CONFIG["scroll_bar"]["style_template"].format(
+            **UI_STYLE_CONFIG["scroll_bar"]["values"])
+        self.exercices_scroll_area.setStyleSheet(scrollbar_style)
+        
         # --- Footer Component ---
         self.footer_component = AppFooter(self, UI_STYLE_CONFIG, __version__, self.GITHUB_URL)
         main_layout.addWidget(self.footer_component)
@@ -241,10 +323,6 @@ class MainWindow(QMainWindow):
         # Collect all line edits from components and apply styling
         self.all_line_edits.extend(self.header_component.all_line_edits)
         self.all_line_edits.extend(self.footer_component.all_line_edits)
-        # Style pour la barre de défilement du QScrollArea principal (depuis la config)
-        scrollbar_style = UI_STYLE_CONFIG["scroll_bar"]["style_template"].format(
-            **UI_STYLE_CONFIG["scroll_bar"]["values"])
-        self.main_scroll_area.setStyleSheet(scrollbar_style)
 
         # --- Initialize exercise_widgets_map ---
         # This map will store all controllable widgets with unique keys.
@@ -380,6 +458,16 @@ class MainWindow(QMainWindow):
             for type_key, cb_widget in self.calculs_column_component.math_problem_type_checkboxes.items():
                 self.exercise_widgets_map[f"math_problem_type_{type_key}_cb"] = cb_widget
 
+        # --- Paramètres Tab (instantiate after exercise_widgets_map is complete) ---
+        # Path to levels_config.json
+        levels_config_json_path = get_resource_path('levels_config.json')
+        self.parametres_tab_component = SettingsTab(
+            self, UI_STYLE_CONFIG, self.LEVEL_ORDER,
+            self.EXERCISES_BY_LEVEL_INCREMENTAL, self.exercise_widgets_map,
+            levels_config_json_path
+        )
+        self.tab_widget.addTab(self.parametres_tab_component, "Paramètres")
+        
         # --- Column Titles and Sections Mapping (for hiding titles of empty columns) ---
         self.column_title_widgets = {
             "calc": self.calculs_column_component.calc_title_label,
@@ -402,10 +490,8 @@ class MainWindow(QMainWindow):
         }
         
         lineedit_style = UI_STYLE_CONFIG["line_edits"]["default"]
-        for le in self.all_line_edits:
-            if le:  # S'assurer que le widget existe
-                le.setStyleSheet(lineedit_style)
-
+        for le in self.all_line_edits: # Apply style to all collected line edits
+            if le: le.setStyleSheet(lineedit_style)
         # Chargement de la configuration si elle existe
         def get_config_path():
             if getattr(sys, 'frozen', False):
@@ -428,25 +514,25 @@ class MainWindow(QMainWindow):
             ('sort_n_numbers', self.mesures_column_component.sort_n_numbers, 'text'),
             ('sort_type_croissant', self.mesures_column_component.sort_type_croissant, 'checked'),
             ('sort_type_decroissant', self.mesures_column_component.sort_type_decroissant, 'checked'),
-            ('addition_count', self.calculs_column_component.addition_count, 'text'),
-            ('addition_num_operands', self.calculs_column_component.addition_num_operands, 'text'),
-            ('addition_decimals', self.calculs_column_component.addition_decimals, 'text'),
-            ('subtraction_count', self.calculs_column_component.subtraction_count, 'text'),
-            ('subtraction_digits', self.calculs_column_component.subtraction_digits, 'text'),
-            ('subtraction_num_operands', self.calculs_column_component.subtraction_num_operands, 'text'),
-            ('subtraction_decimals', self.calculs_column_component.subtraction_decimals, 'text'),
-            ('subtraction_negative_checkbox',self.calculs_column_component.subtraction_negative_checkbox, 'checked'),
-            ('multiplication_count', self.calculs_column_component.multiplication_count, 'text'),
-            ('multiplication_digits', self.calculs_column_component.multiplication_digits, 'text'),
-            ('multiplication_num_operands', self.calculs_column_component.multiplication_num_operands, 'text'),
-            ('multiplication_decimals', self.calculs_column_component.multiplication_decimals, 'text'),
-            ('division_count', self.calculs_column_component.division_count, 'text'),
-            ('division_digits', self.calculs_column_component.division_digits, 'text'),
-            ('division_decimals', self.calculs_column_component.division_decimals, 'text'),
-            ('division_reste_checkbox', self.calculs_column_component.division_reste_checkbox, 'checked'),
-            # Nouveaux exercices de conjugaison
-            ('conj_complete_sentence_count', self.conjugaison_column_component.conj_complete_sentence_count, 'text'),
-            ('conj_complete_pronoun_count', self.conjugaison_column_component.conj_complete_pronoun_count, 'text'),
+            ('addition_count', self.calculs_column_component.addition_count, 'text'), # Kept for value, not level config
+            ('addition_digits', self.calculs_column_component.addition_digits, 'text'),
+            ('addition_num_operands', self.calculs_column_component.addition_num_operands, 'text'), # Kept for value, not level config
+            ('addition_decimals', self.calculs_column_component.addition_decimals, 'text'), # Kept for value, not level config
+            ('subtraction_count', self.calculs_column_component.subtraction_count, 'text'), # Kept for value, not level config
+            ('subtraction_digits', self.calculs_column_component.subtraction_digits, 'text'), # Kept for value, not level config
+            ('subtraction_num_operands', self.calculs_column_component.subtraction_num_operands, 'text'), # Kept for value, not level config
+            ('subtraction_decimals', self.calculs_column_component.subtraction_decimals, 'text'), # Kept for value, not level config
+            ('subtraction_negative_checkbox',self.calculs_column_component.subtraction_negative_checkbox, 'checked'), # Kept for value, not level config
+            ('multiplication_count', self.calculs_column_component.multiplication_count, 'text'), # Kept for value, not level config
+            ('multiplication_digits', self.calculs_column_component.multiplication_digits, 'text'), # Kept for value, not level config
+            ('multiplication_num_operands', self.calculs_column_component.multiplication_num_operands, 'text'), # Kept for value, not level config
+            ('multiplication_decimals', self.calculs_column_component.multiplication_decimals, 'text'), # Kept for value, not level config
+            ('division_count', self.calculs_column_component.division_count, 'text'), # Kept for value, not level config
+            ('division_digits', self.calculs_column_component.division_digits, 'text'), # Kept for value, not level config
+            ('division_decimals', self.calculs_column_component.division_decimals, 'text'), # Kept for value, not level config
+            ('division_reste_checkbox', self.calculs_column_component.division_reste_checkbox, 'checked'), # Kept for value, not level config
+            ('conj_complete_sentence_count', self.conjugaison_column_component.conj_complete_sentence_count, 'text'), # Kept for value, not level config
+            ('conj_complete_pronoun_count', self.conjugaison_column_component.conj_complete_pronoun_count, 'text'), # Kept for value, not level config 
             # Groupes de conjugaison
             ('verbs_per_day_entry', self.conjugaison_column_component.verbs_per_day_entry, 'text'),
             ('grammar_sentence_count', self.grammar_column_component.grammar_sentence_count, 'text'),
@@ -456,8 +542,8 @@ class MainWindow(QMainWindow):
             ('ditransitive_checkbox', self.grammar_column_component.ditransitive_checkbox, 'checked'),
             ('transfo_checkboxes', self.grammar_column_component.transfo_checkboxes, 'checked_list'),
             # Orthographe
-            ('orthographe_ex_count', self.orthographe_column_component.orthographe_ex_count, 'text'),
-            ('orthographe_homophone_checkboxes',self.orthographe_column_component.orthographe_homophone_checkboxes, 'checked_list'),
+            ('orthographe_ex_count', self.orthographe_column_component.orthographe_ex_count, 'text'), # Kept for value, not level config
+            ('orthographe_homophone_checkboxes',self.orthographe_column_component.orthographe_homophone_checkboxes, 'checked_list'), # Kept for value, not level config
             # Header checkboxes
             ('show_name_checkbox', self.header_component.show_name_checkbox, 'checked'),
             ('show_note_checkbox', self.header_component.show_note_checkbox, 'checked'),
@@ -469,48 +555,50 @@ class MainWindow(QMainWindow):
             ('group_3_checkbox', self.conjugaison_column_component.group_3_checkbox, 'checked'),
             ('usual_verbs_checkbox', self.conjugaison_column_component.usual_verbs_checkbox, 'checked'),
             ('tense_checkboxes', self.conjugaison_column_component.tense_checkboxes, 'checked_list'),
-            ('geo_ex_count', self.mesures_column_component.geo_ex_count, 'text'),
-            ('geo_conv_type_checkboxes', self.mesures_column_component.geo_conv_type_checkboxes, 'checked_list'),
-            ('conv_sens_direct', self.mesures_column_component.conv_sens_direct, 'checked'),
-            ('conv_sens_inverse', self.mesures_column_component.conv_sens_inverse, 'checked'),
-            # Anglais - phrases à compléter
-            ('english_complete_count', self.anglais_column_component.english_complete_count, 'text'),
-            ('english_type_simple', self.anglais_column_component.english_type_simple, 'checked'),
-            ('english_type_complexe', self.anglais_column_component.english_type_complexe, 'checked'),
-            # Anglais - jeux à relier
-            ('english_relier_count', self.anglais_column_component.english_relier_count, 'text'),
-            ('relier_count', self.anglais_column_component.relier_count, 'text'), # No change here
-            # Encadrement
-            ('encadrement_count', self.mesures_column_component.encadrement_count, 'text'),
-            ('encadrement_digits', self.mesures_column_component.encadrement_digits, 'text'),
-            ('encadrement_unite', self.mesures_column_component.encadrement_unite, 'checked'),
-            ('encadrement_dizaine', self.mesures_column_component.encadrement_dizaine, 'checked'),
-            ('encadrement_centaine', self.mesures_column_component.encadrement_centaine, 'checked'),
-            ('encadrement_millier', self.mesures_column_component.encadrement_millier, 'checked'),
-            # --- NEW: Problèmes de mesures ---
-            ('measurement_problems_count', self.mesures_column_component.measurement_problems_count, 'text'),
-            ('measurement_problem_longueur_cb', self.mesures_column_component.measurement_problem_longueur_cb, 'checked'),
-            ('measurement_problem_masse_cb', self.mesures_column_component.measurement_problem_masse_cb, 'checked'),
-            ('measurement_problem_volume_cb', self.mesures_column_component.measurement_problem_volume_cb, 'checked'),
-            ('measurement_problem_temps_cb', self.mesures_column_component.measurement_problem_temps_cb, 'checked'),
-            ('measurement_problem_monnaie_cb', self.mesures_column_component.measurement_problem_monnaie_cb, 'checked'),
-            # Petits Problèmes
-            ('math_problems_count', self.calculs_column_component.math_problems_count, 'text'),
-            # Comparer des nombres
-            ('compare_numbers_count', self.mesures_column_component.compare_numbers_count, 'text'),
-            ('compare_numbers_digits', self.mesures_column_component.compare_numbers_digits, 'text'),
-            # Suites Logiques
-            ('logical_sequences_count', self.mesures_column_component.logical_sequences_count, 'text'),
-            ('logical_sequences_length', self.mesures_column_component.logical_sequences_length, 'text'),  # Nouveau
-            ('logical_sequences_type_arithmetic_plus_cb', self.mesures_column_component.logical_sequences_type_arithmetic_plus_cb, 'checked'),
-            ('logical_sequences_type_arithmetic_minus_cb', self.mesures_column_component.logical_sequences_type_arithmetic_minus_cb, 'checked'),
-            ('logical_sequences_type_arithmetic_multiply_cb', self.mesures_column_component.logical_sequences_type_arithmetic_multiply_cb, 'checked'),
-            ('logical_sequences_type_arithmetic_divide_cb', self.mesures_column_component.logical_sequences_type_arithmetic_divide_cb, 'checked'),
+            ('geo_ex_count', self.mesures_column_component.geo_ex_count, 'text'), # Kept for value, not level config
+            ('geo_conv_type_checkboxes', self.mesures_column_component.geo_conv_type_checkboxes, 'checked_list'), # Kept for value, not level config
+            ('conv_sens_direct', self.mesures_column_component.conv_sens_direct, 'checked'), # Kept for value, not level config
+            ('conv_sens_inverse', self.mesures_column_component.conv_sens_inverse, 'checked'), # Kept for value, not level config
+            ('english_complete_count', self.anglais_column_component.english_complete_count, 'text'), # Kept for value, not level config
+            ('english_type_simple', self.anglais_column_component.english_type_simple, 'checked'), # Kept for value, not level config
+            ('english_type_complexe', self.anglais_column_component.english_type_complexe, 'checked'), # Kept for value, not level config
+            ('english_relier_count', self.anglais_column_component.english_relier_count, 'text'), # Kept for value, not level config
+            ('relier_count', self.anglais_column_component.relier_count, 'text'), # Kept for value, not level config
+            ('encadrement_count', self.mesures_column_component.encadrement_count, 'text'), # Kept for value, not level config
+            ('encadrement_digits', self.mesures_column_component.encadrement_digits, 'text'), # Kept for value, not level config
+            ('encadrement_unite', self.mesures_column_component.encadrement_unite, 'checked'), # Kept for value, not level config
+            ('encadrement_dizaine', self.mesures_column_component.encadrement_dizaine, 'checked'), # Kept for value, not level config
+            ('encadrement_centaine', self.mesures_column_component.encadrement_centaine, 'checked'), # Kept for value, not level config
+            ('encadrement_millier', self.mesures_column_component.encadrement_millier, 'checked'), # Kept for value, not level config
+            ('measurement_problems_count', self.mesures_column_component.measurement_problems_count, 'text'), # Kept for value, not level config
+            ('measurement_problem_longueur_cb', self.mesures_column_component.measurement_problem_longueur_cb, 'checked'), # Kept for value, not level config
+            ('measurement_problem_masse_cb', self.mesures_column_component.measurement_problem_masse_cb, 'checked'), # Kept for value, not level config
+            ('measurement_problem_volume_cb', self.mesures_column_component.measurement_problem_volume_cb, 'checked'), # Kept for value, not level config
+            ('measurement_problem_temps_cb', self.mesures_column_component.measurement_problem_temps_cb, 'checked'), # Kept for value, not level config
+            ('measurement_problem_monnaie_cb', self.mesures_column_component.measurement_problem_monnaie_cb, 'checked'), # Kept for value, not level config
+            ('math_problems_count', self.calculs_column_component.math_problems_count, 'text'), # Kept for value, not level config
+            ('compare_numbers_count', self.mesures_column_component.compare_numbers_count, 'text'), # Kept for value, not level config
+            ('compare_numbers_digits', self.mesures_column_component.compare_numbers_digits, 'text'), # Kept for value, not level config
+            ('logical_sequences_count', self.mesures_column_component.logical_sequences_count, 'text'), # Kept for value, not level config
+            ('logical_sequences_length', self.mesures_column_component.logical_sequences_length, 'text'), # Kept for value, not level config
+            ('logical_sequences_type_arithmetic_plus_cb', self.mesures_column_component.logical_sequences_type_arithmetic_plus_cb, 'checked'), # Kept for value, not level config
+            ('logical_sequences_type_arithmetic_minus_cb', self.mesures_column_component.logical_sequences_type_arithmetic_minus_cb, 'checked'), # Kept for value, not level config
+            ('logical_sequences_type_arithmetic_multiply_cb', self.mesures_column_component.logical_sequences_type_arithmetic_multiply_cb, 'checked'), # Kept for value, not level config
+            ('logical_sequences_type_arithmetic_divide_cb', self.mesures_column_component.logical_sequences_type_arithmetic_divide_cb, 'checked'), # Kept for value, not level config
+
             # Les checkboxes de types de problèmes seront ajoutées dynamiquement
             # Ajout pour sauvegarder le niveau
             ('current_level', self, 'level_variable'),
         ] # End of config_fields
-
+        
+        # --- NEW: Add window settings to config fields ---
+        if hasattr(self, 'parametres_tab_component'):
+            self.config_fields.extend([
+                ('window_fullscreen', self.parametres_tab_component.fullscreen_checkbox, 'checked'),
+                ('window_width', self.parametres_tab_component.width_input, 'text'),
+                ('window_height', self.parametres_tab_component.height_input, 'text'),
+            ])
+            
         # Dynamically add checkboxes from components to config_fields
         if hasattr(self.anglais_column_component, 'english_relier_theme_checkboxes'): # Access via anglais_column_component
             for theme_name, cb_widget in self.anglais_column_component.english_relier_theme_checkboxes.items():
@@ -521,6 +609,7 @@ class MainWindow(QMainWindow):
                     (f"math_problem_type_{type_key}_cb", cb_widget, 'checked'))
 
         self.load_config()
+        self._apply_window_size_from_config() # Apply size after loading
         # Set initial visibility based on loaded config (or default)
         self.update_exercise_visibility()
 
@@ -545,7 +634,34 @@ class MainWindow(QMainWindow):
         # The AppHeader component manages its own current_selected_level_button
         # and its visual state.
         self.update_exercise_visibility()
+        # Mettre à jour le contenu de l'onglet Cours
+        if hasattr(self, 'cours_tab_component'):
+            self.cours_tab_component.update_content(level_name)
+    
+    def _apply_window_size_from_config(self):
+        """Applies window size settings after the configuration is loaded."""
+        if not hasattr(self, 'parametres_tab_component'):
+            return # Component not ready yet
 
+        try:
+            # The state of the widgets has been set by load_config()
+            is_fullscreen = self.parametres_tab_component.fullscreen_checkbox.isChecked()
+            
+            if is_fullscreen:
+                self.showMaximized()
+            else:
+                width_str = self.parametres_tab_component.width_input.text()
+                height_str = self.parametres_tab_component.height_input.text()
+                
+                if width_str and height_str:
+                    width = int(width_str)
+                    height = int(height_str)
+                    if width >= self.minimumWidth() and height >= self.minimumHeight():
+                        self.resize(width, height)
+        except (ValueError, TypeError):
+            # If values are invalid or empty, do nothing, keep default size.
+            pass
+        
     def set_selected_output_path(self, path):
         """
         Called by AppFooter to update the main window's selected output path.
@@ -996,11 +1112,42 @@ class MainWindow(QMainWindow):
             print(
                 f"Erreur inattendue lors du chargement de la configuration : {type(e).__name__} - {e}")
             # import traceback; traceback.print_exc() # Décommenter pour un débogage plus détaillé
-
+        
+        # Update the SettingsTab component with the latest data if it exists
+        if hasattr(self, 'parametres_tab_component'):
+            self.parametres_tab_component.update_data(self.EXERCISES_BY_LEVEL_INCREMENTAL)
+            
     def closeEvent(self, event):
         self.save_config()
         super().closeEvent(event)
 
+    def reload_level_config_and_update_ui(self):
+        """
+        Recharge le fichier levels_config.json et met à jour toutes les parties pertinentes de l'interface.
+        Cette méthode est appelée depuis l'onglet Paramètres après la sauvegarde d'une modification.
+        """
+        # --- 1. Recharger la configuration des niveaux ---
+        self.level_configuration_data = {}
+        default_level_order = ["CP", "CE1", "CE2", "CM1", "CM2"]
+        default_exercises_by_level = {}  # Fallback vide
+        try:
+            levels_config_path = get_resource_path('levels_config.json')
+            with open(levels_config_path, 'r', encoding='utf-8') as f:
+                self.level_configuration_data = json.load(f)
+        except FileNotFoundError:
+            print(f"ERREUR: Fichier de configuration des niveaux '{levels_config_path}' introuvable. Utilisation des valeurs par défaut.")
+        except json.JSONDecodeError:
+            print(f"ERREUR: Fichier de configuration des niveaux '{levels_config_path}' JSON invalide. Utilisation des valeurs par défaut.")
+
+        # Mettre à jour les attributs de la fenêtre principale avec la configuration rechargée
+        self.LEVEL_ORDER = self.level_configuration_data.get("level_order", default_level_order)
+        self.EXERCISES_BY_LEVEL_INCREMENTAL = self.level_configuration_data.get("exercises_by_level", default_exercises_by_level)
+
+        # --- 2. Mettre à jour les composants de l'interface ---
+        if hasattr(self, 'parametres_tab_component'):
+            self.parametres_tab_component.update_data(self.EXERCISES_BY_LEVEL_INCREMENTAL)
+
+        self.update_exercise_visibility()
 
     def get_exercises_for_level(self, target_level):
         ALWAYS_VISIBLE_KEYS = {
@@ -1095,7 +1242,7 @@ class MainWindow(QMainWindow):
             'geo': is_geo_column_active,
             'conj': is_conj_column_active,
             'ortho_anglais': is_ortho_anglais_column_active,
-            'grammar': is_grammar_column_active
+            'grammar': is_grammar_column_active,
         }
 
         active_column_configs = []
@@ -1106,6 +1253,7 @@ class MainWindow(QMainWindow):
                 active_column_configs.append(config)
             else:
                 inactive_column_configs.append(config)
+
 
         final_ordered_configs = active_column_configs + inactive_column_configs
 
@@ -1142,7 +1290,7 @@ class MainWindow(QMainWindow):
 if __name__ == "__main__":
     from PyQt6.QtGui import QIcon
     icon_path = os.path.join(os.path.dirname(__file__), "Apprentium.ico")
-    app = QApplication([])
+    app = QApplication(sys.argv)
     app.setWindowIcon(QIcon(icon_path))
     window = MainWindow()
     window.show()
