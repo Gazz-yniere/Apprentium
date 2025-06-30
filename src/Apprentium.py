@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QGridLayout, QWidget, QLabel, QLineEdit, QCheckBox, QPushButton, QFrame, QTabWidget, QGroupBox, QSplitter, QFileDialog, QLayout, QGraphicsOpacityEffect, QScrollArea)
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSlot
 from PyQt6.QtGui import QPalette, QColor
 from PyQt6.QtGui import QIcon
 import json
@@ -303,6 +303,10 @@ class MainWindow(QMainWindow):
         # Créer le composant de l'onglet Cours
         self.cours_tab_component = CoursColumn(self, UI_STYLE_CONFIG, "Cours", all_cours_data, "blue")
         self.tab_widget.addTab(self.cours_tab_component, "Cours")
+        # Connecter le signal de mise à jour de la leçon à la méthode de sauvegarde
+        self.cours_tab_component.lesson_updated.connect(self.save_lesson_to_json)
+        self.cours_tab_component.lesson_deleted.connect(self.delete_lesson_from_json)
+        self.cours_tab_component.new_lesson_requested.connect(self.create_new_lesson)
 
         # --- Paramètres Tab ---
         # (Instantiated after exercise_widgets_map is fully populated)
@@ -637,6 +641,131 @@ class MainWindow(QMainWindow):
         # Mettre à jour le contenu de l'onglet Cours
         if hasattr(self, 'cours_tab_component'):
             self.cours_tab_component.update_content(level_name)
+
+    @pyqtSlot(str, str)
+    def create_new_lesson(self, subject, level):
+        """
+        Crée une nouvelle leçon vierge pour une matière et un niveau donnés,
+        l'ajoute aux données en mémoire, sauvegarde le fichier et rafraîchit l'interface.
+        """
+        print(f"Création d'un nouveau cours pour : Matière={subject}, Niveau={level}")
+
+        subject_map = {
+            'calc': (self.cours_calcul_data, 'cours_calcul.json'),
+            'grammar': (self.cours_grammaire_data, 'cours_grammaire.json'),
+            'geo': (self.cours_mesures_data, 'cours_mesures.json'),
+            'conj': (self.cours_conjugaison_data, 'cours_conjugaison.json'),
+            'ortho': (self.cours_orthographe_data, 'cours_orthographe.json'),
+            'english': (self.cours_anglais_data, 'cours_anglais.json'),
+        }
+
+        if subject not in subject_map:
+            print(f"Erreur de création : matière inconnue '{subject}'")
+            return
+
+        data_structure, file_name = subject_map[subject]
+        file_path = get_resource_path(file_name)
+
+        # Contenu par défaut pour un nouveau cours
+        default_content = "<h2>Nouveau Titre</h2><p>Commencez à écrire ici...</p>"
+        new_lesson = {'content': default_content}
+
+        try:
+            # S'assurer que la clé de niveau existe
+            if level not in data_structure:
+                data_structure[level] = []
+            
+            # 1. Ajouter la nouvelle leçon au début de la liste dans la structure de données en mémoire
+            data_structure[level].insert(0, new_lesson)
+
+            # 2. Écrire la structure mise à jour dans le fichier JSON
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(data_structure, f, indent=4, ensure_ascii=False)
+            print(f"Nouveau cours ajouté avec succès. Fichier mis à jour : {file_path}")
+
+            # 3. Rafraîchir l'affichage des cours pour montrer la nouvelle leçon
+            self.cours_tab_component.update_content(self.current_level)
+
+        except Exception as e:
+            print(f"Une erreur inattendue est survenue lors de la création du cours : {e}")
+
+    @pyqtSlot(str, str, int)
+    def delete_lesson_from_json(self, subject, level, lesson_index):
+        """
+        Supprime une leçon des données en mémoire, sauvegarde le fichier JSON,
+        et rafraîchit l'interface.
+        """
+        print(f"Suppression de la leçon : Matière={subject}, Niveau={level}, Index={lesson_index}")
+
+        subject_map = {
+            'calc': (self.cours_calcul_data, 'cours_calcul.json'),
+            'grammar': (self.cours_grammaire_data, 'cours_grammaire.json'),
+            'geo': (self.cours_mesures_data, 'cours_mesures.json'),
+            'conj': (self.cours_conjugaison_data, 'cours_conjugaison.json'),
+            'ortho': (self.cours_orthographe_data, 'cours_orthographe.json'),
+            'english': (self.cours_anglais_data, 'cours_anglais.json'),
+        }
+
+        if subject not in subject_map:
+            print(f"Erreur de suppression : matière inconnue '{subject}'")
+            return
+
+        data_structure, file_name = subject_map[subject]
+        file_path = get_resource_path(file_name)
+
+        try:
+            # 1. Supprimer la leçon de la structure de données en mémoire
+            if level in data_structure and 0 <= lesson_index < len(data_structure[level]):
+                data_structure[level].pop(lesson_index)
+
+                # 2. Écrire la structure mise à jour dans le fichier JSON
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    json.dump(data_structure, f, indent=4, ensure_ascii=False)
+                print(f"Leçon supprimée avec succès. Fichier mis à jour : {file_path}")
+
+                # 3. Rafraîchir l'affichage des cours
+                self.cours_tab_component.update_content(self.current_level)
+        except (KeyError, IndexError) as e:
+            print(f"Erreur de suppression : clé ou index invalide pour {subject}/{level}. Détails: {e}")
+        except Exception as e:
+            print(f"Une erreur inattendue est survenue lors de la suppression : {e}")
+
+    @pyqtSlot(str, str, int, str)
+    def save_lesson_to_json(self, subject, level, lesson_index, new_content):
+        """
+        Met à jour les données en mémoire et sauvegarde le fichier JSON complet.
+        """
+        print(f"Sauvegarde de la leçon : Matière={subject}, Niveau={level}, Index={lesson_index}")
+
+        # Mapper les clés de sujet à leur attribut de données et nom de fichier
+        subject_map = {
+            'calc': (self.cours_calcul_data, 'cours_calcul.json'),
+            'grammar': (self.cours_grammaire_data, 'cours_grammaire.json'),
+            'geo': (self.cours_mesures_data, 'cours_mesures.json'),
+            'conj': (self.cours_conjugaison_data, 'cours_conjugaison.json'),
+            'ortho': (self.cours_orthographe_data, 'cours_orthographe.json'),
+            'english': (self.cours_anglais_data, 'cours_anglais.json'),
+        }
+
+        if subject not in subject_map:
+            print(f"Erreur de sauvegarde : matière inconnue '{subject}'")
+            return
+
+        data_structure, file_name = subject_map[subject]
+        file_path = get_resource_path(file_name)
+
+        try:
+            # 1. Mettre à jour la structure de données en mémoire
+            data_structure[level][lesson_index]['content'] = new_content
+
+            # 2. Écrire la structure de données complète dans le fichier JSON
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(data_structure, f, indent=4, ensure_ascii=False)
+            print(f"Leçon sauvegardée avec succès dans {file_path}")
+        except (KeyError, IndexError) as e:
+            print(f"Erreur de sauvegarde : clé ou index invalide pour {subject}/{level}. Détails: {e}")
+        except Exception as e:
+            print(f"Une erreur inattendue est survenue lors de la sauvegarde : {e}")
     
     def _apply_window_size_from_config(self):
         """Applies window size settings after the configuration is loaded."""
