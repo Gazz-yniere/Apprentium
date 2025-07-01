@@ -305,7 +305,7 @@ class MainWindow(QMainWindow):
         self.tab_widget.addTab(self.cours_tab_component, "Cours")
         # Connecter le signal de mise à jour de la leçon à la méthode de sauvegarde
         self.cours_tab_component.lesson_updated.connect(self.save_lesson_to_json)
-        self.cours_tab_component.lesson_deleted.connect(self.delete_lesson_from_json)
+        self.cours_tab_component.lesson_data_deletion_requested.connect(self.delete_lesson_from_json)
         self.cours_tab_component.new_lesson_requested.connect(self.create_new_lesson)
 
         # --- Paramètres Tab ---
@@ -674,26 +674,22 @@ class MainWindow(QMainWindow):
             # S'assurer que la clé de niveau existe
             if level not in data_structure:
                 data_structure[level] = []
-            
             # 1. Ajouter la nouvelle leçon au début de la liste dans la structure de données en mémoire
             data_structure[level].insert(0, new_lesson)
-
             # 2. Écrire la structure mise à jour dans le fichier JSON
             with open(file_path, 'w', encoding='utf-8') as f:
                 json.dump(data_structure, f, indent=4, ensure_ascii=False)
             print(f"Nouveau cours ajouté avec succès. Fichier mis à jour : {file_path}")
-
-            # 3. Rafraîchir l'affichage des cours pour montrer la nouvelle leçon
-            self.cours_tab_component.update_content(self.current_level)
-
+            # 3. Rafraîchir uniquement la section concernée
+            self.cours_tab_component.update_content(level)
         except Exception as e:
             print(f"Une erreur inattendue est survenue lors de la création du cours : {e}")
 
     @pyqtSlot(str, str, int)
     def delete_lesson_from_json(self, subject, level, lesson_index):
         """
-        Supprime une leçon des données en mémoire, sauvegarde le fichier JSON,
-        et rafraîchit l'interface.
+        Supprime une leçon du modèle de données (fichier JSON) après que l'interface
+        a déjà été mise à jour de manière ciblée.
         """
         print(f"Suppression de la leçon : Matière={subject}, Niveau={level}, Index={lesson_index}")
 
@@ -717,14 +713,13 @@ class MainWindow(QMainWindow):
             # 1. Supprimer la leçon de la structure de données en mémoire
             if level in data_structure and 0 <= lesson_index < len(data_structure[level]):
                 data_structure[level].pop(lesson_index)
-
                 # 2. Écrire la structure mise à jour dans le fichier JSON
                 with open(file_path, 'w', encoding='utf-8') as f:
                     json.dump(data_structure, f, indent=4, ensure_ascii=False)
                 print(f"Leçon supprimée avec succès. Fichier mis à jour : {file_path}")
-
-                # 3. Rafraîchir l'affichage des cours
-                self.cours_tab_component.update_content(self.current_level)
+                # 3. NE PAS RAFRAÎCHIR L'INTERFACE ICI.
+                # La méthode handle_lesson_deletion dans CoursColumn s'est déjà occupée
+                # de la suppression ciblée du widget. Appeler update_content() rechargerait tout.
         except (KeyError, IndexError) as e:
             print(f"Erreur de suppression : clé ou index invalide pour {subject}/{level}. Détails: {e}")
         except Exception as e:

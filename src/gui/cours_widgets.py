@@ -84,7 +84,7 @@ class AutoResizingWebEngineView(QWebEngineView):
         # NEW: 4. Create and register the object to handle edit/save requests
         self.edit_handler = self.EditHandler(self, subject, level, lesson_index)
         self.channel.registerObject("edit_handler_obj", self.edit_handler)
-        self.edit_handler.lesson_deleted.connect(self.cours_column.lesson_deleted)
+        self.edit_handler.lesson_deleted.connect(self.cours_column.handle_lesson_deletion)
         
         self.page().loadFinished.connect(self._on_load_finished)
         self.page().setBackgroundColor(Qt.GlobalColor.transparent)
@@ -302,8 +302,8 @@ class CoursColumn(QFrame):
     """
     # NEW: Signal to notify the main window about a lesson update
     lesson_updated = pyqtSignal(str, str, int, str) # subject, level, lesson_index, new_content
-    lesson_deleted = pyqtSignal(str, str, int) # NEW: For lesson deletion
     new_lesson_requested = pyqtSignal(str, str) # NEW: For creating a new lesson
+    lesson_data_deletion_requested = pyqtSignal(str, str, int) # Signal to request data model deletion
 
     def __init__(self, parent_window, UI_STYLE_CONFIG, title, content_data_by_level, color_key):
         super().__init__()
@@ -313,9 +313,13 @@ class CoursColumn(QFrame):
         self.content_data_by_level = content_data_by_level
         self.color_key = color_key
         self.cours_css_content = ""
-        self.current_level = None # Store the current level
+        self.current_level = None  # Store the current level
 
         self._load_cours_css()
+        # Dictionnaires pour suivre les widgets affichés et permettre leur suppression ciblée
+        self.subject_headers = {}
+        self.lesson_views = {}
+
         self._setup_ui()
 
     def _handle_print_request(self, web_view):
@@ -390,6 +394,10 @@ class CoursColumn(QFrame):
     def update_content(self, level):
         """Met à jour le contenu affiché en fonction du niveau."""
         self.current_level = level # Store the current level
+
+        # Nettoyer les références aux anciens widgets
+        self.subject_headers.clear()
+        self.lesson_views.clear()
 
         # 1. Nettoyer l'ancien contenu des deux colonnes
         for layout in [self.left_column_layout, self.right_column_layout]:
@@ -472,6 +480,7 @@ class CoursColumn(QFrame):
                 # Utiliser une lambda pour passer les arguments au slot
                 new_lesson_button.clicked.connect(lambda checked, s=subject, l=level: self.new_lesson_requested.emit(s, l))
                 header_layout.addWidget(new_lesson_button)
+                self.subject_headers[subject] = header_widget
 
                 target_layout.addWidget(header_widget)
 
@@ -862,6 +871,7 @@ class CoursColumn(QFrame):
                     lesson_content_view.setMinimumHeight(30) # Hauteur minimale pendant le chargement
 
                     # Ajouter la vue web directement à la colonne, sans QFrame supplémentaire
+                    self.lesson_views[(subject, lesson_index)] = lesson_content_view
                     target_layout.addWidget(lesson_content_view)
 
         if not any_lesson_found:
@@ -871,3 +881,40 @@ class CoursColumn(QFrame):
             no_lesson_label.setStyleSheet("font-size: 14px; color: #E0E0E0; background-color: #2C2C2C; border-radius: 8px; padding: 10px; margin-bottom: 10px;")
             no_lesson_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.left_column_layout.addWidget(no_lesson_label) # Ajouter à la colonne de gauche
+
+    @pyqtSlot(str, str, int)
+    def handle_lesson_deletion(self, subject, level, lesson_index_to_delete):
+        """
+        Gère la suppression d'un cours de manière ciblée sans rafraîchir les autres.
+        Cette méthode retire uniquement le widget concerné et met à jour les indices
+        des cours suivants pour maintenir la cohérence.
+        """
+        # 1. Retirer le widget cible de l'interface et de notre dictionnaire de suivi.
+        widget_to_delete = self.lesson_views.pop((subject, lesson_index_to_delete), None)
+        # AJOUT POUR LE DÉBOGAGE : Ce message s'affichera avant le rafraîchissement global.
+        print(f"UI-UPDATE: Suppression ciblée du widget pour {subject}, index {lesson_index_to_delete}.")
+        if widget_to_delete:
+            widget_to_delete.setParent(None)
+            widget_to_delete.deleteLater()
+
+        # 2. Mettre à jour les indices des leçons restantes dans la même matière.
+        # C'est crucial pour que les futures actions (éditer/supprimer) sur ces leçons
+        # fonctionnent correctement.
+        for (s, idx), view in list(self.lesson_views.items()):
+            if s == subject and idx > lesson_index_to_delete:
+                new_index = idx - 1
+                view.edit_handler.lesson_index = new_index  # Mettre à jour l'index
+                self.lesson_views.pop((s, idx))  # Retirer l'ancien index
+                self.lesson_views[(s, new_index)] = view  # Ajouter le nouveau index
+
+        # 3. Vérifier si c'était la dernière leçon pour cette matière et supprimer l'en-tête si c'est le cas.
+        if not any(s == subject for s, _ in self.lesson_views.keys()):
+            header_to_delete = self.subject_headers.pop(subject, None)
+            if header_to_delete:
+                header_to_delete.setParent(None)
+                header_to_delete.deleteLater()
+
+        # 4. Notifier la fenêtre principale pour qu'elle supprime les données du modèle (ex: JSON).
+        # Le rafraîchissement complet que vous observez vient probablement du code qui reçoit
+        # ce signal, s'il appelle `update_content()` au lieu de juste supprimer la donnée.
+        self.lesson_data_deletion_requested.emit(subject, level, lesson_index_to_delete)
