@@ -1,0 +1,21 @@
+<html>
+    <head>
+        <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+        <style>
+            {{cours_css_content}}
+        </style>
+    </head>
+    <body>
+        <div id="custom-tooltip" class="custom-tooltip"></div>
+        {{confirm_dialog_html}}
+        <div id="content-wrapper" class="lesson-card {{subject_bg_class}}">
+            <div class="lesson-header">
+                {{buttons_html}}
+                {{edit_toolbar_html}}
+            </div>
+            <div class="lesson-content-editable">
+                {{raw_lesson_content}}
+            </div>
+        </div>
+    </body>
+</html>

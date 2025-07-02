@@ -1,0 +1,22 @@
+<div class="edit-toolbar">
+    <select onchange="changeBlockFormat(this)" data-title="Style de texte">
+        <option value="" disabled selected>Style</option>
+        <option value="h2">Titre 1</option>
+        <option value="h3">Titre 2</option>
+        <option value="h4">Titre 3</option>
+        <option value="p">Paragraphe</option>
+    </select>
+    <button type="button" onclick="formatDoc('bold');" data-title="Gras"><b>B</b></button>
+    <button type="button" onclick="formatDoc('italic');" data-title="Italique"><i>I</i></button>
+    <button type="button" onclick="formatDoc('underline');" data-title="Souligné"><u>U</u></button>
+    <button type="button" onclick="formatDoc('insertUnorderedList');" data-title="Liste à puces">●</button>
+    <button type="button" onclick="formatDoc('insertOrderedList');" data-title="Liste numérotée">1.</button>
+    <span class="toolbar-separator"></span>
+    <label for="font-color" class="color-label" data-title="Couleur du texte">A</label>
+    <input type="color" id="font-color" oninput="formatDoc('foreColor', this.value)" value="#ffffff">
+    <label for="bg-color" class="color-label" data-title="Couleur de surlignage">S</label>
+    <input type="color" id="bg-color" oninput="formatDoc('hiliteColor', this.value)" value="#3a3a3a">
+    <span class="toolbar-separator"></span>
+    <button type="button" onclick="insertStyledBox('memo-box')" data-title="Insérer un cadre Mémo">📝</button>
+    <button type="button" onclick="insertStyledBox('info-box')" data-title="Insérer un cadre Info">ℹ️</button>
+</div>

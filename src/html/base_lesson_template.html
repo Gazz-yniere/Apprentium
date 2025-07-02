@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+    <style>
+        /* Styles communs à toutes les leçons (par ex. pour html, body, content-wrapper) */
+        html, body {
+            background-color: transparent;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif; /* Exemple de police par défaut */
+            color: #ECF0F1; /* Couleur de texte par défaut */
+        }
+        #content-wrapper {
+            width: 100%;
+            padding-top: 1px;
+            margin-top: -1px;
+            box-sizing: border-box;
+        }
+
+        /* Styles importés depuis global_styles.css */
+        {global_css_content}
+
+        /* Styles importés depuis cours_style.css */
+        {cours_css_content}
+
+        /* --- STYLES SPÉCIFIQUES POUR L'IMPRESSION --- */
+        @media print {
+            .lesson-buttons { display: none !important; }
+            .saved-notification { display: none !important; }
+            .delete-button-html { display: none !important; }
+            .cancel-button-html { display: none !important; }
+            .edit-toolbar { display: none !important; }
+            -webkit-print-color-adjust: exact; /* Forcer le moteur de rendu à utiliser les couleurs de fond spécifiées */
+
+            body, html {
+                background: #FFFFFF !important;
+                color: #000000 !important;
+                font-size: 10pt !important;
+                line-height: 1.4 !important;
+            }
+            body { zoom: 0.85; }
+
+            .lesson-card, .column-item {
+                background-color: #FFFFFF !important;
+                box-shadow: none !important;
+                border: none !important;
+                page-break-inside: avoid;
+            }
+
+            .memo-box {
+                border: 3px solid #000000 !important;
+                background-color: transparent !important;
+            }
+
+            h2, h3, h4, p, li, strong, em, span, a, cite, figcaption, td, th {
+                color: #000000 !important;
+                text-shadow: none !important;
+                background-color: transparent !important;
+            }
+
+            a { text-decoration: underline !important; }
+        }
+    </style>
+</head>
+<body>
+    <div id="custom-tooltip" class="custom-tooltip"></div>
+    {confirm_dialog_html}
+    <div id="content-wrapper" class="lesson-card {subject_bg_class}">
+        <div class="lesson-header">
+            <div class="lesson-buttons">
+                <div class="button-group-left">
+                    <button class="edit-button-html" data-title="Éditer le cours">✏️ Éditer</button>
+                    <button class="cancel-button-html" data-title="Annuler les modifications">Annuler</button>
+                    <button class="print-button-html" data-title="Imprimer le cours">🖨️ Imprimer</button>
+                </div>
+                <div class="button-group-right">
+                    <button class="delete-button-html" data-title="Supprimer le cours">🗑️ Supprimer</button>
+                </div>
+                <div class="saved-notification">Sauvegardé !</div>
+            </div>
+            {edit_toolbar_html}
+        </div>
+        <div class="lesson-content-editable" contenteditable="false">
+            {raw_lesson_content}
+        </div>
+    </div>
+
+    <script>
+        {main_js_content}
+    </script>
+</body>
+</html>
