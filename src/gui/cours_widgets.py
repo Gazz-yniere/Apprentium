@@ -257,50 +257,47 @@ class CoursColumn(QFrame):
         for i, subject in enumerate(self.SUBJECT_ORDER):
             target_layout = self.left_column_layout if i < mid_point else self.right_column_layout
             
-            if subject not in self.content_data_by_level:
-                continue
-            
-            subject_data = self.content_data_by_level[subject]
+            # Create and add the header for every subject, regardless of whether it has lessons.
+            # This ensures the "New Lesson" button is always available.
+            header_widget = QWidget()
+            header_layout = QHBoxLayout(header_widget)
+            header_layout.setContentsMargins(0, 0, 0, 0)
+            header_layout.setSpacing(10)
+
+            subject_color = subject_colors.get(subject, '#FFFFFF')
+            display_name = self.SUBJECT_DISPLAY_NAMES.get(subject, subject.capitalize())
+            subject_title_label = QLabel(f"<h2>{display_name}</h2>")
+            subject_title_label.setTextFormat(Qt.TextFormat.RichText)
+            subject_title_label.setStyleSheet(f"font-size: 18px; font-weight: bold; color: {subject_color}; margin-top: 15px; margin-bottom: 5px; border-bottom: 2px solid {subject_color}; padding-bottom: 3px;")
+            header_layout.addWidget(subject_title_label)
+
+            header_layout.addStretch(1)
+
+            new_lesson_button = QPushButton("➕ Nouveau Cours")
+            new_lesson_button.setStyleSheet("""
+                QPushButton {
+                    background-color: #34495E;
+                    color: #ECF0F1;
+                    border: 1px solid #4A6572;
+                    padding: 5px 10px;
+                    border-radius: 5px;
+                    font-weight: bold;
+                }
+                QPushButton:hover {
+                    background-color: #4A6572;
+                }
+            """)
+            new_lesson_button.setCursor(Qt.CursorShape.PointingHandCursor)
+            new_lesson_button.clicked.connect(lambda checked, s=subject, l=level: self.new_lesson_requested.emit(s, l))
+            header_layout.addWidget(new_lesson_button)
+            self.subject_headers[subject] = header_widget
+            target_layout.addWidget(header_widget)
+
+            # Now, add the lessons for the current level if they exist.
+            subject_data = self.content_data_by_level.get(subject, {})
             lessons_for_level = subject_data.get(level, [])
-
-            if lessons_for_level: # Only add header if there are lessons for this level
+            if lessons_for_level:
                 any_lesson_found = True
-
-                header_widget = QWidget()
-                header_layout = QHBoxLayout(header_widget)
-                header_layout.setContentsMargins(0, 0, 0, 0)
-                header_layout.setSpacing(10)
-
-                subject_color = subject_colors.get(subject, '#FFFFFF')
-                display_name = self.SUBJECT_DISPLAY_NAMES.get(subject, subject.capitalize())
-                subject_title_label = QLabel(f"<h2>{display_name}</h2>")
-                subject_title_label.setTextFormat(Qt.TextFormat.RichText)
-                subject_title_label.setStyleSheet(f"font-size: 18px; font-weight: bold; color: {subject_color}; margin-top: 15px; margin-bottom: 5px; border-bottom: 2px solid {subject_color}; padding-bottom: 3px;")
-                header_layout.addWidget(subject_title_label)
-
-                header_layout.addStretch(1)
-
-                new_lesson_button = QPushButton("➕ Nouveau Cours")
-                new_lesson_button.setStyleSheet("""
-                    QPushButton {
-                        background-color: #34495E;
-                        color: #ECF0F1;
-                        border: 1px solid #4A6572;
-                        padding: 5px 10px;
-                        border-radius: 5px;
-                        font-weight: bold;
-                    }
-                    QPushButton:hover {
-                        background-color: #4A6572;
-                    }
-                """)
-                new_lesson_button.setCursor(Qt.CursorShape.PointingHandCursor)
-                new_lesson_button.clicked.connect(lambda checked, s=subject, l=level: self.new_lesson_requested.emit(s, l))
-                header_layout.addWidget(new_lesson_button)
-                self.subject_headers[subject] = header_widget
-
-                target_layout.addWidget(header_widget)
-
                 for lesson_index, lesson in enumerate(lessons_for_level):
                     raw_lesson_content = lesson.get('content', '')
                     subject_bg_class = f"lesson-card-bg-{subject}" if lesson_index % 2 == 0 else f"lesson-card-bg-{subject}-alt"
@@ -327,6 +324,84 @@ class CoursColumn(QFrame):
         if not any_lesson_found:
             self._add_placeholder_message(f"<h3>Pas de cours pour le niveau {level}</h3><p>Le contenu pour ce niveau n'a pas encore été ajouté.</p>")
 
+    def add_new_lesson_widget(self, subject, level, new_lesson_data):
+        """
+        Adds a single new lesson widget to the UI in a targeted manner,
+        without reloading everything.
+        """
+        # 1. Shift indices of existing lesson views for the same subject
+        keys_to_update = []
+        for (s, idx), view in self.lesson_views.items():
+            if s == subject:
+                keys_to_update.append(((s, idx), view))
+
+        # Sort by index descending to avoid overwriting keys during update
+        keys_to_update.sort(key=lambda item: item[0][1], reverse=True)
+
+        for (s_old, idx_old), view_obj in keys_to_update:
+            new_index = idx_old + 1
+            view_obj.edit_handler.lesson_index = new_index
+            # Move the view object to the new key in the dictionary
+            self.lesson_views[(s_old, new_index)] = self.lesson_views.pop((s_old, idx_old))
+            print(f"UI-UPDATE: Shifted index for {s_old} from {idx_old} to {new_index}.")
+
+        # 2. Determine target layout and check for header
+        subject_index = self.SUBJECT_ORDER.index(subject)
+        mid_point = (len(self.SUBJECT_ORDER) + 1) // 2
+        target_layout = self.left_column_layout if subject_index < mid_point else self.right_column_layout
+
+        header_widget = self.subject_headers.get(subject)
+        if not header_widget:
+            # Create and add header if it's the first lesson for this subject
+            header_widget = QWidget()
+            header_layout = QHBoxLayout(header_widget)
+            header_layout.setContentsMargins(0, 0, 0, 0)
+            header_layout.setSpacing(10)
+
+            subject_color = self.UI_STYLE_CONFIG['labels']['column_title_colors'].get(subject, '#FFFFFF')
+            display_name = self.SUBJECT_DISPLAY_NAMES.get(subject, subject.capitalize())
+            subject_title_label = QLabel(f"<h2>{display_name}</h2>")
+            subject_title_label.setTextFormat(Qt.TextFormat.RichText)
+            subject_title_label.setStyleSheet(f"font-size: 18px; font-weight: bold; color: {subject_color}; margin-top: 15px; margin-bottom: 5px; border-bottom: 2px solid {subject_color}; padding-bottom: 3px;")
+            header_layout.addWidget(subject_title_label)
+            header_layout.addStretch(1)
+
+            new_lesson_button = QPushButton("➕ Nouveau Cours")
+            new_lesson_button.setStyleSheet("""
+                QPushButton { background-color: #34495E; color: #ECF0F1; border: 1px solid #4A6572; padding: 5px 10px; border-radius: 5px; font-weight: bold; }
+                QPushButton:hover { background-color: #4A6572; }
+            """)
+            new_lesson_button.setCursor(Qt.CursorShape.PointingHandCursor)
+            new_lesson_button.clicked.connect(lambda checked, s=subject, l=level: self.new_lesson_requested.emit(s, l))
+            header_layout.addWidget(new_lesson_button)
+            
+            self.subject_headers[subject] = header_widget
+            target_layout.insertWidget(0, header_widget) # Insert header at the top of its column
+
+        # 3. Create and insert the new lesson widget
+        lesson_index = 0 # New lesson is always at the top
+        raw_lesson_content = new_lesson_data.get('content', '')
+        subject_bg_class = f"lesson-card-bg-{subject}" # First lesson always gets the primary color
+
+        new_lesson_view = AutoResizingWebEngineView(self, subject, level, lesson_index)
+        new_lesson_view.edit_handler.edit_requested.connect(self.lesson_updated)
+
+        CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+        CSS_DIR = os.path.abspath(os.path.join(CURRENT_DIR, '..', 'css'))
+        HTML_DIR = os.path.abspath(os.path.join(CURRENT_DIR, '..', 'html'))
+        template_html = self._load_file_content(os.path.join(HTML_DIR, 'template.html'))
+        cours_css_content = self._load_file_content(os.path.join(CSS_DIR, 'cours_style.css'))
+        confirm_dialog_html = self._load_file_content(os.path.join(HTML_DIR, 'confirm_dialog_html.html'))
+        edit_toolbar_html = self._load_file_content(os.path.join(HTML_DIR, 'edit_toolbar.html'))
+        buttons_html = self._load_file_content(os.path.join(HTML_DIR, 'buttons.html'))
+
+        full_html = template_html.replace("{{cours_css_content}}", cours_css_content).replace("{{confirm_dialog_html}}", confirm_dialog_html).replace("{{edit_toolbar_html}}", edit_toolbar_html).replace("{{buttons_html}}", buttons_html).replace("{{raw_lesson_content}}", raw_lesson_content).replace("{{subject_bg_class}}", subject_bg_class)
+        new_lesson_view.setHtml(full_html, QUrl("qrc:/"))
+        new_lesson_view.setMinimumHeight(30)
+
+        self.lesson_views[(subject, lesson_index)] = new_lesson_view
+        target_layout.insertWidget(target_layout.indexOf(header_widget) + 1, new_lesson_view)
+
     @pyqtSlot(str, str, int)
     def handle_lesson_deletion(self, subject, level, lesson_index_to_delete):
         """
@@ -346,19 +421,17 @@ class CoursColumn(QFrame):
             if s == subject and idx > lesson_index_to_delete:
                 keys_to_update.append(((s, idx), view))
 
+        # Trier par index croissant pour éviter d'écraser les clés du dictionnaire lors de la mise à jour.
+        # C'est crucial pour garantir que la ré-indexation se fasse correctement.
+        keys_to_update.sort(key=lambda item: item[0][1])
+
         for (s_old, idx_old), view_obj in keys_to_update:
             new_index = idx_old - 1
             view_obj.edit_handler.lesson_index = new_index
-            del self.lesson_views[(s_old, idx_old)]
-            self.lesson_views[(s_old, new_index)] = view_obj
+            # Déplacer l'objet de vue vers la nouvelle clé d'index dans le dictionnaire
+            self.lesson_views[(s_old, new_index)] = self.lesson_views.pop((s_old, idx_old))
             print(f"UI-UPDATE: Updated index for {s_old} from {idx_old} to {new_index}.")
 
-        # Check if it was the last lesson for this subject and remove the header if so.
-        if not any(s == subject for s, _ in self.lesson_views.keys()):
-            header_to_delete = self.subject_headers.pop(subject, None)
-            if header_to_delete:
-                header_to_delete.setParent(None)
-                header_to_delete.deleteLater()
-                print(f"UI-UPDATE: Removed header for subject {subject} as no lessons remain.")
+        # The header is now persistent and managed by update_content, so we no longer delete it here.
 
         self.lesson_data_deletion_requested.emit(subject, level, lesson_index_to_delete)

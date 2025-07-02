@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout
 from PyQt6.QtCore import Qt, pyqtSlot
 from PyQt6.QtGui import QPalette, QColor
 from PyQt6.QtGui import QIcon
-import json
+import json, re
 import os 
 import sys
 
@@ -667,8 +667,9 @@ class MainWindow(QMainWindow):
         file_path = get_resource_path(file_name)
 
         # Contenu par défaut pour un nouveau cours
-        default_content = "<h2>Nouveau Titre</h2><p>Commencez à écrire ici...</p>"
-        new_lesson = {'content': default_content}
+        default_title = "Nouveau Titre"
+        default_content = f"<h2>{default_title}</h2><p>Commencez à écrire ici...</p>"
+        new_lesson = {'title': default_title, 'content': default_content}
 
         try:
             # S'assurer que la clé de niveau existe
@@ -680,8 +681,8 @@ class MainWindow(QMainWindow):
             with open(file_path, 'w', encoding='utf-8') as f:
                 json.dump(data_structure, f, indent=4, ensure_ascii=False)
             print(f"Nouveau cours ajouté avec succès. Fichier mis à jour : {file_path}")
-            # 3. Rafraîchir uniquement la section concernée
-            self.cours_tab_component.update_content(level)
+            # 3. Appeler la nouvelle méthode pour un ajout ciblé sans recharger toute l'interface
+            self.cours_tab_component.add_new_lesson_widget(subject, level, new_lesson)
         except Exception as e:
             print(f"Une erreur inattendue est survenue lors de la création du cours : {e}")
 
@@ -750,10 +751,18 @@ class MainWindow(QMainWindow):
         file_path = get_resource_path(file_name)
 
         try:
-            # 1. Mettre à jour la structure de données en mémoire
-            data_structure[level][lesson_index]['content'] = new_content
+            # 1. Nettoyer le contenu HTML
+            cleaned_content = new_content.strip()
 
-            # 2. Écrire la structure de données complète dans le fichier JSON
+            # 2. Extraire le titre du premier tag de titre (h2, h3, h4)
+            title_match = re.search(r'<(h[2-4]).*?>(.*?)</\1>', cleaned_content, re.IGNORECASE | re.DOTALL)
+            new_title = title_match.group(2).strip() if title_match else "Sans Titre"
+
+            # 3. Mettre à jour la structure de données en mémoire
+            data_structure[level][lesson_index]['content'] = cleaned_content
+            data_structure[level][lesson_index]['title'] = new_title
+
+            # 4. Écrire la structure de données complète dans le fichier JSON
             with open(file_path, 'w', encoding='utf-8') as f:
                 json.dump(data_structure, f, indent=4, ensure_ascii=False)
             print(f"Leçon sauvegardée avec succès dans {file_path}")
