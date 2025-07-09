@@ -63,7 +63,7 @@ section {
 .logo {
     font-size: 1.8em;
     margin: 0;
-    color: var(--dark-color);
+    color: var(--primary-color);
 }
 
 .main-nav a {
@@ -91,16 +91,18 @@ section {
 
 /* --- Hero Section --- */
 .hero {
-    background-color: var(--primary-color);
+    background: linear-gradient(45deg, var(--primary-color), #81D4FA);
     color: #fff;
     text-align: center;
-    padding: 60px 0;
+    padding: 80px 20px 60px 20px;
+    border-bottom: 5px solid var(--secondary-color);
 }
 
 .hero h2 {
     color: #fff;
     font-size: 2.5em;
     margin-bottom: 10px;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
 }
 
 .hero .subtitle {
@@ -108,6 +110,7 @@ section {
     max-width: 600px;
     margin: 0 auto 30px auto;
     opacity: 0.9;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
 }
 
 .version-badge {
@@ -138,40 +141,114 @@ section {
 /* --- Features Section --- */
 #features {
     text-align: center;
+    background-color: #fff; /* White background for this section */
 }
 
 #features h3 {
-    font-size: 2em;
-    margin-bottom: 40px;
+    font-size: 2.2em;
+    margin-bottom: 15px;
+}
+
+.features-intro {
+    font-size: 1.1em;
+    color: #666;
+    max-width: 700px;
+    margin: 0 auto 40px auto;
 }
 
 .features-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    /* 3 columns on large screens, 2 on medium, 1 on small */
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 30px;
+    text-align: left; /* Align text to the left inside items */
 }
 
 .feature-item {
-    background-color: #fff;
-    padding: 30px;
+    background-color: #f8f9fa; /* Light grey background for items */
+    padding: 25px;
     border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    border: 1px solid #e9ecef;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.feature-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
 }
 
 .feature-icon {
-    font-size: 3em;
+    font-size: 2.5em;
     margin-bottom: 15px;
+    display: block; /* Make icon a block to center it */
+    text-align: center;
 }
 
 .feature-item h4 {
-    font-size: 1.2em;
-    color: var(--dark-color);
-    margin-bottom: 10px;
+    font-size: 1.3em;
+    color: var(--primary-color);
+    margin-top: 0;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.feature-item ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.feature-item ul li {
+    padding-left: 1.5em;
+    position: relative;
+    margin-bottom: 8px;
+    color: #555;
+}
+
+.feature-item ul li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--secondary-color);
+    font-weight: bold;
+}
+
+/* --- Editor Feature Section --- */
+#editor-feature {
+    background-color: var(--dark-color);
+    color: var(--light-color);
+    padding: 80px 0;
+}
+
+#editor-feature .container {
+    display: flex;
+    align-items: center;
+    gap: 50px;
+}
+
+#editor-feature .editor-content {
+    flex: 1;
+}
+
+#editor-feature .editor-content h3 {
+    color: #fff;
+    font-size: 2.2em;
+    margin-bottom: 20px;
+}
+
+#editor-feature .editor-image {
+    flex: 1;
+}
+
+#editor-feature .editor-image img {
+    max-width: 100%;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
 }
 
 /* --- Screenshots Section --- */
 #screenshots {
-    background-color: #fff;
+    background-color: var(--background-color); /* Match the body background */
     text-align: center;
 }
 
@@ -180,11 +257,21 @@ section {
     margin-bottom: 40px;
 }
 
+.screenshot-gallery {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px; /* Espace entre les images */
+    justify-content: center;
+    align-items: flex-start;
+}
+
 .screenshot-gallery img {
-    max-width: 100%;
+    max-width: 48%; /* Pour que deux images tiennent côte à côte */
+    flex-grow: 1;   /* Permet à une image seule de prendre plus de place */
     border-radius: 8px;
     box-shadow: 0 10px 20px rgba(0,0,0,0.15);
     border: 5px solid #fff;
+    object-fit: contain; /* Assure que l'image n'est pas déformée */
 }
 
 .screenshot-caption {
@@ -224,6 +311,12 @@ section {
 }
 
 /* --- Responsive --- */
+@media (max-width: 992px) {
+    #editor-feature .container {
+        flex-direction: column-reverse; /* Image on top on smaller screens */
+    }
+}
+
 @media (max-width: 768px) {
     .main-header .container {
         flex-direction: column;
@@ -239,5 +332,9 @@ section {
 
     .hero h2 {
         font-size: 2em;
+    }
+
+    .features-grid {
+        grid-template-columns: 1fr; /* Single column on small screens */
     }
 }
