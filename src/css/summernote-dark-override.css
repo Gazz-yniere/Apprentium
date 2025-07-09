@@ -1,0 +1,224 @@
+/* Override dark mode pour Summernote, compatible avec la palette native */
+
+/* Fond général de l'éditeur et de la toolbar */
+.note-editor.note-frame,
+.note-editor.note-frame .note-editing-area .note-editable {
+    background-color: #2c3e50 !important;
+    color: #ecf0f1 !important;
+}
+
+.note-toolbar {
+    background-color: #34495e !important;
+    border-color: #2c3e50 !important;
+}
+
+/* .note-toolbar .note-btn {
+    background-color: #2c3e50 !important;
+    border-color: #34495e !important;
+    color: #ecf0f1 !important;
+} */
+
+.note-toolbar .note-btn:not(.note-color-btn) {
+    background-color: #2c3e50 !important;
+    border-color: #34495e !important;
+    color: #ecf0f1 !important;
+}
+
+.note-toolbar .note-btn:not(.note-color-btn):hover {
+    background-color: #1e2b37 !important;
+    border-color: #2c3e50 !important;
+    color: #ffffff !important;
+}
+
+.note-dropdown-menu {
+    background-color: #34495e !important;
+    border-color: #2c3e50 !important;
+}
+
+.note-dropdown-item {
+    color: #ecf0f1 !important;
+    background-color: #34495e !important;
+}
+
+.note-dropdown-item:hover {
+    background-color: #2c3e50 !important;
+    color: #ffffff !important;
+}
+
+.note-modal-content {
+    background-color: #34495e !important;
+    border-color: #2c3e50 !important;
+}
+
+.note-modal-header {
+    background-color: #2c3e50 !important;
+    border-color: #34495e !important;
+}
+
+.note-modal-title {
+    color: #ecf0f1 !important;
+} */
+
+ .note-modal-body {
+    background-color: #34495e !important;
+    color: #ecf0f1 !important;
+}
+
+.note-input {
+    background-color: #2c3e50 !important;
+    border-color: #34495e !important;
+    color: #ecf0f1 !important;
+}
+
+.note-input:focus {
+    background-color: #1e2b37 !important;
+    border-color: #3498db !important;
+    color: #ffffff !important;
+}
+
+.note-popover {
+    background-color: #34495e !important;
+    border-color: #2c3e50 !important;
+}
+
+.note-popover-content {
+    color: #ecf0f1 !important;
+}
+
+.note-status-output {
+    background-color: #2c3e50 !important;
+    color: #ecf0f1 !important;
+    border-color: #34495e !important;
+} */
+
+/* Palette de couleurs : NE PAS TOUCHER AU background-color des .note-color-btn ! */
+ .note-color-palette div .note-color-btn {
+    border-color: #34495e !important;
+} 
+
+.note-color-palette div .note-color-btn:hover {
+    border-color: #3498db !important;
+} 
+
+/* Code view */
+ .note-editor.note-frame .note-editing-area .note-codable {
+    background-color: #1e2b37 !important;
+    color: #ecf0f1 !important;
+}
+
+/* Placeholder */
+.note-placeholder { 
+    color: #95a5a6 !important;
+}
+
+/* Harmonisation des listes Summernote avec le style des cours */
+.note-editor.note-frame .note-editing-area .note-editable ul,
+.note-editor.note-frame .note-editing-area .note-editable ol {
+    list-style-position: inside !important;
+    padding-left: 40px !important;
+    margin-left: 0 !important;
+    color: #ECF0F1 !important;
+}
+
+.note-editor.note-frame .note-editing-area .note-editable ul {
+    list-style-type: disc !important;
+}
+
+.note-editor.note-frame .note-editing-area .note-editable ol {
+    list-style-type: decimal !important;
+}
+
+.note-editor.note-frame .note-editing-area .note-editable li {
+    color: #ECF0F1 !important;
+    font-size: 16px !important;
+    margin-bottom: 8px !important;
+    text-align: left !important;
+}
+
+/*
+Masque le champ URL de l'image dans la popin Summernote (dialogue natif)
+*/
+.note-image-url, .note-group-image-url {
+    display: none !important;
+}
+.note-image-dialog .note-form-group:has(.note-image-url) {
+    display: none !important;
+}
+/* Masque aussi le label si besoin */
+.note-image-dialog label[for="note-image-url"] {
+    display: none !important;
+}
+
+/* Harmonisation scrollbar Summernote */
+.note-editable {
+    scrollbar-width: thin;
+    scrollbar-color: #888 #222;
+}
+.note-editable::-webkit-scrollbar {
+    width: 8px;
+    background: #222;
+    border-radius: 6px;
+}
+.note-editable::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 6px;
+}
+
+/* Titres modales Summernote en blanc */
+.note-modal .modal-title,
+.note-modal .note-modal-title,
+.note-modal .note-modal-header,
+.note-modal .modal-header {
+    color: #fff !important;
+}
+
+/* Titre popin image Summernote en blanc (tous cas) */
+.note-image-dialog .modal-title,
+.note-image-dialog .note-modal-title,
+.note-image-dialog label,
+.note-image-dialog span,
+.note-image-dialog .note-form-label {
+    color: #fff !important;
+}
+
+/* Palette de couleurs Summernote : titres en blanc (tous cas) */
+.note-color .note-color-title,
+.note-color .note-color-row .note-color-title,
+.note-color .note-color-row label,
+.note-color .note-color-row span {
+    color: #fff !important;
+}
+
+/* Palette de couleurs Summernote : boutons sombres et texte blanc */
+.note-color-row .note-color-reset,
+.note-color-row .note-color-select,
+.note-color-row .note-color-transparent {
+    background: #222 !important;
+    color: #fff !important;
+    border: 1px solid #444 !important;
+}
+.note-color-row .note-color-reset:hover,
+.note-color-row .note-color-select:hover,
+.note-color-row .note-color-transparent:hover {
+    background: #333 !important;
+    color: #fff !important;
+}
+
+/* Custom Dark Theme Fixes */
+.note-modal .note-form-label,
+.note-modal .note-modal-title {
+    color: #ECF0F1; /* Light text for dark dialogs */
+}
+
+.note-modal .close {
+    color: #ECF0F1;
+    opacity: 0.6;
+}
+
+.note-modal .close:hover {
+    opacity: 1;
+}
+
+.note-color .note-palette-title {
+    color: #ECF0F1; /* Light text for palette titles */
+}

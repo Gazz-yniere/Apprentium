@@ -10,6 +10,7 @@ from docx.oxml import OxmlElement
 from calculs_generator import generate_arithmetic_problems
 # Pour les images et couleurs (get_resource_path_pdf est ok ici)
 from pdf_generator import SECTION_ASSETS, get_resource_path_pdf
+from utils.resource_path import project_file_path
 import random
 import warnings
 import os

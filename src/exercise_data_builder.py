@@ -9,6 +9,8 @@ from mesures_generator import (
     generate_measurement_story_problems
 )
 
+from utils.resource_path import project_file_path
+
 
 class InvalidFieldError(Exception):
     def __init__(self, field_name, value):
@@ -155,25 +157,71 @@ class ExerciseDataBuilder:
         verbes_par_jour = params.get('verbs_per_day', 0)
         VERBS = params.get('VERBS', {})
         
-        # Get possible verbs
-        verbes_possibles = []
-        for g in groupes_choisis:
-            verbes_possibles += VERBS.get(g, [])
-        if include_usuels and "usuels" in VERBS:
-            verbes_possibles += VERBS["usuels"]
+        # --- Nouvelle logique de sélection pondérée des verbes ---
+        sources_verbes = []
+        source_keys = []  # Pour garder une trace de la clé du groupe (ex: 1, 2, 'usuels')
+
+        # Ajouter les groupes standards
+        if groupes_choisis:
+            for g in groupes_choisis:
+                if VERBS.get(g):
+                    # On fait une copie pour pouvoir la modifier (random.shuffle)
+                    sources_verbes.append(list(VERBS[g]))
+                    source_keys.append(g)
+        
+        # Ajouter le groupe "usuels" s'il est sélectionné
+        if include_usuels and VERBS.get("usuels"):
+            # Insérer au début pour une logique plus simple
+            sources_verbes.insert(0, list(VERBS["usuels"]))
+            source_keys.insert(0, "usuels")
+
+        # Mélanger chaque source individuellement pour une sélection aléatoire au sein de chaque groupe
+        for source in sources_verbes:
+            random.shuffle(source)
+
+        verbes_selectionnes = []
+        total_verbes_necessaires = verbes_par_jour * days
+
+        if verbes_par_jour > 0 and sources_verbes:
+            # --- Définir les poids ---
+            weights = []
+            has_usuels = "usuels" in source_keys
             
+            if has_usuels and len(source_keys) > 1:
+                # Cas spécial : "usuels" + autres groupes
+                num_autres_groupes = len(source_keys) - 1
+                for key in source_keys:
+                    if key == "usuels":
+                        weights.append(num_autres_groupes)  # Poids des usuels = nb d'autres groupes
+                    else:
+                        weights.append(2)  # Poids des autres groupes
+            else:
+                # Cas normal : tous les groupes ont un poids égal
+                weights = [1] * len(sources_verbes)
+
+            # --- Sélection pondérée ---
+            curseurs = [0] * len(sources_verbes)
+            
+            while len(verbes_selectionnes) < total_verbes_necessaires:
+                if not any(w > 0 for w in weights): break # Évite une boucle infinie si toutes les sources sont vides
+
+                chosen_source_index = random.choices(range(len(sources_verbes)), weights=weights, k=1)[0]
+                source = sources_verbes[chosen_source_index]
+                if not source: continue
+
+                if curseurs[chosen_source_index] >= len(source):
+                    random.shuffle(source)
+                    curseurs[chosen_source_index] = 0
+                
+                verbe = source[curseurs[chosen_source_index]]
+                verbes_selectionnes.append(verbe)
+                curseurs[chosen_source_index] += 1
+
+        verbes_possibles = verbes_selectionnes
+
         # Ensure there are verbs and tenses before continuing
         if not verbes_possibles or not temps_choisis:
             verbes_par_jour = 0
-            
-        # Handle case where there aren't enough unique verbs
-        if verbes_par_jour > 0 and len(verbes_possibles) < verbes_par_jour * days:
-            # Allow repetition if necessary
-            extended_verbes_possibles = []
-            while len(extended_verbes_possibles) < verbes_par_jour * days:
-                random.shuffle(verbes_possibles)
-                extended_verbes_possibles.extend(verbes_possibles)
-            verbes_possibles = extended_verbes_possibles[:verbes_par_jour * days]
             
         # Generate conjugations
         conjugations = []
@@ -214,7 +262,7 @@ class ExerciseDataBuilder:
         if count > 0:
             # Load data from JSON
             json_path = os.path.join(os.path.dirname(__file__), 'json', json_filename)
-            with open(json_path, encoding='utf-8') as f:
+            with open(project_file_path(json_path), encoding='utf-8') as f:
                 data = json.load(f)
                 
             # Get tenses to use
@@ -339,7 +387,7 @@ class ExerciseDataBuilder:
         if orthographe_ex_count > 0 and orthographe_homophones:
             # Load homophones data
             homophones_path = os.path.join(os.path.dirname(__file__), 'json', 'homophones.json')
-            with open(homophones_path, encoding='utf-8') as f:
+            with open(project_file_path(homophones_path), encoding='utf-8') as f:
                 homophones_data = json.load(f)
                 
             for _ in range(days):

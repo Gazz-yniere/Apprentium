@@ -1,21 +1,73 @@
-<html>
-    <head>
-        <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
-        <style>
-            {{cours_css_content}}
-        </style>
-    </head>
-    <body>
-        <div id="custom-tooltip" class="custom-tooltip"></div>
-        {{confirm_dialog_html}}
-        <div id="content-wrapper" class="lesson-card {{subject_bg_class}}">
-            <div class="lesson-header">
-                {{buttons_html}}
-                {{edit_toolbar_html}}
-            </div>
-            <div class="lesson-content-editable">
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leçon</title>
+    
+    <!-- QWebChannel pour la communication Python-JavaScript -->
+    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+    
+    <!-- CSS Summernote avec chemin absolu -->
+    <link href="file:///{{css_path}}/summernote-lite.css" rel="stylesheet">
+    <link href="file:///{{css_path}}/summernote-dark-override.css" rel="stylesheet">
+    <!-- <link href="file:///{{css_path}}/summernote-lite-dark.css" rel="stylesheet"> -->
+    
+    <!-- CSS personnalisé pour corriger les chemins de polices -->
+    <style>
+        @font-face {
+            font-family: "summernote";
+            font-style: normal;
+            font-weight: 400;
+            font-display: auto;
+            src: url("file:///{{font_path}}/summernote.eot?#iefix") format("embedded-opentype"), 
+                 url("file:///{{font_path}}/summernote.woff2") format("woff2"), 
+                 url("file:///{{font_path}}/summernote.woff") format("woff"), 
+                 url("file:///{{font_path}}/summernote.ttf") format("truetype");
+        }
+    </style>
+    
+    <!-- CSS de l'application avec chemins absolus -->
+    <link href="file:///{{css_path}}/cours_style.css" rel="stylesheet">
+    <link href="file:///{{css_path}}/editor_style.css" rel="stylesheet">
+    
+    <!-- JavaScript avec chemins absolus -->
+    <script src="file:///{{js_path}}/jquery.min.js"></script>
+    <script src="file:///{{js_path}}/summernote-lite.js"></script>
+    <script src="file:///{{js_path}}/summernote-fr-FR.js"></script>
+    <script src="file:///{{js_path}}/editor_logic.js"></script>
+    
+    <!-- CSS personnalisé pour le cours -->
+    <style>
+        {{cours_css_content}}
+    </style>
+</head>
+<body>
+    <!-- Tooltip personnalisé -->
+    <div id="custom-tooltip" class="custom-tooltip"></div>
+    
+    <!-- Dialog de confirmation -->
+    {{confirm_dialog_html}}
+    
+    <!-- Conteneur principal -->
+    <div id="content-wrapper" class="lesson-card {{subject_bg_class}}">
+        <!-- En-tête avec boutons -->
+        <div class="lesson-header">
+            {{buttons_html}}
+        </div>
+        
+        <!-- Contenu de la leçon -->
+        <div class="lesson-content-editable">
+            <!-- Mode lecture -->
+            <div id="read-mode">
                 {{raw_lesson_content}}
             </div>
+            
+            <!-- Mode édition -->
+            <div id="edit-mode" style="display:none;">
+                <div id="summernote"></div>
+            </div>
         </div>
-    </body>
+    </div>
+</body>
 </html>

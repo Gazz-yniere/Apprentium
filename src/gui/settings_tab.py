@@ -1,11 +1,12 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTableWidget,
                              QTableWidgetItem, QCheckBox, QPushButton, QComboBox, QSplitter,
                              QHeaderView, QLabel, QMessageBox, QScrollArea, QFrame, QSizePolicy,
-                             QGroupBox, QLineEdit)
+                             QGroupBox, QLineEdit, QFileDialog)
 from PyQt6.QtCore import Qt, QTimer # Import QTimer for feedback
 from PyQt6.QtGui import QColor # Import QColor for styling
 import json
 import os
+import sys
 
 class SettingsTab(QWidget):
     def __init__(self, parent_window, UI_STYLE_CONFIG, level_order, exercises_by_level_incremental, exercise_widgets_map, config_path):
@@ -357,6 +358,42 @@ class SettingsTab(QWidget):
         window_layout.addLayout(size_layout)
         right_layout.addWidget(window_group)
 
+        # --- Output Folder Settings ---
+        output_group = QGroupBox("Dossier de sortie des fichiers générés")
+        output_group.setStyleSheet(self.UI_STYLE_CONFIG["group_boxes"]["base_style_template"].format(border_color="#7F8C8D"))
+        output_layout = QVBoxLayout(output_group)
+        self.choose_output_folder_btn = QPushButton("Définir le dossier de sortie…")
+        self.choose_output_folder_btn.setStyleSheet(self.UI_STYLE_CONFIG["buttons"]["action_button_base_style_template"].format(
+            bg_color=self.UI_STYLE_CONFIG["buttons"]["select_folder"]["bg_color"],
+            disabled_bg_color=self.UI_STYLE_CONFIG["buttons"]["disabled"]["bg_color"],
+            disabled_text_color=self.UI_STYLE_CONFIG["buttons"]["disabled"]["text_color"],
+            pressed_bg_color=self.UI_STYLE_CONFIG["buttons"]["select_folder"]["pressed_bg_color"]
+        ))
+        self.choose_output_folder_btn.clicked.connect(self.choose_output_folder)
+        self.choose_output_folder_btn.setFixedWidth(300) # Définir une largeur fixe
+        output_layout.addWidget(self.choose_output_folder_btn)
+        self.output_path_label = QLabel()
+        self.output_path_label.setStyleSheet("color: #E0E0E0; font-size: 13px; margin-top: 4px;")
+        output_layout.addWidget(self.output_path_label)
+        right_layout.addWidget(output_group)
+        # Afficher le chemin actuel au démarrage
+        config_path = os.path.join(os.path.dirname(__file__), '../config.json')
+        config_path = os.path.abspath(config_path)
+        try:
+            import json
+            with open(config_path, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+            folder = config.get('selected_output_path', '')
+            if folder:
+                self.output_path_label.setText(f"Dossier de sortie actuel : {folder}")
+            else:
+                # Par défaut : dossier output/ à côté de l'exécutable
+                default_output = os.path.abspath(os.path.join(os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else os.path.dirname(os.path.dirname(__file__)), 'output'))
+                self.output_path_label.setText(f"Dossier de sortie actuel : {default_output} (par défaut)")
+        except Exception:
+            default_output = os.path.abspath(os.path.join(os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else os.path.dirname(os.path.dirname(__file__)), 'output'))
+            self.output_path_label.setText(f"Dossier de sortie actuel : {default_output} (par défaut)")
+
         right_layout.addStretch()
 
         # Add panels to splitter
@@ -590,3 +627,34 @@ class SettingsTab(QWidget):
         self.is_dirty = False
         if hasattr(self, 'save_button'): # Check if button exists yet
             self._update_save_button_style()
+
+    def choose_output_folder(self):
+        folder = QFileDialog.getExistingDirectory(self, "Définir le dossier de sortie des fichiers générés")
+        if folder:
+            # Enregistrer dans config.json (création si besoin)
+            config_path = os.path.join(os.path.dirname(__file__), '../config.json')
+            config_path = os.path.abspath(config_path)
+            import json
+            config = {}
+            if os.path.exists(config_path):
+                try:
+                    with open(config_path, 'r', encoding='utf-8') as f:
+                        config = json.load(f)
+                except Exception:
+                    config = {}
+            config['selected_output_path'] = folder
+            try:
+                with open(config_path, 'w', encoding='utf-8') as f:
+                    json.dump(config, f, ensure_ascii=False, indent=2)
+            except Exception as e:
+                print(f"Erreur lors de l'enregistrement du dossier de sortie : {e}")
+            # Notifier la fenêtre principale pour mettre à jour la variable ET sauvegarder
+            if hasattr(self.parent_window, 'set_selected_output_path'):
+                self.parent_window.set_selected_output_path(folder)
+            if hasattr(self.parent_window, 'save_config'):
+                self.parent_window.save_config()
+            # Afficher le chemin sous le bouton
+            if hasattr(self, 'output_path_label'):
+                self.output_path_label.setText(f"Dossier de sortie actuel : {folder}")
+        elif hasattr(self, 'output_path_label'):
+            self.output_path_label.setText("Aucun dossier sélectionné.")

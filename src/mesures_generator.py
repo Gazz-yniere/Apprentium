@@ -2,6 +2,7 @@ import random
 import os
 import json
 import sys
+from utils.resource_path import project_file_path
 
 
 def get_resource_path(filename):
@@ -15,9 +16,7 @@ def get_resource_path(filename):
 
 CONVERSION_DATA = {}
 try:
-    # Assuming your conversion configuration is in 'conversions_config.json'
-    # in the 'json' subdirectory relative to this script's location.
-    with open(get_resource_path('conversions_config.json'), 'r', encoding='utf-8') as f:
+    with open(project_file_path('json/conversions_config.json'), 'r', encoding='utf-8') as f:
         CONVERSION_DATA = json.load(f)
 except FileNotFoundError:
     print("ERREUR: Fichier conversions_config.json introuvable. " "Les exercices de conversion ne seront pas disponibles.")
@@ -29,7 +28,7 @@ except Exception as e:
 # --- NEW ---
 MEASUREMENT_PROBLEMS_DATA = {}
 try:
-    with open(get_resource_path('problemes_mesures.json'), 'r', encoding='utf-8') as f:
+    with open(project_file_path('json/problemes_mesures.json'), 'r', encoding='utf-8') as f:
         MEASUREMENT_PROBLEMS_DATA = json.load(f)
 except Exception as e:
     print(f"ERREUR: Impossible de charger les problèmes de mesures depuis 'problemes_mesures.json': {e}")

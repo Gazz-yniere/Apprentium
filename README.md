@@ -1,129 +1,150 @@
 # Apprentium
 
-![Version](https://img.shields.io/badge/version-1.0-blue.svg)
-![Python](https://img.shields.io/badge/Python-3.6+-green.svg)
+![Version](https://img.shields.io/badge/version-0.25.7a-blue.svg)
+![Python](https://img.shields.io/badge/Python-3.10+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-yellow.svg)
 
 ## Table des matières
-- [Description](#description)
-- [Fonctionnalités](#fonctionnalités)
+- [Description détaillée](#description-détaillée)
 - [Prérequis](#prérequis)
 - [Installation](#installation)
 - [Utilisation](#utilisation)
-  - [Mode Python](#mode-python)
-  - [Mode Exécutable Windows](#mode-exécutable-windows)
 - [Personnalisation](#personnalisation)
-- [Création de l'exécutable](#création-de-lexécutable)
+- [Création de l'exécutable Windows](#création-de-lexécutable-windows)
 - [Contribuer](#contribuer)
+- [Bonnes pratiques et maintenance](#bonnes-pratiques-et-maintenance)
 
-## Description
-Apprentium est une application de bureau développée en Python avec une interface graphique conviviale (basée sur PyQt6). Elle est conçue pour aider à la création de cahiers d'exercices personnalisés pour les élèves, couvrant un large éventail de matières. L'application permet de générer ces fiches d'exercices aux formats PDF et Word.
+## Description détaillée
 
-Les utilisateurs peuvent finement ajuster les paramètres de chaque type d'exercice (nombre d'items, difficulté, options spécifiques) directement depuis l'interface. Ces configurations sont automatiquement sauvegardées dans un fichier `config.json` pour une réutilisation facile.
+**Apprentium** est un générateur de cahiers d'exercices scolaires ultra-flexible pour le primaire (CP à CM2). Il permet de créer en quelques clics des fiches PDF ou Word entièrement personnalisées, prêtes à imprimer, adaptées au niveau et aux besoins de chaque élève ou groupe. L'application propose une interface moderne, intuitive et puissante, pensée pour les enseignants, AESH, parents ou orthophonistes.
 
-## Fonctionnalités
+### Ce que fait le logiciel
+- Génère des fiches d'exercices sur-mesure en **maths** (calculs, problèmes, mesures), **français** (conjugaison, grammaire, orthographe) et **anglais** (phrases à compléter, mots à relier).
+- Permet de choisir précisément le nombre, la difficulté, le type et la présentation de chaque exercice.
+- Offre un **éditeur de cours intégré** (WYSIWYG) pour créer ou modifier des leçons, insérer des images, tableaux, listes, etc. (avec gestion avancée des images locales).
+- Gère la sauvegarde automatique de tous les réglages, le rappel des derniers paramètres, et la personnalisation fine de l'apparence (dark mode, couleurs, styles, etc.).
+- Génère des documents PDF/Word propres, harmonisés, avec gestion intelligente des sauts de page, cadres, images et titres.
+- Permet d'ajouter, modifier ou supprimer ses propres contenus pédagogiques (verbes, phrases, problèmes, etc.) via de simples fichiers JSON.
 
-### Matières couvertes
-- **Calculs** : additions, soustractions, multiplications, divisions, énumération de nombres, petits problèmes
-- **Mesures** : conversions d'unités, rangement de nombres, encadrement
-- **Conjugaison** : exercices adaptés par niveau
-- **Grammaire** : types de phrases, transformations
-- **Orthographe** : homophones
-- **Anglais** : phrases à compléter, jeux de mots à relier
-
-### Autres fonctionnalités
-- Interface utilisateur intuitive avec onglets par matière
-- Génération de documents aux formats PDF et Word
-- Sauvegarde automatique des paramètres
-- Personnalisation facile du contenu pédagogique via fichiers JSON
-- Adaptation des exercices par niveau scolaire (CP, CE1, etc.)
+### Options et possibilités principales
+- **Sélection du niveau** : CP, CE1, CE2, CM1, CM2 (adaptation automatique des exercices proposés)
+- **Personnalisation fine** : nombre d'exercices, types d'opérations, thèmes, options avancées (décimaux, négatifs, multi-opérandes, etc.)
+- **Gestion des images** : upload local, insertion dans les cours, affichage garanti dans l'éditeur ET dans les PDF/Word
+- **Choix du dossier de sortie** : possibilité de définir où seront enregistrés les fichiers générés
+- **Sauvegarde/restauration automatique** de tous les paramètres (niveau, quantités, options, apparence, etc.)
+- **Édition des cours** : création, modification, suppression de leçons pour chaque matière et chaque niveau
+- **Support multi-utilisateur** : chaque utilisateur retrouve ses réglages et contenus
+- **Mode sombre natif** : interface agréable et lisible, même en classe ou sur vidéoprojecteur
+- **Notifications et popups** : retour utilisateur clair (erreurs, confirmations, etc.)
 
 ## Prérequis
-- Python 3.6 ou supérieur
-- Bibliothèques requises :
-  - PyQt6 (interface graphique)
-  - PyQt6-WebEngine (composants web)
-  - reportlab (génération de PDF)
-  - python-docx (génération de documents Word)
+- Python 3.10 ou supérieur
+- Dépendances principales :
+  - PyQt6
+  - PyQt6-WebEngine
+  - reportlab
+  - python-docx
+  - (voir `requirements.txt` pour la liste complète)
 
 ## Installation
-1. Clonez ce dépôt ou téléchargez les fichiers source
-2. Installez les dépendances nécessaires avec :
-
-```bash
-pip install -r requirements.txt
-```
+1. Clonez ce dépôt ou téléchargez les sources
+2. Installez les dépendances :
+   ```bash
+   pip install -r requirements.txt
+   ```
 
 ## Utilisation
 
-### Mode Python
-1. Exécutez `Apprentium.py` pour lancer l'application :
+### 1. En mode code source (Python)
+
+1. Installez Python 3.10+ et les dépendances :
+   ```bash
+   pip install -r requirements.txt
+   ```
+2. Lancez l'application :
    ```bash
    python src/Apprentium.py
    ```
-2. Personnalisez les paramètres dans chaque onglet (calculs, conjugaison, grammaire, etc.)
-3. Cliquez sur "Générer PDF" ou "Générer Word" pour créer la fiche d'exercices
-4. Le document généré est automatiquement enregistré dans le dossier `output/`
+3. Utilisez l'interface graphique :
+   - Choisissez le niveau et configurez chaque type d'exercice dans les onglets.
+   - Modifiez ou créez vos propres cours dans l'éditeur intégré (onglet "Cours").
+   - Cliquez sur "Générer PDF" ou "Générer Word" pour créer votre fiche.
+   - Le fichier est enregistré dans le dossier de sortie choisi (par défaut `output/`).
+   - Tous vos réglages sont sauvegardés automatiquement.
 
-### Mode Exécutable Windows
-1. Téléchargez la version compilée ou créez l'exécutable (voir section [Création de l'exécutable](#création-de-lexécutable))
-2. Lancez `Apprentium.exe` (aucune installation Python requise)
-3. Configurez les exercices selon vos besoins
-4. Générez les documents PDF ou Word qui seront sauvegardés dans le dossier `output/`
+### 2. En mode exécutable Windows (compilé)
+
+1. Téléchargez ou compilez l'exécutable (`Apprentium.exe`).
+2. Double-cliquez sur `Apprentium.exe` (aucune installation Python requise).
+3. L'interface et les options sont identiques au mode source.
+4. Les fichiers générés, les images uploadées et les réglages sont stockés à côté de l'exécutable (ou dans le dossier choisi).
+5. Vous pouvez distribuer le dossier à d'autres utilisateurs sans dépendances.
+
+### Points importants (tous modes)
+- **Aucune donnée n'est envoyée sur Internet** : tout reste en local.
+- **Les images insérées dans les cours** sont toujours accessibles dans les PDF/Word générés.
+- **Vous pouvez modifier les fichiers JSON** dans `src/json/` pour enrichir les exercices proposés.
+- **Le logiciel est portable** : copiez le dossier ou l'exécutable où vous voulez, tout fonctionnera.
+
+## Exemples d'utilisation
+
+- Générer une fiche de calculs pour un élève de CE2 avec 10 additions, 5 soustractions et 2 problèmes.
+- Créer un cours d'anglais avec images et exercices personnalisés, puis l'imprimer pour la classe.
+- Adapter rapidement les exercices pour un élève en difficulté ou en avance.
+- Sauvegarder et réutiliser vos propres modèles de fiches et de cours.
+
+Pour toute question ou suggestion, consultez la section "Support et contact" ci-dessous.
 
 ## Personnalisation
 
-Le contenu pédagogique de base est stocké dans des fichiers JSON dédiés, ce qui permet une personnalisation et une extension aisées du matériel pédagogique.
-
-### Contenu des exercices
-- **Verbes** : éditez `verbes.json` pour ajouter/supprimer des verbes par groupe
-- **Phrases de grammaire** : éditez `phrases_grammaire.json` pour enrichir les exercices
-- **Phrases en anglais** : modifiez `phrases_anglais_complexe.json` et `phrases_anglais_simple.json`
-- **Mots à relier** : personnalisez `mots_a_relier.json`
-- **Homophones** : ajustez `homophones.json`
-- **Petits problèmes (Maths)** : éditez `problemes_maths.json` pour ajouter ou modifier les énoncés
+### Contenu pédagogique
+- **Verbes** : éditez `src/json/verbes.json` pour ajouter/supprimer des verbes
+- **Phrases de grammaire** : éditez `src/json/phrases_grammaire.json`
+- **Phrases en anglais** : modifiez `src/json/phrases_anglais_complexe.json` et `src/json/phrases_anglais_simple.json`
+- **Mots à relier** : personnalisez `src/json/mots_a_relier.json`
+- **Homophones** : ajustez `src/json/homophones.json`
+- **Petits problèmes (Maths)** : éditez `src/json/problemes_maths.json`
 
 ### Configuration par niveau
-- Éditez `levels_config.json` pour définir quels types d'exercices sont disponibles pour chaque niveau scolaire (CP, CE1, etc.)
+- Modifiez `src/levels_config.json` pour définir les exercices disponibles par niveau
 
 ### Apparence des documents
-- Modifiez ou remplacez les images dans le dossier `src/img/` (ex: calculs.png, mesures.png) pour changer les illustrations des sections dans les documents PDF générés
-- Personnalisez le style CSS dans `src/css/cours_style.css` pour modifier l'apparence des documents
+- Modifiez/remplacez les images dans `src/img/` (ex: calculs.png, mesures.png)
+- Personnalisez le style CSS dans `src/css/cours_style.css`
 
-## Création de l'exécutable
-
-Pour créer un exécutable Windows autonome :
+## Création de l'exécutable Windows
 
 1. Installez PyInstaller :
    ```bash
    pip install pyinstaller
    ```
-
-2. Compilez l'application avec la commande suivante :
+2. Compilez l'application avec toutes les ressources nécessaires :
    ```bash
-   pyinstaller --onefile --noconsole --icon=src/Apprentium.ico --add-data "src/json;json" --add-data "src/img;img" --add-data "src/css;css" --add-data "src/Apprentium.ico;." --add-data "src/config.json;." src/Apprentium.py
+   pyinstaller --onefile --noconsole --icon=src/Apprentium.ico --add-data "src/json;json" --add-data "src/img;img" --add-data "src/css;css" --add-data "src/html;html" --add-data "src/js;js" --add-data "src/font;font" --add-data "src/Apprentium.ico;." --add-data "src/config.json;." src/Apprentium.py
    ```
-
-3. Dans le dossier `dist/` créé, vous trouverez :
-   - `Apprentium.exe` - l'exécutable principal
-   - Les dossiers et fichiers nécessaires au fonctionnement
-
-4. Pour une distribution complète, assurez-vous d'inclure :
+   > **Remarque** : Sur Windows, remplacez les `/` par `\` si besoin. Sur Mac/Linux, adaptez la syntaxe des chemins.
+3. Dans le dossier `dist/`, vous trouverez :
+   - `Apprentium.exe` (exécutable principal)
+   - Tous les dossiers/fichiers nécessaires au fonctionnement
+4. Pour distribuer, incluez :
    - `Apprentium.exe`
    - `config.json`
    - `Apprentium.ico`
-   - Le dossier `json/` avec tous les fichiers de contenu
-   - Le dossier `img/` pour les illustrations des PDF
-   - Le dossier `css/` pour les styles
+   - Le dossier `json/` (contenu pédagogique)
+   - Le dossier `img/` (illustrations)
+   - Le dossier `css/` (styles)
+   - Le dossier `html/` (templates HTML)
+   - Le dossier `js/` (scripts JS)
+   - Le dossier `font/` (polices Summernote)
 
 ## Contribuer
 
-Les contributions sont les bienvenues ! Voici comment vous pouvez contribuer :
+Les contributions sont les bienvenues !
 
 1. Forkez le projet
-2. Créez une branche pour votre fonctionnalité (`git checkout -b nouvelle-fonctionnalite`)
-3. Committez vos changements (`git commit -m 'Ajout d'une nouvelle fonctionnalité'`)
-4. Poussez vers la branche (`git push origin nouvelle-fonctionnalite`)
+2. Créez une branche (`git checkout -b nouvelle-fonctionnalite`)
+3. Committez vos changements (`git commit -m 'Ajout d'une fonctionnalité'`)
+4. Poussez (`git push origin nouvelle-fonctionnalite`)
 5. Ouvrez une Pull Request
 
-N'hésitez pas à proposer des améliorations ou signaler des bugs en ouvrant une issue.
+N'hésitez pas à proposer des améliorations ou signaler des bugs via les issues.

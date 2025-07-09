@@ -2,6 +2,7 @@ import random
 import json
 import os
 import sys
+from utils.resource_path import project_file_path
 
 
 def get_resource_path(filename):
@@ -13,7 +14,7 @@ def get_resource_path(filename):
 
 PROBLEMS_DATA = {}
 try:
-    with open(get_resource_path('problemes_maths.json'), 'r', encoding='utf-8') as f:
+    with open(project_file_path('json/problemes_maths.json'), 'r', encoding='utf-8') as f:
         PROBLEMS_DATA = json.load(f)
 except Exception as e:
     print(f"ERREUR: Impossible de charger les problèmes mathématiques depuis 'problemes_maths.json': {e}")

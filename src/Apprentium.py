@@ -5,6 +5,7 @@ from PyQt6.QtGui import QIcon
 import json, re
 import os 
 import sys
+import traceback
 
 # Import de la config
 from gui.template import UI_STYLE_CONFIG 
@@ -33,6 +34,7 @@ from anglais_generator import PHRASES_SIMPLES, PHRASES_COMPLEXES, MOTS_A_RELIER
 from exercise_data_builder import ExerciseDataBuilder
 from pdf_generator import generate_workbook_pdf
 from word_generator import generate_workbook_docx
+from utils.resource_path import project_file_path
 
 class InvalidFieldError(Exception):
     def __init__(self, field_name, value):
@@ -42,25 +44,15 @@ class InvalidFieldError(Exception):
         self.value = value
 
 
-__version__ = "0.25.6g"  # Version de l'application
-
-
-def get_resource_path(filename):
-    """ Obtient le chemin absolu d'une ressource JSON, que ce soit en mode script ou compilé. """
-    # base_path = os.path.dirname(__file__) # Chemin du script Apprentium.py
-    if hasattr(sys, '_MEIPASS'):
-        # Chemin pour l'exécutable PyInstaller (le dossier 'json' est au même niveau que l'exécutable)
-        return os.path.join(sys._MEIPASS, "json", filename)
-    # Chemin pour l'exécution en tant que script (le dossier 'json' est dans le même dossier que ce script)
-    return os.path.join(os.path.dirname(__file__), "json", filename)
+__version__ = "0.25.7a"  # Version de l'application
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Apprentium")
-        # Assurez-vous que le chemin est correct
-        icon_path = os.path.join(os.path.dirname(__file__), "Apprentium.ico")
+        # Le chemin doit être relatif à la racine du projet (src/ ou le dossier de l'exécutable)
+        icon_path = project_file_path("Apprentium.ico")
         self.setWindowIcon(QIcon(icon_path))
         self.setMinimumWidth(UI_STYLE_CONFIG["window"]["minimum_width"])
         self.setMinimumHeight(UI_STYLE_CONFIG["window"]["minimum_height"])
@@ -83,7 +75,7 @@ class MainWindow(QMainWindow):
         default_level_order = ["CP", "CE1", "CE2", "CM1", "CM2"]
         default_exercises_by_level = {}  # Fallback vide
         try:
-            levels_config_path = get_resource_path('levels_config.json')
+            levels_config_path = project_file_path('json/levels_config.json')
             with open(levels_config_path, 'r', encoding='utf-8') as f:
                 self.level_configuration_data = json.load(f)
             # print(f"Configuration des niveaux chargée depuis : {levels_config_path}")
@@ -102,7 +94,7 @@ class MainWindow(QMainWindow):
         # --- Chargement des thèmes pour l'anglais ---
         self.english_relier_themes = {}
         try:
-            mots_relier_path = get_resource_path('mots_a_relier.json')
+            mots_relier_path = project_file_path('json/mots_a_relier.json')
             with open(mots_relier_path, 'r', encoding='utf-8') as f:
                 self.english_relier_themes = json.load(
                     f)  # Charge le dict des thèmes
@@ -114,7 +106,7 @@ class MainWindow(QMainWindow):
         # --- Chargement des types de problèmes mathématiques ---
         self.math_problem_types_data = {}
         try:
-            problemes_maths_path = get_resource_path('problemes_maths.json')
+            problemes_maths_path = project_file_path('json/problemes_maths.json')
             with open(problemes_maths_path, 'r', encoding='utf-8') as f:
                 self.math_problem_types_data = json.load(f)
         except Exception as e:
@@ -124,7 +116,7 @@ class MainWindow(QMainWindow):
         # --- Chargement des données de cours ---
         self.cours_calcul_data = {}
         try:
-            cours_calcul_path = get_resource_path('cours_calcul.json')
+            cours_calcul_path = project_file_path('json/cours_calcul.json')
             with open(cours_calcul_path, 'r', encoding='utf-8') as f:
                 self.cours_calcul_data = json.load(f)
         except Exception as e:
@@ -132,7 +124,7 @@ class MainWindow(QMainWindow):
 
         self.cours_grammaire_data = {}
         try:
-            cours_grammaire_path = get_resource_path('cours_grammaire.json')
+            cours_grammaire_path = project_file_path('json/cours_grammaire.json')
             with open(cours_grammaire_path, 'r', encoding='utf-8') as f:
                 self.cours_grammaire_data = json.load(f)
         except Exception as e:
@@ -140,7 +132,7 @@ class MainWindow(QMainWindow):
 
         self.cours_mesures_data = {}
         try:
-            cours_mesures_path = get_resource_path('cours_mesures.json')
+            cours_mesures_path = project_file_path('json/cours_mesures.json')
             with open(cours_mesures_path, 'r', encoding='utf-8') as f:
                 self.cours_mesures_data = json.load(f)
         except Exception as e:
@@ -148,7 +140,7 @@ class MainWindow(QMainWindow):
 
         self.cours_conjugaison_data = {}
         try:
-            cours_conjugaison_path = get_resource_path('cours_conjugaison.json')
+            cours_conjugaison_path = project_file_path('json/cours_conjugaison.json')
             with open(cours_conjugaison_path, 'r', encoding='utf-8') as f:
                 self.cours_conjugaison_data = json.load(f)
         except Exception as e:
@@ -156,7 +148,7 @@ class MainWindow(QMainWindow):
 
         self.cours_orthographe_data = {}
         try:
-            cours_orthographe_path = get_resource_path('cours_orthographe.json')
+            cours_orthographe_path = project_file_path('json/cours_orthographe.json')
             with open(cours_orthographe_path, 'r', encoding='utf-8') as f:
                 self.cours_orthographe_data = json.load(f)
         except Exception as e:
@@ -164,7 +156,7 @@ class MainWindow(QMainWindow):
 
         self.cours_anglais_data = {}
         try:
-            cours_anglais_path = get_resource_path('cours_anglais.json')
+            cours_anglais_path = project_file_path('json/cours_anglais.json')
             with open(cours_anglais_path, 'r', encoding='utf-8') as f:
                 self.cours_anglais_data = json.load(f)
         except Exception as e:
@@ -464,7 +456,7 @@ class MainWindow(QMainWindow):
 
         # --- Paramètres Tab (instantiate after exercise_widgets_map is complete) ---
         # Path to levels_config.json
-        levels_config_json_path = get_resource_path('levels_config.json')
+        levels_config_json_path = project_file_path('json/levels_config.json')
         self.parametres_tab_component = SettingsTab(
             self, UI_STYLE_CONFIG, self.LEVEL_ORDER,
             self.EXERCISES_BY_LEVEL_INCREMENTAL, self.exercise_widgets_map,
@@ -498,12 +490,7 @@ class MainWindow(QMainWindow):
             if le: le.setStyleSheet(lineedit_style)
         # Chargement de la configuration si elle existe
         def get_config_path():
-            if getattr(sys, 'frozen', False):
-                # Exécutable PyInstaller : toujours à côté de l'exe
-                return os.path.join(os.path.dirname(sys.executable), 'config.json')
-            else:
-                # Mode script : à côté du script
-                return os.path.join(os.path.dirname(__file__), 'config.json')
+            return project_file_path('config.json')
         self.config_path = get_config_path()
 
         # Centralisation des champs pour la config (nom, widget, mode)
@@ -651,12 +638,12 @@ class MainWindow(QMainWindow):
         print(f"Création d'un nouveau cours pour : Matière={subject}, Niveau={level}")
 
         subject_map = {
-            'calc': (self.cours_calcul_data, 'cours_calcul.json'),
-            'grammar': (self.cours_grammaire_data, 'cours_grammaire.json'),
-            'geo': (self.cours_mesures_data, 'cours_mesures.json'),
-            'conj': (self.cours_conjugaison_data, 'cours_conjugaison.json'),
-            'ortho': (self.cours_orthographe_data, 'cours_orthographe.json'),
-            'english': (self.cours_anglais_data, 'cours_anglais.json'),
+            'calc': (self.cours_calcul_data, 'json/cours_calcul.json'),
+            'grammar': (self.cours_grammaire_data, 'json/cours_grammaire.json'),
+            'geo': (self.cours_mesures_data, 'json/cours_mesures.json'),
+            'conj': (self.cours_conjugaison_data, 'json/cours_conjugaison.json'),
+            'ortho': (self.cours_orthographe_data, 'json/cours_orthographe.json'),
+            'english': (self.cours_anglais_data, 'json/cours_anglais.json'),
         }
 
         if subject not in subject_map:
@@ -664,7 +651,7 @@ class MainWindow(QMainWindow):
             return
 
         data_structure, file_name = subject_map[subject]
-        file_path = get_resource_path(file_name)
+        file_path = project_file_path(file_name)
 
         # Contenu par défaut pour un nouveau cours
         default_title = "Nouveau Titre"
@@ -695,12 +682,12 @@ class MainWindow(QMainWindow):
         print(f"Suppression de la leçon : Matière={subject}, Niveau={level}, Index={lesson_index}")
 
         subject_map = {
-            'calc': (self.cours_calcul_data, 'cours_calcul.json'),
-            'grammar': (self.cours_grammaire_data, 'cours_grammaire.json'),
-            'geo': (self.cours_mesures_data, 'cours_mesures.json'),
-            'conj': (self.cours_conjugaison_data, 'cours_conjugaison.json'),
-            'ortho': (self.cours_orthographe_data, 'cours_orthographe.json'),
-            'english': (self.cours_anglais_data, 'cours_anglais.json'),
+            'calc': (self.cours_calcul_data, 'json/cours_calcul.json'),
+            'grammar': (self.cours_grammaire_data, 'json/cours_grammaire.json'),
+            'geo': (self.cours_mesures_data, 'json/cours_mesures.json'),
+            'conj': (self.cours_conjugaison_data, 'json/cours_conjugaison.json'),
+            'ortho': (self.cours_orthographe_data, 'json/cours_orthographe.json'),
+            'english': (self.cours_anglais_data, 'json/cours_anglais.json'),
         }
 
         if subject not in subject_map:
@@ -708,7 +695,7 @@ class MainWindow(QMainWindow):
             return
 
         data_structure, file_name = subject_map[subject]
-        file_path = get_resource_path(file_name)
+        file_path = project_file_path(file_name)
 
         try:
             # 1. Supprimer la leçon de la structure de données en mémoire
@@ -735,12 +722,12 @@ class MainWindow(QMainWindow):
 
         # Mapper les clés de sujet à leur attribut de données et nom de fichier
         subject_map = {
-            'calc': (self.cours_calcul_data, 'cours_calcul.json'),
-            'grammar': (self.cours_grammaire_data, 'cours_grammaire.json'),
-            'geo': (self.cours_mesures_data, 'cours_mesures.json'),
-            'conj': (self.cours_conjugaison_data, 'cours_conjugaison.json'),
-            'ortho': (self.cours_orthographe_data, 'cours_orthographe.json'),
-            'english': (self.cours_anglais_data, 'cours_anglais.json'),
+            'calc': (self.cours_calcul_data, 'json/cours_calcul.json'),
+            'grammar': (self.cours_grammaire_data, 'json/cours_grammaire.json'),
+            'geo': (self.cours_mesures_data, 'json/cours_mesures.json'),
+            'conj': (self.cours_conjugaison_data, 'json/cours_conjugaison.json'),
+            'ortho': (self.cours_orthographe_data, 'json/cours_orthographe.json'),
+            'english': (self.cours_anglais_data, 'json/cours_anglais.json'),
         }
 
         if subject not in subject_map:
@@ -748,11 +735,24 @@ class MainWindow(QMainWindow):
             return
 
         data_structure, file_name = subject_map[subject]
-        file_path = get_resource_path(file_name)
+        file_path = project_file_path(file_name)
 
         try:
             # 1. Nettoyer le contenu HTML
             cleaned_content = new_content.strip()
+
+            def fix_image_paths_in_html(html_content):
+                """Correction des chemins d'images pour n'avoir que des chemins relatifs."""
+                return re.sub(
+                    # Ce regex trouve n'importe quel chemin (absolu ou relatif) qui mène à data/images
+                    # et le remplace par le chemin relatif correct depuis la racine du projet.
+                    # Il gère les guillemets simples et doubles, ainsi que les slashes et anti-slashes.
+                    r'src=["\'][^"\']*[/\\]data[/\\]images[/\\]([^"\']+)["\']',
+                    r'src="html/data/images/\1"',
+                    html_content
+                )
+            
+            cleaned_content = fix_image_paths_in_html(cleaned_content)
 
             # 2. Extraire le titre du premier tag de titre (h2, h3, h4)
             title_match = re.search(r'<(h[2-4]).*?>(.*?)</\1>', cleaned_content, re.IGNORECASE | re.DOTALL)
@@ -797,9 +797,11 @@ class MainWindow(QMainWindow):
         
     def set_selected_output_path(self, path):
         """
-        Called by AppFooter to update the main window's selected output path.
+        Appelé par les paramètres pour mettre à jour le chemin de sortie courant.
         """
         self.selected_output_path = path
+        # Sauvegarde immédiate dans le config pour garantir la cohérence
+        self.save_config()
 
     def get_int(self, lineedit, default=0, field_name=None):
         value = lineedit.text().strip()
@@ -854,7 +856,7 @@ class MainWindow(QMainWindow):
             print(f"Error retrieving value for '{widget_map_key}': {e}. Returning default.")
             return default_value
 
-    def _execute_workbook_generation(self, generator_func, file_extension, is_preview):
+    def _execute_workbook_generation(self, generator_func, file_extension, preview):
         """
         Helper method to encapsulate common logic for generating/previewing workbooks.
         """
@@ -868,6 +870,14 @@ class MainWindow(QMainWindow):
             show_note = self.header_component.show_note_checkbox.isChecked()
             filename = self.footer_component.filename_entry.text().strip() or "workbook"
             output_directory = self.selected_output_path
+            config_path = self.config_path
+            output_directory = self.selected_output_path
+            # Toujours relire le chemin depuis le config.json juste avant de générer
+            if os.path.exists(config_path):
+                try:
+                    pass # ...existing code...
+                except Exception as e:
+                    pass # ...existing code...
 
             if not filename.lower().endswith(file_extension):
                 filename += file_extension
@@ -903,17 +913,17 @@ class MainWindow(QMainWindow):
             output_path = generator_func(**common_params)
 
             if output_path and os.path.exists(output_path):
-                if is_preview:
+                output_path_display = normalize_path_for_display(output_path)
+                if preview:
                     os.startfile(output_path)
                 else:
-                    print(f"{file_extension.upper()} généré avec succès : {output_path}")
+                    print(f"{file_extension.upper()} généré avec succès : {output_path_display}")
             else:
                 print(f"Erreur : Fichier {file_extension.upper()} non trouvé à {output_path} après la génération.")
 
         except InvalidFieldError as e:
             print(f"Veuillez entrer une valeur numérique valide pour : {e.field_name} (valeur saisie : '{e.value}')")
         except Exception as e:
-            import traceback
             print(f"Une erreur s'est produite lors de la génération/prévisualisation {file_extension.upper()} : {type(e).__name__} : {e}")
             traceback.print_exc()
 
@@ -1021,7 +1031,7 @@ class MainWindow(QMainWindow):
             params = { # All these parameters are now accessed via self.header_component or other specific widgets
                 # Enumérer un nombre
                 'enumerate_count': self._get_param_value_if_allowed("enumerate_count_input", "Enumérer - nombre d'exercices", 0, allowed_keys), # Access via component
-                'enumerate_digits': self._get_param_value_if_allowed("enumerate_digits_input", "Enumérer - chiffres par nombre", 0, allowed_keys), # Access via component
+                'enumerate_digits': self._get_param_value_if_allowed("encadrement_digits_input", "Enumérer - chiffres par nombre", 0, allowed_keys), # Access via component
                 # Ranger les nombres
                 'sort_count': sort_count_val,
                 'sort_digits': self._get_param_value_if_allowed("sort_digits_input", "Ranger - chiffres par nombre", 0, allowed_keys), # Access via component
@@ -1060,9 +1070,11 @@ class MainWindow(QMainWindow):
                 'english_types': [etype for etype, cb_key, cb_widget in zip(['simple', 'complexe'], ["english_type_simple_cb", "english_type_complexe_cb"], [self.anglais_column_component.english_type_simple, self.anglais_column_component.english_type_complexe]) if cb_key in allowed_keys and cb_widget.isChecked()],
                 'PHRASES_SIMPLES': PHRASES_SIMPLES, # This is a constant
                 'PHRASES_COMPLEXES': PHRASES_COMPLEXES,
+               
                 'MOTS_A_RELIER': MOTS_A_RELIER,
                 # Anglais
                 'english_complete_count': n_complete,  # Already filtered
+               
                 'english_relier_count': n_relier,     # Already filtered
                 # Orthographe
                 # AJOUT DE CETTE LIGNE
@@ -1264,7 +1276,7 @@ class MainWindow(QMainWindow):
         default_level_order = ["CP", "CE1", "CE2", "CM1", "CM2"]
         default_exercises_by_level = {}  # Fallback vide
         try:
-            levels_config_path = get_resource_path('levels_config.json')
+            levels_config_path = project_file_path('json/levels_config.json')
             with open(levels_config_path, 'r', encoding='utf-8') as f:
                 self.level_configuration_data = json.load(f)
         except FileNotFoundError:
@@ -1419,12 +1431,18 @@ class MainWindow(QMainWindow):
     def get_selected_conversion_senses(self):
         return self.header_component.get_selected_conversion_senses() # This method is no longer needed in MainWindow
 
+def normalize_path_for_display(path):
+    """
+    Normalise un chemin pour l'affichage cross-plateforme (remplace les backslashs par des slashs).
+    """
+    return path.replace('\\', '/')
 
 if __name__ == "__main__":
     from PyQt6.QtGui import QIcon
-    icon_path = os.path.join(os.path.dirname(__file__), "Apprentium.ico")
+    # Utiliser project_file_path pour que le chemin soit correct en mode dev et compilé
+    icon_path = project_file_path("Apprentium.ico")
     app = QApplication(sys.argv)
-    app.setWindowIcon(QIcon(icon_path))
+    app.setWindowIcon(QIcon(icon_path)) # Définit l'icône pour l'application (ex: barre des tâches)
     window = MainWindow()
     window.show()
     app.exec()

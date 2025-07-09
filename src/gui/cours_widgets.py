@@ -5,6 +5,8 @@ from PyQt6.QtGui import QColor
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWebChannel import QWebChannel
 from PyQt6.QtPrintSupport import QPrinter, QPrintDialog
+from utils.resource_path import project_file_path
+
 
 class HeightReporter(QObject):
     """
@@ -49,7 +51,7 @@ class AutoResizingWebEngineView(QWebEngineView):
             self.subject = subject
             self.level = level
             self.lesson_index = lesson_index
-
+            
         @pyqtSlot(str)
         def saveContent(self, new_content):
             """Slot called by JavaScript to save the edited content."""
@@ -59,6 +61,69 @@ class AutoResizingWebEngineView(QWebEngineView):
         def deleteLesson(self):
             """Slot called by JS to delete the lesson."""
             self.lesson_deleted.emit(self.subject, self.level, self.lesson_index)
+
+        @pyqtSlot(str, str, result=str)
+        def imageUploadCallback(self, filename, base64data):
+            """Slot appelé par JavaScript pour gérer l'upload d'image.
+            Sauvegarde l'image dans html/data/images/ et retourne le chemin relatif pour insertion dans Summernote."""
+            import base64
+            try:
+                images_dir = project_file_path("html/data/images")
+                safe_filename = os.path.basename(filename)
+                base_name, ext = os.path.splitext(safe_filename)
+                i = 1
+                final_filename = safe_filename
+                while os.path.exists(project_file_path(f"html/data/images/{final_filename}")):
+                    final_filename = f"{base_name}_{i}{ext}"
+                    i += 1
+                if "," in base64data:
+                    base64data = base64data.split(",", 1)[1]
+                image_bytes = base64.b64decode(base64data)
+                image_path = project_file_path(f"html/data/images/{final_filename}")
+                with open(image_path, "wb") as f:
+                    f.write(image_bytes)
+                # Le chemin relatif doit être correct par rapport à la racine du projet (src/)
+                rel_path = f"html/data/images/{final_filename}"
+                print(f"Image saved: {image_path}, rel_path: {rel_path}")
+                return rel_path
+            except Exception as e:
+                print(f"Error handling image upload: {e}")
+                return ""
+
+        @pyqtSlot(str, result=str)
+        def downloadImageFromUrl(self, url):
+            """Télécharge une image distante et retourne le chemin relatif local ou '' en cas d'échec."""
+            import os, requests
+            try:
+                images_dir = project_file_path("html/data/images")
+                from urllib.parse import urlparse, unquote
+                parsed = urlparse(url)
+                filename = os.path.basename(parsed.path)
+                if not filename:
+                    filename = 'image_url'
+                filename = unquote(filename)
+                base_name, ext = os.path.splitext(filename)
+                if not ext:
+                    ext = '.jpg'
+                i = 1
+                final_filename = filename
+                while os.path.exists(project_file_path(f"html/data/images/{final_filename}")):
+                    final_filename = f"{base_name}_{i}{ext}"
+                    i += 1
+                r = requests.get(url, timeout=10)
+                if r.status_code == 200:
+                    image_path = project_file_path(f"html/data/images/{final_filename}")
+                    with open(image_path, 'wb') as f:
+                        f.write(r.content)
+                    rel_path = f"html/data/images/{final_filename}"
+                    print(f"Image téléchargée: {url} -> {image_path}")
+                    return rel_path
+                else:
+                    print(f"Erreur téléchargement image: {url} code={r.status_code}")
+                    return ''
+            except Exception as e:
+                print(f"Erreur downloadImageFromUrl: {e}")
+                return ''
 
     def __init__(self, cours_column_widget, subject, level, lesson_index, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -82,11 +147,14 @@ class AutoResizingWebEngineView(QWebEngineView):
 
     def _on_load_finished(self, ok):
         if ok:
-            # Ensure the path is correct if the script is run from different locations
-            script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'js', 'editor_logic.js')
-            with open(script_path, "r", encoding="utf-8") as f:
-                js_script = f.read()
-            self.page().runJavaScript(js_script)
+            page = self.page()
+            if page:
+                # Ensure the path is correct if the script is run from different locations
+                script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'js', 'editor_logic.js')
+                try:
+                    pass
+                except Exception as e:
+                    print(f"Error loading editor_logic.js: {e}")
 
     def contextMenuEvent(self, event):
         """
@@ -208,7 +276,8 @@ class CoursColumn(QFrame):
         layout.addWidget(scroll_area)
 
     def get_title_widget(self):
-        return self.title_label # This attribute is not defined in the provided code. It seems like a remnant.
+        # This method is not used in the current implementation
+        return None
 
     def _clear_layouts(self):
         """Helper to clear all widgets from both column layouts."""
@@ -241,12 +310,32 @@ class CoursColumn(QFrame):
         CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
         CSS_DIR = os.path.abspath(os.path.join(CURRENT_DIR, '..', 'css'))
         HTML_DIR = os.path.abspath(os.path.join(CURRENT_DIR, '..', 'html'))
+        JS_DIR = os.path.abspath(os.path.join(CURRENT_DIR, '..', 'js'))
+        FONT_DIR = os.path.abspath(os.path.join(CURRENT_DIR, '..', 'font'))
 
         template_html = self._load_file_content(os.path.join(HTML_DIR, 'template.html'))
         cours_css_content = self._load_file_content(os.path.join(CSS_DIR, 'cours_style.css'))
         confirm_dialog_html = self._load_file_content(os.path.join(HTML_DIR, 'confirm_dialog_html.html'))
         edit_toolbar_html = self._load_file_content(os.path.join(HTML_DIR, 'edit_toolbar.html'))
         buttons_html = self._load_file_content(os.path.join(HTML_DIR, 'buttons.html'))
+
+        # Ajout de styles CSS spécifiques pour l'impression
+        print_css = """
+        @media print {
+            body, .lesson-card, p, li, h1, h2, h3, h4, h5, h6, span, div, strong, em, u, b, i {
+                color: #000000 !important;
+                background-color: #FFFFFF !important;
+            }
+            .lesson-card {
+                border: 1px solid #DDDDDD !important;
+                box-shadow: none !important;
+            }
+            .edit-button, .delete-button, .print-button {
+                display: none !important;
+            }
+        }
+        """
+        cours_css_content += "\\n" + print_css
 
         subject_colors = self.UI_STYLE_CONFIG['labels']['column_title_colors']
         any_lesson_found = False
@@ -313,9 +402,15 @@ class CoursColumn(QFrame):
                         .replace("{{buttons_html}}", buttons_html)
                         .replace("{{raw_lesson_content}}", raw_lesson_content)
                         .replace("{{subject_bg_class}}", subject_bg_class)
+                        .replace("{{css_path}}", CSS_DIR.replace('\\', '/'))
+                        .replace("{{js_path}}", JS_DIR.replace('\\', '/'))
+                        .replace("{{font_path}}", FONT_DIR.replace('\\', '/'))
                     )
 
-                    lesson_content_view.setHtml(full_html, QUrl("qrc:/"))
+                    # Utiliser project_file_path pour garantir que le chemin de base est correct
+                    # à la fois en mode développement et en mode compilé.
+                    base_url_path = project_file_path('')
+                    lesson_content_view.setHtml(full_html, QUrl.fromLocalFile(base_url_path + os.sep))
                     lesson_content_view.setMinimumHeight(30)
 
                     self.lesson_views[(subject, lesson_index)] = lesson_content_view
@@ -389,14 +484,29 @@ class CoursColumn(QFrame):
         CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
         CSS_DIR = os.path.abspath(os.path.join(CURRENT_DIR, '..', 'css'))
         HTML_DIR = os.path.abspath(os.path.join(CURRENT_DIR, '..', 'html'))
+        JS_DIR = os.path.abspath(os.path.join(CURRENT_DIR, '..', 'js'))
+        FONT_DIR = os.path.abspath(os.path.join(CURRENT_DIR, '..', 'font'))
         template_html = self._load_file_content(os.path.join(HTML_DIR, 'template.html'))
         cours_css_content = self._load_file_content(os.path.join(CSS_DIR, 'cours_style.css'))
         confirm_dialog_html = self._load_file_content(os.path.join(HTML_DIR, 'confirm_dialog_html.html'))
         edit_toolbar_html = self._load_file_content(os.path.join(HTML_DIR, 'edit_toolbar.html'))
         buttons_html = self._load_file_content(os.path.join(HTML_DIR, 'buttons.html'))
 
-        full_html = template_html.replace("{{cours_css_content}}", cours_css_content).replace("{{confirm_dialog_html}}", confirm_dialog_html).replace("{{edit_toolbar_html}}", edit_toolbar_html).replace("{{buttons_html}}", buttons_html).replace("{{raw_lesson_content}}", raw_lesson_content).replace("{{subject_bg_class}}", subject_bg_class)
-        new_lesson_view.setHtml(full_html, QUrl("qrc:/"))
+        full_html = (
+            template_html
+            .replace("{{cours_css_content}}", cours_css_content)
+            .replace("{{confirm_dialog_html}}", confirm_dialog_html)
+            .replace("{{edit_toolbar_html}}", edit_toolbar_html)
+            .replace("{{buttons_html}}", buttons_html)
+            .replace("{{raw_lesson_content}}", raw_lesson_content)
+            .replace("{{subject_bg_class}}", subject_bg_class)
+            .replace("{{css_path}}", CSS_DIR.replace('\\', '/'))
+            .replace("{{js_path}}", JS_DIR.replace('\\', '/'))
+            .replace("{{font_path}}", FONT_DIR.replace('\\', '/'))
+        )
+        # Utiliser project_file_path pour garantir que le chemin de base est correct.
+        base_url_path = project_file_path('')
+        new_lesson_view.setHtml(full_html, QUrl.fromLocalFile(base_url_path + os.sep))
         new_lesson_view.setMinimumHeight(30)
 
         self.lesson_views[(subject, lesson_index)] = new_lesson_view

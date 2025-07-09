@@ -1,16 +1,11 @@
 import random
 import json
 import sys
-import os 
-
-def get_resource_path(filename):
-    if hasattr(sys, '_MEIPASS'):
-        return os.path.join(sys._MEIPASS, "json", filename)
-    return os.path.join(os.path.dirname(__file__), "json", filename)
-
+import os
+from utils.resource_path import project_file_path
 
 # Chargement dynamique des phrases depuis un fichier JSON
-PHRASES_PATH = get_resource_path('phrases_grammaire.json')
+PHRASES_PATH = project_file_path('json/phrases_grammaire.json')
 with open(PHRASES_PATH, encoding='utf-8') as f:
     PHRASES = json.load(f)
 

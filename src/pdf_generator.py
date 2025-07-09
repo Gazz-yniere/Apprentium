@@ -6,105 +6,7 @@ import random  # Conservé pour english_relier
 import sys
 import os
 
-# Configuration des assets pour chaque section
-SECTION_ASSETS = {
-    # Bleu
-    "Calculs": {"image_path": "img/calculs.png", "color": (0.2, 0.4, 0.8)},
-    # Vert
-    "Mesures": {"image_path": "img/mesures.png", "color": (0.2, 0.6, 0.3)},
-    # Rouge-brique
-    "Conjugaison": {"image_path": "img/conjugaison.png", "color": (0.7, 0.3, 0.2)},
-    # Violet
-    "Grammaire": {"image_path": "img/grammaire.png", "color": (0.5, 0.2, 0.7)},
-    # Orange
-    "Orthographe": {"image_path": "img/orthographe.png", "color": (1.0, 0.7, 0.0)},
-    # Bleu-vert
-    "Anglais": {"image_path": "img/anglais.png", "color": (0.2, 0.6, 0.7)},
-}
-
-PDF_STYLE_CONFIG = {
-    "page": {
-        "margin": 35,
-    },
-    "general_header": {  # En-tête de page (Nom, Titre, Note)
-        "box_height": 30,
-        "box_stroke_color_rgb": (0.6, 0.6, 0.6),
-        "text_font_name": "Helvetica",
-        "text_font_size": 10,
-        "text_color_rgb": (0, 0, 0),
-        "title_font_name": "Helvetica-Bold",
-        "title_font_size": 14,
-        "y_offset_after_box": 18,
-        "y_offset_no_header": 3,
-    },
-    "section_frame": {  # Cadre général d'une section d'exercices
-        "radius": 15,
-        "stroke_width": 2,
-        "default_stroke_color_rgb": (0.7, 0.7, 0.7),
-        "content_bottom_padding": -10,
-        "y_offset_after_box": 15,
-    },
-    "section_header": {  # Titre numéroté à l'intérieur du cadre de section
-        # Police pour le nom de la section (ex: "Calculs")
-        "title_font_name": "Helvetica-Bold",
-        "title_font_size": 12,
-        "number_in_circle_font_name": "Helvetica-Bold",
-        "number_in_circle_font_size": 10,
-        "circle_radius": 10,
-        "box_padding_horizontal": 20,  # Espacement horizontal interne du cadre
-        "content_top_padding": 20, # Espace entre l'en-tête et le premier contenu
-        "img_width": 50,
-        "img_height": 50,
-        "img_top_padding": 5, # Padding for the image from the top of the frame
-        "content_x_start_offset_from_circle": 7,
-        "overlap_offset": 3,  # How much the header visually overlaps above the frame top line
-        "bg_padding_top": 7,  # Extra padding above the header text
-        "bg_padding_bottom": 3,  # Extra padding below the header text
-        "bg_padding_horizontal": 5,  # Extra padding for the white background box
-        "horizontal_shift": 10, # New parameter to shift everything right
-        "vertical_shift": 2,  # Shift the title and number down by this amount
-        "bg_vertical_shift": 5, # Shift the background box down
-    },
-    "story_problems": {  # "Petits Problèmes"
-        "title_font_name": "Helvetica-Bold",
-        "title_font_size": 9,
-        "content_font_name": "Helvetica",  # Changé de Helvetica-Bold à Helvetica
-        "content_font_size": 9,
-        "answer_font_name": "Helvetica", # noqa E501
-        "answer_font_size": 9,
-        "line_spacing_after_section_title": 10,
-        "line_spacing_between_wrapped_lines": 3,
-        "line_spacing_after_problem_text_block": 6,
-        "line_spacing_after_answer_line": 11,
-        "final_spacing_after_section": 8,
-    },
-    "calc_operations": {  # Addition, Soustraction, etc.
-        "title_font_name": "Helvetica-Bold", "title_font_size": 9,
-        "content_font_name": "Helvetica", "content_font_size": 9, # noqa E501
-        "line_spacing_after_title": 16, "line_spacing_per_item": 16, "spacing_after_section": 3, # noqa E501
-    },
-    "enumerate_numbers": {
-        "title_font_name": "Helvetica-Bold", "title_font_size": 9,
-        "content_font_name": "Helvetica", "content_font_size": 9, # noqa E501
-        "line_spacing_after_title": 16, "line_spacing_per_item": 16, "spacing_after_section": 6, # noqa E501
-    },
-    "measures_conversions":   {"title_font_name": "Helvetica-Bold", "title_font_size": 9, "content_font_name": "Helvetica", "content_font_size": 9, "line_spacing_after_title": 16, "line_spacing_per_item": 22, "spacing_after_section": 5, },
-    "measures_sort":          {"title_font_name": "Helvetica-Bold", "title_font_size": 9, "content_font_name": "Helvetica", "content_font_size": 9, "line_spacing_after_title": 16, "line_spacing_per_item": 22, "spacing_after_section": 8, },
-    "measures_encadrement":   {"title_font_name": "Helvetica-Bold", "title_font_size": 9, "content_font_name": "Helvetica", "content_font_size": 9, "line_spacing_after_title": 16, "line_spacing_per_item": 22, "spacing_after_section": 8, },
-    "conjugation":            {"title_font_name": "Helvetica-Bold", "title_font_size": 9, "content_font_name": "Helvetica", "content_font_size": 9, "line_spacing_after_title": 10, "line_spacing_before_pronouns": 10, "line_spacing_per_pronoun": 16,"spacing_after_verb_block": 5, "spacing_after_last_verb_block": 10, "spacing_between_exercise_types": 15, }, # noqa E501
-    "conj_completer":         {"title_font_name": "Helvetica-Bold", "title_font_size": 9, "content_font_name": "Helvetica", "content_font_size": 9, "line_spacing_after_title": 16, "line_spacing_per_item": 22, "spacing_after_section": 8, }, # noqa E501
-    "grammar":                {"title_font_name": "Helvetica-Bold", "title_font_size": 9, "content_font_name": "Helvetica", "content_font_size": 9, "line_spacing_per_line": 13, "spacing_before_answer": 10, "line_spacing_answer": 22, "spacing_after_exercise_block": 10, }, # noqa E501
-    "orthographe_homophones": {"title_font_name": "Helvetica-Bold", "title_font_size": 9, "content_font_name": "Helvetica", "content_font_size": 9, "line_spacing_after_title": 16, "line_spacing_per_item": 16, "spacing_after_item": 10, }, # noqa E501
-    "english_completer":      {"title_font_name": "Helvetica-Bold", "title_font_size": 9, "content_font_name": "Helvetica", "content_font_size": 9, "line_spacing_after_title": 10, "spacing_before_first_item": 10, "line_spacing_per_item": 13, "spacing_after_item": 10, }, # noqa E501
-    "english_relier":         {"title_font_name": "Helvetica-Bold", "title_font_size": 9, "content_font_name": "Helvetica", "content_font_size": 9, "line_spacing_after_title": 10, "spacing_before_first_item": 10, "line_spacing_per_item": 13, "spacing_after_block": 10, "x_offset_anglais": 0, "x_offset_bullet1": 75, "x_offset_bullet2_from_bullet1": 50, "x_offset_francais_from_bullet2": 20, }, # noqa E501
-    "default_font": {"name": "Helvetica", "size": 10, "color_rgb": (0, 0, 0)}
-}
-
-# Estimation de la hauteur de l'en-tête de section (numéro+titre)
-cfg_sh = PDF_STYLE_CONFIG["section_header"]
-# This estimate is for the total vertical space consumed by the header, from its highest point to the point where the content starts inside the frame.
-HEADER_HEIGHT_ESTIMATE = (cfg_sh["overlap_offset"] + cfg_sh["circle_radius"] + cfg_sh["bg_padding_top"] + cfg_sh["content_top_padding"])
-
+from pdf_template import PDF_STYLE_CONFIG, SECTION_ASSETS, HEADER_HEIGHT_ESTIMATE
 
 def get_resource_path_pdf(relative_path):
     """ Obtient le chemin absolu d'une ressource, que ce soit en mode script ou compilé. """
@@ -213,10 +115,8 @@ def draw_section_header(pdf, y_header_top, section_key, section_num, margin, pag
     # --- Draw circle and text on top of the white background ---
     pdf.setStrokeColorRGB(*section_color_rgb)
     pdf.setLineWidth(PDF_STYLE_CONFIG["section_frame"]["stroke_width"]) # Fix for thin border
-    pdf.circle(circle_center_x, circle_center_y,
-               cfg_sh["circle_radius"], fill=1, stroke=1)
-    pdf.setFont(cfg_sh["number_in_circle_font_name"],
-                cfg_sh["number_in_circle_font_size"])
+    pdf.circle(circle_center_x, circle_center_y, cfg_sh["circle_radius"], fill=1, stroke=1)
+    pdf.setFont(cfg_sh["number_in_circle_font_name"], cfg_sh["number_in_circle_font_size"])
     pdf.setFillColorRGB(*section_color_rgb)
     pdf.drawCentredString(circle_center_x, circle_center_y - (cfg_sh["number_in_circle_font_size"] / 3.0), str(section_num))  # noqa E501
     pdf.setFont(cfg_sh["title_font_name"], cfg_sh["title_font_size"]) # Set font to measure width
@@ -236,11 +136,7 @@ def draw_section_header(pdf, y_header_top, section_key, section_num, margin, pag
     return y_after_header, exercise_content_x_start_for_content
 
 
-def draw_canvas_story_problems(pdf, y_position, problems_for_day, exercise_content_x_start, margin, page_width, page_height,
-                               # Use a list [y] to pass by reference for updates
-                               current_frame_segment_top_y_ref,
-                               section_data_for_image,  # For redrawing image on new page
-                               section_color_rgb):  # For redrawing frame on new page
+def draw_canvas_story_problems(pdf, y_position, problems_for_day, exercise_content_x_start, margin, page_width, page_height, current_frame_segment_top_y_ref, section_data_for_image, section_color_rgb):  # For redrawing frame on new page
     """Dessine les "Petits Problèmes" sur le canvas, gérant les sauts de page."""
     if not problems_for_day:
         return y_position
@@ -257,14 +153,11 @@ def draw_canvas_story_problems(pdf, y_position, problems_for_day, exercise_conte
     title_height_estimate = (title_font_size + cfg_sp["line_spacing_after_section_title"])
 
     if y_position - title_height_estimate < margin:
-        # Close previous frame segment
-        draw_rounded_box_with_color(pdf, margin, margin, page_width - 2 * margin, current_frame_segment_top_y_ref[0] - margin, stroke_rgb_color=section_color_rgb, sides=['bottom', 'left', 'right'])
-        pdf.showPage()
-        y_position = page_height - margin
-        current_frame_segment_top_y_ref[0] = y_position
-        # Draw top of new frame segment
-        draw_rounded_box_with_color(pdf, margin, y_position, page_width - 2 * margin, 0, stroke_rgb_color=section_color_rgb, sides=['top'])
-        draw_section_image_in_frame(pdf, section_data_for_image, current_frame_segment_top_y_ref[0], page_width, margin)
+        y_position = check_and_handle_page_overflow(
+            pdf, y_position, margin, page_height, page_width,
+            section_color_rgb, current_frame_segment_top_y_ref,
+            section_data_for_image
+        )
 
     pdf.setFont(cfg_sp["title_font_name"], title_font_size)
     pdf.drawString(exercise_content_x_start, y_position, title_text)
@@ -291,17 +184,12 @@ def draw_canvas_story_problems(pdf, y_position, problems_for_day, exercise_conte
         for line_idx_in_problem, line_text_segment in enumerate(lines_to_draw):
             line_height_check = (content_font_size + cfg_sp["line_spacing_between_wrapped_lines"])
             if y_position - line_height_check < margin:
-                # Close previous frame segment
-                draw_rounded_box_with_color(pdf, margin, margin, page_width - 2 * margin, current_frame_segment_top_y_ref[0] - margin, stroke_rgb_color=section_color_rgb, sides=['bottom', 'left', 'right'])
-                pdf.showPage()
-                y_position = page_height - margin
-                current_frame_segment_top_y_ref[0] = y_position
-                # Draw top of new frame segment
-                draw_rounded_box_with_color(pdf, margin, y_position, page_width - 2 * margin, 0, stroke_rgb_color=section_color_rgb, sides=['top'])
-                draw_section_image_in_frame(
-                    pdf, section_data_for_image, current_frame_segment_top_y_ref[0], page_width, margin)
-                suite_title_text = "Petit Problème (suite):" if len(
-                    problems_for_day) == 1 else "Petits Problèmes (suite):"
+                y_position = check_and_handle_page_overflow(
+                    pdf, y_position, margin, page_height, page_width,
+                    section_color_rgb, current_frame_segment_top_y_ref,
+                    section_data_for_image
+                )
+                suite_title_text = "Petit Problème (suite):" if len(problems_for_day) == 1 else "Petits Problèmes (suite):"
                 pdf.setFont(cfg_sp["title_font_name"], title_font_size)
                 pdf.drawString(exercise_content_x_start, y_position, suite_title_text)
                 y_position -= (title_font_size + cfg_sp["line_spacing_after_section_title"])
@@ -323,17 +211,12 @@ def draw_canvas_story_problems(pdf, y_position, problems_for_day, exercise_conte
 
         answer_line_total_height = (cfg_sp["answer_font_size"] + cfg_sp["line_spacing_after_answer_line"])
         if y_position - answer_line_total_height < margin:
-            # Close previous frame segment
-            draw_rounded_box_with_color(pdf, margin, margin, page_width - 2 * margin, current_frame_segment_top_y_ref[0] - margin, stroke_rgb_color=section_color_rgb, sides=['bottom', 'left', 'right'])
-            pdf.showPage()
-            y_position = page_height - margin
-            current_frame_segment_top_y_ref[0] = y_position
-            # Draw top of new frame segment
-            draw_rounded_box_with_color(pdf, margin, y_position, page_width - 2 * margin, 0, stroke_rgb_color=section_color_rgb, sides=['top'])
-            draw_section_image_in_frame(
-                pdf, section_data_for_image, current_frame_segment_top_y_ref[0], page_width, margin)
-            suite_title_text = "Petit Problème (suite):" if len(
-                problems_for_day) == 1 else "Petits Problèmes (suite):"
+            y_position = check_and_handle_page_overflow(
+                pdf, y_position, margin, page_height, page_width,
+                section_color_rgb, current_frame_segment_top_y_ref,
+                section_data_for_image
+            )
+            suite_title_text = "Petit Problème (suite):" if len(problems_for_day) == 1 else "Petits Problèmes (suite):"
             pdf.setFont(cfg_sp["title_font_name"], title_font_size)
             pdf.drawString(exercise_content_x_start, y_position, suite_title_text)
             y_position -= (title_font_size + cfg_sp["line_spacing_after_section_title"])
@@ -360,8 +243,7 @@ def get_output_path(filename, custom_output_dir=None):
                 os.makedirs(custom_output_dir, exist_ok=True)
                 base_dir_for_output = custom_output_dir
             except OSError:
-                print(
-                    f"Avertissement : Impossible de créer le dossier personnalisé '{custom_output_dir}'. Utilisation du dossier par défaut.")
+                print(f"Avertissement : Impossible de créer le dossier personnalisé '{custom_output_dir}'. Utilisation du dossier par défaut.")
 
     if base_dir_for_output is None:
         if getattr(sys, 'frozen', False):
@@ -385,6 +267,40 @@ def draw_section_image_in_frame(pdf, section_data, current_frame_top_y, page_wid
             pdf.drawImage(image_file_path, img_draw_x, img_draw_y, width=cfg_sh["img_width"], height=cfg_sh["img_height"], mask='auto')
         except Exception as e:
             print(f"Erreur drawImage (in-frame) pour {image_file_path}: {e}")
+
+
+def check_and_handle_page_overflow(pdf, y_position, margin, page_height, page_width, section_color_rgb, current_frame_segment_top_y_ref):
+    """
+    Vérifie si le contenu dépasse la limite de la page et effectue un saut de page proprement.
+    """
+    # On ne saute la page que si on va vraiment dépasser
+    if y_position < margin:
+        # Calculer la hauteur du cadre à fermer
+        box_height = current_frame_segment_top_y_ref[0] - margin
+        if box_height > 0:
+            draw_rounded_box_with_color(
+                pdf,
+                margin,
+                margin,
+                page_width - 2 * margin,
+                box_height,
+                stroke_rgb_color=section_color_rgb,
+                sides=['bottom', 'left', 'right']
+            )
+        pdf.showPage()
+        y_position = page_height - margin
+        current_frame_segment_top_y_ref[0] = y_position
+        # Dessiner le haut du nouveau segment de cadre
+        draw_rounded_box_with_color(
+            pdf,
+            margin,
+            y_position,
+            page_width - 2 * margin,
+            0,
+            stroke_rgb_color=section_color_rgb,
+            sides=['top']
+        )
+    return y_position
 
 
 def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, params_list, grammar_exercises, orthographe_exercises, enumerate_exercises, sort_exercises, story_math_problems_by_day=None, geo_exercises=None, english_exercises=None, encadrement_exercises_list=None, header_text=None, filename="workbook.pdf", division_entier=False, show_name=False, show_note=False, output_dir_override=None, compare_numbers_exercises_list=None, logical_sequences_exercises_list=None, conj_complete_sentence_exercises=None, conj_complete_pronoun_exercises=None, measurement_problems=None):
@@ -890,9 +806,9 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                     pdf.setFont(cfg_gram["content_font_name"], cfg_gram["content_font_size"])
 
                 pdf.setFont(cfg_gram["title_font_name"], cfg_gram["title_font_size"])
-                pdf.drawString(exercise_content_x_start, y_position, "Transformation demandée :")
+                pdf.drawString(exercise_content_x_start, y_position, "Transformation demandée : ")
                 pdf.setFont(cfg_gram["content_font_name"], cfg_gram["content_font_size"])
-                pdf.drawString(exercise_content_x_start + 130, y_position, transformation)
+                pdf.drawString(exercise_content_x_start + 150, y_position, transformation)
                 y_position -= cfg_gram["line_spacing_per_line"]
                 if y_position < margin:
                     # Close previous frame segment
@@ -952,7 +868,7 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
 
                 # Draw the main title for homophones once per section
                 if homophone_exercises_for_day and not pdf._ortho_homophone_title_drawn:
-                    if len(homophone_exercises_for_day) == 1: # Check length of filtered list
+                    if len(homophone_exercises_for_day) == 1 :# Check length of filtered list
                         exercise_title = "Complète l'homophone :"
                     else:
                         exercise_title = "Complète les homophones :"
@@ -1039,7 +955,7 @@ def generate_workbook_pdf(days, operations, counts, max_digits, conjugations, pa
                             current_frame_segment_top_y = y_position
                             # Draw top of new frame segment
                             draw_rounded_box_with_color(pdf, margin, y_position, width - 2 * margin, 0, stroke_rgb_color=section_color_rgb, sides=['top'])
-                            draw_section_image_in_frame( pdf, section_data, current_frame_segment_top_y, width, margin)
+                            draw_section_image_in_frame(pdf, section_data, current_frame_segment_top_y, width, margin)
                             pdf.setFont( cfg_eng_comp["content_font_name"], cfg_eng_comp["content_font_size"])
 
                     pdf.drawString(exercise_content_x_start, y_position, ex['content'])

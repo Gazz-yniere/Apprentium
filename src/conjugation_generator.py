@@ -2,15 +2,10 @@ import random
 import json
 import sys
 import os
-
-def get_resource_path(filename):
-    if hasattr(sys, '_MEIPASS'):
-        return os.path.join(sys._MEIPASS, "json", filename)
-    return os.path.join(os.path.dirname(__file__), "json", filename)
-
+from utils.resource_path import project_file_path
 
 # Chargement dynamique des verbes depuis un fichier JSON
-VERBS_PATH = get_resource_path('verbes.json')
+VERBS_PATH = project_file_path('json/verbes.json')
 with open(VERBS_PATH, encoding='utf-8') as f:
     _VERBS = json.load(f)
     VERBS = {}

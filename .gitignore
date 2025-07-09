@@ -2,6 +2,8 @@
 /src/dist/
 /src/build/
 /src/output/
+/src/data/
+/src/html/data/
 /output/
 /tests/
 /font/

@@ -1,29 +1,22 @@
 import random
 import json
-import sys
-import os
-
-def get_resource_path(filename): 
-    if hasattr(sys, '_MEIPASS'):
-        return os.path.join(sys._MEIPASS, "json", filename)
-    return os.path.join(os.path.dirname(__file__), "json", filename)
-
+from utils.resource_path import project_file_path
 
 # Chargement des phrases à compléter simples
 try:
-    with open(get_resource_path('phrases_anglais_simple.json'), encoding='utf-8') as f:
+    with open(project_file_path('json/phrases_anglais_simple.json'), encoding='utf-8') as f:
         PHRASES_SIMPLES = json.load(f)
 except Exception:
     PHRASES_SIMPLES = []
 # Chargement des phrases à compléter complexes
 try:
-    with open(get_resource_path('phrases_anglais_complexe.json'), encoding='utf-8') as f:
+    with open(project_file_path('json/phrases_anglais_complexe.json'), encoding='utf-8') as f:
         PHRASES_COMPLEXES = json.load(f)
 except Exception:
     PHRASES_COMPLEXES = []
 # Chargement des mots à relier
 try:
-    with open(get_resource_path('mots_a_relier.json'), encoding='utf-8') as f:
+    with open(project_file_path('json/mots_a_relier.json'), encoding='utf-8') as f:
         # Sera maintenant un dictionnaire de thèmes
         MOTS_A_RELIER = json.load(f)
 except Exception:

@@ -493,6 +493,51 @@ html, body {
 .lesson-content-editable ul, .lesson-content-editable ol {
     padding-left: 40px;
 }
+
+/* Harmonisation des listes avec Summernote (lecture) */
+.lesson-content-editable ul,
+.lesson-content-editable ol {
+    list-style-position: inside !important;
+    padding-left: 40px !important;
+    margin-left: 0 !important;
+    color: #ECF0F1 !important;
+}
+
+.lesson-content-editable ul {
+    list-style-type: disc !important;
+}
+
+.lesson-content-editable ol {
+    list-style-type: decimal !important;
+}
+
+.lesson-content-editable li {
+    color: #ECF0F1 !important;
+    font-size: 16px !important;
+    margin-bottom: 8px !important;
+    text-align: left !important;
+}
+
+/* Harmonisation des tableaux avec Summernote (lecture) */
+.lesson-content-editable table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    background-color: #2c3e50 !important;
+    color: #ECF0F1 !important;
+    margin: 15px 0 !important;
+}
+.lesson-content-editable th, .lesson-content-editable td {
+    border: 1px solid #34495e !important;
+    padding: 8px 6px !important;
+    color: #ECF0F1 !important;
+    background-color: #2c3e50 !important;
+    text-align: left !important;
+}
+.lesson-content-editable th {
+    background-color: #34495e !important;
+    font-weight: bold !important;
+}
+
 /* NEW: Custom Confirmation Dialog Styles */
 .confirm-dialog-overlay {
     display: none; /* Hidden by default */

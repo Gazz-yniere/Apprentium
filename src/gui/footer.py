@@ -41,12 +41,6 @@ class AppFooter(QFrame):
 
         # Left part for path and filename
         left_file_controls_layout = QGridLayout()
-        self.output_path_button = QPushButton("Choisir dossier...")
-        self.output_path_button.clicked.connect(self._select_output_directory)
-        self.output_path_display_label = QLabel()
-        self.output_path_display_label.setWordWrap(True)
-        self.output_path_display_label.setMinimumWidth(200)
-
         self.filename_label = QLabel("Nom du fichier :")
         self.filename_label.setStyleSheet(self.UI_STYLE_CONFIG["labels"]["filename_label"])
         self.filename_entry = QLineEdit()
@@ -55,12 +49,7 @@ class AppFooter(QFrame):
         self.all_line_edits.append(self.filename_entry)
         self.filename_entry.setText("workbook")
 
-        # Initial display of output path
-        self._update_output_path_display(self.selected_output_path)
-
         file_controls_line_layout = QHBoxLayout()
-        file_controls_line_layout.addWidget(self.output_path_button)
-        file_controls_line_layout.addWidget(self.output_path_display_label)
         file_controls_line_layout.addWidget(self.filename_label)
         file_controls_line_layout.addWidget(self.filename_entry)
         file_controls_line_layout.addStretch(0)
@@ -79,8 +68,6 @@ class AppFooter(QFrame):
                 disabled_text_color=btn_cfg["disabled"]["text_color"],
                 pressed_bg_color=btn_cfg[type_key]["pressed_bg_color"]
             )
-
-        self.output_path_button.setStyleSheet(get_action_button_style("select_folder"))
 
         action_buttons_layout = QHBoxLayout()
         self.generate_pdf_button = QPushButton("Générer PDF")
@@ -130,30 +117,11 @@ class AppFooter(QFrame):
             self, "Choisir le dossier de sortie", self.selected_output_path or os.getcwd())
         if directory:
             self.selected_output_path = os.path.normpath(directory)
-        self._update_output_path_display(self.selected_output_path)
         # Notify parent_window about the change for config saving
         self.parent_window.set_selected_output_path(self.selected_output_path)
 
-    def _update_output_path_display(self, full_path):
-        prefix = "Dossier : "
-        default_relative_path = "output/"
-        max_display_len = 40
-
-        cfg_labels = self.UI_STYLE_CONFIG["labels"]
-        if not full_path:
-            self.output_path_display_label.setText(prefix + default_relative_path)
-            self.output_path_display_label.setStyleSheet(cfg_labels["output_path_display_default"])
-        else:
-            display_path = full_path
-            if len(full_path) > max_display_len:
-                parts = full_path.split(os.sep)
-                if len(parts) > 4:
-                    display_path = parts[0] + os.sep + "..." + os.sep + \
-                        os.path.join(parts[-3], parts[-2], parts[-1])
-
-            self.output_path_display_label.setText(prefix + display_path)
-            self.output_path_display_label.setStyleSheet(cfg_labels["output_path_display_set"])
-
     def set_output_path_from_config(self, path):
         self.selected_output_path = path
-        self._update_output_path_display(path)
+
+    def update_output_path_from_config_file(self):
+        pass

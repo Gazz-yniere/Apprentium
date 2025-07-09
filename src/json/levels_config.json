@@ -393,6 +393,7 @@
       "transfo_affirmative_negative_cb",
       "transfo_masculin_feminin_cb",
       "transfo_singulier_pluriel_cb",
+      "transitive_direct_cb",
       "usual_verbs_cb",
       "verbs_per_day_entry_input",
       "verbs_per_day_entry_row"
