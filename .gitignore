@@ -10,6 +10,7 @@
 /src/old/
 /src/config.json
 /src/cleanup_cours_json.py
+RELEASE_NOTES.md
 /dist/
 /build/
 .pytest_cache/
