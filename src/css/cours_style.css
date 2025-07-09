@@ -621,43 +621,46 @@ html, body {
 /* --- STYLES GÉNERAUX --- {self.cours_css_content}*/
 /* --- STYLES SPÉCIFIQUES POUR L'IMPRESSION --- */
 @media print {
-    .lesson-buttons { display: none !important; }
-    .saved-notification { display: none !important; }
-    .delete-button-html { display: none !important; }
-    .cancel-button-html { display: none !important; }
-    .edit-toolbar { display: none !important; }
-    /* Forcer le moteur de rendu à utiliser les couleurs de fond spécifiées */
-    -webkit-print-color-adjust: exact;
-    /* Reset général pour l'impression : fond blanc, texte noir */
-    body, html {
-        background: #FFFFFF !important;
-        color: #000000 !important;
-        font-size: 10pt !important; /* Réduire la taille de la police */
-        line-height: 1.4 !important; /* Ajuster la hauteur de ligne */
-    }
-    body {
-        zoom: 0.85; /* Réduire l'ensemble du contenu */
-    }
-    /* Retirer les ombres et forcer un fond blanc sur les conteneurs principaux */
-    .lesson-card, .column-item {
-        background-color: #FFFFFF !important;
+    html, body, .lesson-card, .lesson-card *,
+    p, li, ul, ol, h1, h2, h3, h4, h5, h6, span, div, strong, em, u, b, i {
+        color: #000 !important;
+        background: #fff !important;
         box-shadow: none !important;
-        border: none !important; /* Pas de bordure pour la carte de leçon dans le PDF */
-        page-break-inside: avoid; /* Empêche les éléments d'être coupés entre deux pages */
-    }
-    /* Style spécifique pour le mémo dans le PDF */
-    .memo-box {
-        border: 3px solid #000000 !important; /* Bordure noire et plus épaisse pour le mémo */
-        background-color: transparent !important;
-    }
-    /* S'assurer que tous les textes sont noirs et sans effets d'ombre */
-    h2, h3, h4, p, li, strong, em, span, a, cite, figcaption, td, th {
-        color: #000000 !important;
         text-shadow: none !important;
-        background-color: transparent !important;
+        filter: none !important;
     }
-    /* Rendre les liens visibles sur papier */
+    ul, ol, ul *, ol *, li, li *, .math-steps, .math-steps *, .memo-box, .memo-box *, .key-info, .key-info *, .example, .example * {
+        color: #000 !important;
+        background: #fff !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    .lesson-card {
+        border: 1px solid #DDDDDD !important;
+        page-break-inside: avoid;
+    }
+    .memo-box {
+        border: 2px solid #000 !important;
+    }
+    .key-info, .example {
+        border: none !important;
+        background: #fff !important;
+        color: #000 !important;
+        box-shadow: none !important;
+    }
+    .highlight-red, .highlight-blue, .highlight-green, .highlight-orange, .highlight-yellow, .highlight-purple {
+        color: #000 !important;
+    }
     a {
+        color: #0000FF !important;
         text-decoration: underline !important;
+    }
+    /* Cacher les boutons et barres inutiles */
+    .lesson-buttons, .saved-notification, .edit-toolbar,
+    .edit-button-html, .delete-button-html, .print-button-html, .cancel-button-html {
+        display: none !important;
+    }
+    .lesson-card li, .lesson-card li *, .lesson-content-editable li, .lesson-content-editable li *, .memo-box li, .memo-box li * {
+    color: #000 !important;
     }
 }

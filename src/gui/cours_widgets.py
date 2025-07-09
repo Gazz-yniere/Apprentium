@@ -319,24 +319,6 @@ class CoursColumn(QFrame):
         edit_toolbar_html = self._load_file_content(os.path.join(HTML_DIR, 'edit_toolbar.html'))
         buttons_html = self._load_file_content(os.path.join(HTML_DIR, 'buttons.html'))
 
-        # Ajout de styles CSS spécifiques pour l'impression
-        print_css = """
-        @media print {
-            body, .lesson-card, p, li, h1, h2, h3, h4, h5, h6, span, div, strong, em, u, b, i {
-                color: #000000 !important;
-                background-color: #FFFFFF !important;
-            }
-            .lesson-card {
-                border: 1px solid #DDDDDD !important;
-                box-shadow: none !important;
-            }
-            .edit-button, .delete-button, .print-button {
-                display: none !important;
-            }
-        }
-        """
-        cours_css_content += "\\n" + print_css
-
         subject_colors = self.UI_STYLE_CONFIG['labels']['column_title_colors']
         any_lesson_found = False
         
