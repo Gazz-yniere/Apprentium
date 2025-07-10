@@ -80,14 +80,19 @@ def generate_story_math_problems(selected_problem_types, num_problems, target_le
     if not candidate_problem_templates:
         return generated_exercises
 
-    problems_generated_count = 0
-    while problems_generated_count < num_problems:
-        if not candidate_problem_templates:
-            break
+    # --- MODIFICATION : Assurer des problèmes uniques par jour ---
+    # S'assurer de ne pas demander plus de problèmes qu'il n'y a de modèles uniques.
+    if len(candidate_problem_templates) < num_problems:
+        print(f"Avertissement: Le nombre de problèmes mathématiques demandés ({num_problems}) est supérieur au nombre de modèles uniques disponibles ({len(candidate_problem_templates)}). Le nombre de problèmes sera limité.")
+        num_problems = len(candidate_problem_templates)
 
+    # Sélectionner un échantillon de modèles uniques pour éviter les doublons.
+    selected_templates = random.sample(candidate_problem_templates, num_problems)
+
+    for template in selected_templates:
         problem_successfully_generated_for_iteration = False
         for _retry_attempt in range(MAX_RETRIES_PER_PROBLEM):
-            template = random.choice(candidate_problem_templates)
+            # Le modèle est déjà choisi, on génère juste les variables
             enonce_template = template["enonce"]
             variables_config = template["variables"]
             condition_str = template.get("condition")
@@ -113,12 +118,11 @@ def generate_story_math_problems(selected_problem_types, num_problems, target_le
             if condition_met:
                 formatted_enonce = enonce_template.format(**instance_variables)
                 generated_exercises.append({"type": "math_problem", "content": formatted_enonce})
-                problems_generated_count += 1
                 problem_successfully_generated_for_iteration = True
-                break
+                break # Sortir de la boucle de tentatives
 
         if not problem_successfully_generated_for_iteration:
-            print(f"Avertissement: Impossible de générer un problème satisfaisant les conditions " f"après {MAX_RETRIES_PER_PROBLEM} tentatives pour un modèle. " "Passage au problème suivant si possible.")
+            print(f"Avertissement: Impossible de générer un problème satisfaisant les conditions " f"après {MAX_RETRIES_PER_PROBLEM} tentatives pour le modèle '{template['enonce']}'.")
     return generated_exercises
 
 

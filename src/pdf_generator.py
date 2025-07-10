@@ -269,7 +269,7 @@ def draw_section_image_in_frame(pdf, section_data, current_frame_top_y, page_wid
             print(f"Erreur drawImage (in-frame) pour {image_file_path}: {e}")
 
 
-def check_and_handle_page_overflow(pdf, y_position, margin, page_height, page_width, section_color_rgb, current_frame_segment_top_y_ref):
+def check_and_handle_page_overflow(pdf, y_position, margin, page_height, page_width, section_color_rgb, current_frame_segment_top_y_ref, section_data_for_image=None):
     """
     Vérifie si le contenu dépasse la limite de la page et effectue un saut de page proprement.
     """
@@ -300,6 +300,10 @@ def check_and_handle_page_overflow(pdf, y_position, margin, page_height, page_wi
             stroke_rgb_color=section_color_rgb,
             sides=['top']
         )
+        # Redessiner l'image de la section sur la nouvelle page
+        if section_data_for_image:
+            draw_section_image_in_frame(pdf, section_data_for_image, current_frame_segment_top_y_ref[0], page_width, margin)
+
     return y_position
 
 
